@@ -94,14 +94,14 @@ export default function Footer() {
             </p>
             <div className="space-y-2 text-sm">
               <a 
-                href="https://wa.me/2250154072488" 
+                href="https://wa.me/2290154072488" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 hover:bg-emerald-900/60 transition-colors font-medium"
               >
                 <MessageCircle className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
-                  <div className="text-xs text-stone-400">WhatsApp officiel</div>
+                  <div className="text-xs text-stone-400">WhatsApp officiel (Bénin)</div>
                   <div className="font-bold text-white text-base">0154072488</div>
                 </div>
               </a>
@@ -121,7 +121,7 @@ export default function Footer() {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
           <p>© {new Date().getFullYear()} Christaline Shop. Tous droits réservés.</p>
           <p className="text-center sm:text-right">
-            Service de commande et transit sécurisé • Côte d'Ivoire & International
+            Service de commande et transit sécurisé • Bénin (Cotonou, Calavi, Porto-Novo) & International
           </p>
         </div>
       </div>

@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   TicketOrder, 
   STATUS_MAP, 
-  PLATFORM_CONFIG, 
-  QuoteStatus 
+  PLATFORM_CONFIG 
 } from '@/lib/types';
+import { AppSettings, PaymentAccount } from '@/lib/settings';
 import { 
   ShoppingBag, 
   Truck, 
@@ -16,19 +16,18 @@ import {
   ExternalLink, 
   MessageCircle, 
   Printer, 
-  Share2, 
   Copy, 
   CreditCard, 
   PackageCheck, 
   Plane, 
-  Building, 
-  AlertCircle,
-  FileText,
-  User,
-  MapPin,
-  Calendar,
-  Sparkles,
-  Crown
+  User, 
+  MapPin, 
+  Calendar, 
+  Crown,
+  X,
+  Smartphone,
+  ShieldCheck,
+  Check
 } from 'lucide-react';
 
 interface Props {
@@ -36,8 +35,27 @@ interface Props {
 }
 
 export default function TicketTrackingView({ ticket }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState<'quote' | 'tracking' | 'client'>('quote');
+  
+  // Modal des instructions de paiement
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [copiedAccNumber, setCopiedAccNumber] = useState<string | null>(null);
+  const [copiedTicketRef, setCopiedTicketRef] = useState(false);
+
+  // Paramètres de paiement (chargés depuis l'API)
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.settings) {
+          setSettings(data.settings);
+        }
+      })
+      .catch(err => console.error('Erreur chargement paramètres:', err));
+  }, []);
 
   const statusConfig = STATUS_MAP[ticket.quote.status] || STATUS_MAP.pending;
   const isQuoteCalculated = ticket.quote.grandTotalCFA > 0 || ticket.quote.status !== 'pending';
@@ -45,8 +63,24 @@ export default function TicketTrackingView({ ticket }: Props) {
   const copyLink = () => {
     if (typeof window !== 'undefined') {
       navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+    }
+  };
+
+  const copyNumber = (num: string) => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(num);
+      setCopiedAccNumber(num);
+      setTimeout(() => setCopiedAccNumber(null), 3000);
+    }
+  };
+
+  const copyTicketRef = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(ticket.id);
+      setCopiedTicketRef(true);
+      setTimeout(() => setCopiedTicketRef(false), 3000);
     }
   };
 
@@ -56,22 +90,19 @@ export default function TicketTrackingView({ ticket }: Props) {
     }
   };
 
-  // Formatage des montants FCFA
   const formatCFA = (amount: number) => {
     return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
   };
 
-  // Lien WhatsApp client vers Christaline Shop avec message contextuel
-  const getWhatsAppMessage = () => {
-    let msg = `Bonjour Christaline Shop ! 🌸\nJe consulte mon ticket *${ticket.id}* (Client: ${ticket.client.name}).\n`;
-    if (ticket.quote.status === 'ready') {
-      msg += `Mon devis est de *${formatCFA(ticket.quote.grandTotalCFA)}*. Je souhaite valider et régler mon acompte de *${formatCFA(ticket.quote.depositRequiredCFA)}*. Merci de me communiquer les détails de paiement !`;
-    } else if (ticket.quote.status === 'pending') {
-      msg += `Je voulais savoir si mon devis est en cours de calcul pour mes ${ticket.items.length} article(s). Merci !`;
-    } else {
-      msg += `Statut actuel : *${ticket.tracking.statusLabel}*. Avez-vous une mise à jour sur l'arrivée de mon colis ?`;
-    }
-    return `https://wa.me/2250154072488?text=${encodeURIComponent(msg)}`;
+  // WhatsApp de confirmation après avoir effectué le paiement
+  const getWhatsAppPaymentProofMessage = () => {
+    const waNumber = settings?.whatsappNumber || '2290154072488';
+    const msg = `Bonjour Christaline Shop Bénin ! 🌸\n`
+      + `Je viens d'effectuer le règlement de mon acompte pour le *Ticket ${ticket.id}*.\n`
+      + `👤 Client : ${ticket.client.name}\n`
+      + `💰 Montant acompte : ${formatCFA(ticket.quote.depositRequiredCFA)}\n`
+      + `Je vous transmets ma capture / référence de transaction pour validation de ma commande. Merci !`;
+    return `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
   };
 
   return (
@@ -82,7 +113,7 @@ export default function TicketTrackingView({ ticket }: Props) {
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <span className="text-xs font-mono font-bold bg-stone-900 text-white px-3 py-1 rounded-lg">
-              TICKET OFFICIEL
+              TICKET OFFICIEL • BÉNIN
             </span>
             <span className={`text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${statusConfig.badgeClass}`}>
               <span className="w-2 h-2 rounded-full bg-current animate-ping" />
@@ -103,21 +134,21 @@ export default function TicketTrackingView({ ticket }: Props) {
             <span>Client : <strong>{ticket.client.name}</strong></span>
             <span className="text-stone-300">•</span>
             <MapPin className="w-4 h-4 text-stone-400" />
-            <span>{ticket.client.city}</span>
+            <span>{ticket.client.city} (Bénin)</span>
           </p>
         </div>
 
         {/* Boutons d'action rapides */}
         <div className="flex flex-wrap items-center gap-2.5 no-print">
-          <a
-            href={getWhatsAppMessage()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-emerald-200 transition-all hover:scale-102"
-          >
-            <MessageCircle className="w-4 h-4 fill-white" />
-            <span>WhatsApp (0154072488)</span>
-          </a>
+          {ticket.quote.status === 'ready' && (
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-emerald-200 transition-all hover:scale-102 cursor-pointer"
+            >
+              <CreditCard className="w-4 h-4" />
+              <span>Régler mon Acompte</span>
+            </button>
+          )}
 
           <button
             onClick={copyLink}
@@ -125,7 +156,7 @@ export default function TicketTrackingView({ ticket }: Props) {
             title="Copier le lien du ticket"
           >
             <Copy className="w-3.5 h-3.5 text-stone-600" />
-            <span>{copied ? 'Copié !' : 'Partager'}</span>
+            <span>{copiedLink ? 'Copié !' : 'Partager'}</span>
           </button>
 
           <button
@@ -170,13 +201,13 @@ export default function TicketTrackingView({ ticket }: Props) {
           </div>
         </div>
 
-        {/* Montant / Acompte */}
+        {/* Montant Total Devis */}
         <div className="bg-white p-5 rounded-2xl border border-emerald-100 shadow-xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <CreditCard className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Total Devis (FCFA)</div>
+            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Total de la commande</div>
             <div className="text-base font-black text-emerald-700">
               {ticket.quote.grandTotalCFA > 0 ? formatCFA(ticket.quote.grandTotalCFA) : 'En cours de chiffrage'}
             </div>
@@ -195,8 +226,8 @@ export default function TicketTrackingView({ ticket }: Props) {
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
-          <FileText className="w-4 h-4" />
-          <span>Devis & Articles ({ticket.items.length})</span>
+          <ShoppingBag className="w-4 h-4" />
+          <span>Mes Articles & Devis ({ticket.items.length})</span>
         </button>
 
         <button
@@ -220,59 +251,53 @@ export default function TicketTrackingView({ ticket }: Props) {
           }`}
         >
           <User className="w-4 h-4" />
-          <span>Infos Client & Adresse</span>
+          <span>Infos Client & Livraison</span>
         </button>
       </div>
 
-      {/* ONGLET 1 : DEVIS & ARTICLES */}
+      {/* ONGLET 1 : DEVIS & ARTICLES SANS DÉTAILS INTERNES */}
       {activeTab === 'quote' && (
         <div className="space-y-6">
 
-          {/* Alerte si le devis est encore en attente */}
+          {/* Alerte si le devis est en cours de calcul */}
           {ticket.quote.status === 'pending' && (
             <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
               <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="space-y-1 text-sm text-amber-900">
-                <div className="font-bold">Devis en cours de traitement par Christaline Shop</div>
+                <div className="font-bold">Devis en cours de traitement par Christaline Shop Bénin</div>
                 <p className="text-xs text-amber-800">
-                  Notre équipe consulte vos liens pour calculer le tarif en FCFA, les frais de fret aérien et la douane. 
-                  Vous recevrez un message WhatsApp dès que ce devis sera mis à jour !
+                  Notre équipe consulte vos liens pour calculer le montant total de vos articles en FCFA. 
+                  Vous serez notifié(e) dès que le prix total sera affiché ici !
                 </p>
-                <div className="pt-2">
-                  <a
-                    href={`https://wa.me/2250154072488?text=Bonjour%2C%20je%20relance%20pour%20mon%20ticket%20${ticket.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 underline hover:text-amber-950"
-                  >
-                    <span>Relancer l'équipe sur WhatsApp (0154072488) ›</span>
-                  </a>
-                </div>
               </div>
             </div>
           )}
 
-          {/* Tableau des articles et devis individuel */}
+          {/* LISTE DES ARTICLES AVEC UNIQUEMENT LE PRIX TOTAL PAR ARTICLE */}
           <div className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-xs">
             <div className="p-5 bg-stone-50/80 border-b border-stone-200 flex items-center justify-between">
               <h2 className="text-base font-bold text-stone-900 flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4 text-rose-600" />
-                <span>Articles demandés & Devis Individuel</span>
+                <span>Articles de votre commande</span>
               </h2>
               <span className="text-xs text-stone-500 font-medium">
-                {ticket.items.length} produit{ticket.items.length > 1 ? 's' : ''}
+                {ticket.items.length} article{ticket.items.length > 1 ? 's' : ''}
               </span>
             </div>
 
             <div className="divide-y divide-stone-100">
               {ticket.items.map((item, index) => {
                 const pltCfg = PLATFORM_CONFIG[item.platform] || PLATFORM_CONFIG.autre;
+                const itemTotalPrice = item.totalItemCFA > 0 
+                  ? item.totalItemCFA 
+                  : (item.unitPriceCFA > 0 ? item.unitPriceCFA * item.quantity : 0);
+
                 return (
-                  <div key={item.id || index} className="p-5 sm:p-6 space-y-4 hover:bg-rose-50/20 transition-colors">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div key={item.id || index} className="p-5 sm:p-6 space-y-3 hover:bg-rose-50/20 transition-colors">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       
-                      {/* Titre & Plateforme */}
-                      <div className="space-y-1">
+                      {/* Titre & Informations Article */}
+                      <div className="space-y-1 flex-1">
                         <div className="flex items-center gap-2">
                           <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${pltCfg.bg}`}>
                             {pltCfg.name}
@@ -285,20 +310,20 @@ export default function TicketTrackingView({ ticket }: Props) {
 
                         {item.variant && (
                           <div className="text-xs text-stone-600">
-                            Variante / Modèle : <span className="font-semibold text-stone-800">{item.variant}</span>
+                            Variante : <span className="font-semibold text-stone-800">{item.variant}</span>
                           </div>
                         )}
 
                         {item.notes && (
                           <div className="text-xs italic text-stone-500">
-                            Note client : &ldquo;{item.notes}&rdquo;
+                            Remarque : &ldquo;{item.notes}&rdquo;
                           </div>
                         )}
                       </div>
 
-                      {/* Quantité & Lien produit */}
+                      {/* Quantité & Lien */}
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs bg-stone-100 text-stone-700 font-bold px-2.5 py-1 rounded-lg">
+                        <span className="text-xs bg-stone-100 text-stone-700 font-bold px-3 py-1.5 rounded-xl border border-stone-200">
                           Qté : {item.quantity}
                         </span>
 
@@ -313,130 +338,81 @@ export default function TicketTrackingView({ ticket }: Props) {
                         </a>
                       </div>
 
+                      {/* PRIX TOTAL DE L'ARTICLE (AUCUN DÉTAIL INTERNE) */}
+                      <div className="text-left sm:text-right shrink-0 bg-rose-50/60 sm:bg-transparent p-3 sm:p-0 rounded-xl sm:rounded-none">
+                        <span className="text-[11px] font-semibold text-stone-500 block uppercase">Prix de l'article</span>
+                        <span className="text-lg sm:text-xl font-black text-rose-700">
+                          {itemTotalPrice > 0 ? formatCFA(itemTotalPrice) : 'En attente de chiffrage'}
+                        </span>
+                      </div>
+
                     </div>
-
-                    {/* DÉCOMPTE DU DEVIS INDIVIDUEL (FCFA) */}
-                    <div className="bg-stone-50/80 p-4 rounded-2xl border border-stone-200 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-                      <div>
-                        <span className="text-stone-400 block text-[11px]">Prix article (unit.)</span>
-                        <span className="font-bold text-stone-800 text-sm">
-                          {item.unitPriceCFA > 0 ? formatCFA(item.unitPriceCFA) : 'En attente'}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-stone-400 block text-[11px]">Fret / Port (unit.)</span>
-                        <span className="font-bold text-stone-800 text-sm">
-                          {item.shippingFeeCFA > 0 ? formatCFA(item.shippingFeeCFA) : 'Inclus / Estim.'}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-stone-400 block text-[11px]">Commission service</span>
-                        <span className="font-bold text-stone-800 text-sm">
-                          {item.serviceFeeCFA > 0 ? formatCFA(item.serviceFeeCFA) : 'Inclus'}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-stone-400 block text-[11px]">Douane</span>
-                        <span className="font-bold text-stone-800 text-sm">
-                          {item.customsFeeCFA > 0 ? formatCFA(item.customsFeeCFA) : 'Inclus'}
-                        </span>
-                      </div>
-
-                      <div className="col-span-2 sm:col-span-1 border-t sm:border-t-0 sm:border-l border-stone-200 pt-2 sm:pt-0 sm:pl-3">
-                        <span className="text-rose-600 font-bold block text-[11px] uppercase">Total cet article</span>
-                        <span className="font-black text-rose-700 text-base">
-                          {item.totalItemCFA > 0 ? formatCFA(item.totalItemCFA) : (item.unitPriceCFA > 0 ? formatCFA(item.unitPriceCFA * item.quantity) : 'À chiffrer')}
-                        </span>
-                      </div>
-                    </div>
-
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* RÉCAPITULATIF FINANCIER GLOBAL DU DEVIS */}
+          {/* RÉCAPITULATIF FINANCIER ÉPURÉ & INSTRUCTIONS DE PAIEMENT */}
           {isQuoteCalculated && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              {/* Carte des détails financiers */}
+              {/* Carte Résumé Total Client */}
               <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-4">
                 <h3 className="font-bold text-stone-900 text-base flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-rose-600" />
-                  <span>Détail du Devis Global</span>
+                  <span>Récapitulatif de votre commande</span>
                 </h3>
 
-                <div className="space-y-2.5 text-sm">
+                <div className="space-y-3 text-sm">
                   <div className="flex justify-between text-stone-600">
-                    <span>Sous-total articles :</span>
-                    <span className="font-semibold text-stone-800">{formatCFA(ticket.quote.subtotalItemsCFA)}</span>
+                    <span>Nombre d'articles :</span>
+                    <span className="font-bold text-stone-900">{ticket.items.length}</span>
                   </div>
-                  <div className="flex justify-between text-stone-600">
-                    <span>Frais de port / Fret international :</span>
-                    <span className="font-semibold text-stone-800">{formatCFA(ticket.quote.totalShippingCFA)}</span>
-                  </div>
-                  <div className="flex justify-between text-stone-600">
-                    <span>Commission de service Christaline :</span>
-                    <span className="font-semibold text-stone-800">{formatCFA(ticket.quote.totalServiceFeeCFA)}</span>
-                  </div>
-                  <div className="flex justify-between text-stone-600">
-                    <span>Frais de douane & transit :</span>
-                    <span className="font-semibold text-stone-800">{formatCFA(ticket.quote.totalCustomsCFA)}</span>
-                  </div>
-                  {ticket.quote.discountCFA > 0 && (
-                    <div className="flex justify-between text-emerald-600 font-semibold">
-                      <span>Remise accordée :</span>
-                      <span>-{formatCFA(ticket.quote.discountCFA)}</span>
-                    </div>
-                  )}
 
-                  <div className="border-t-2 border-stone-100 pt-3 flex justify-between items-baseline">
-                    <span className="text-base font-black text-stone-900">TOTAL NET DU DEVIS :</span>
+                  <div className="border-t border-stone-100 pt-3 flex justify-between items-baseline">
+                    <span className="text-base font-black text-stone-900">PRIX TOTAL DE LA COMMANDE :</span>
                     <span className="text-2xl font-black text-rose-600">
                       {formatCFA(ticket.quote.grandTotalCFA)}
                     </span>
                   </div>
-                </div>
 
-                {ticket.quote.adminNote && (
-                  <div className="mt-4 p-3.5 rounded-xl bg-rose-50/60 border border-rose-200 text-xs text-rose-950 space-y-1">
-                    <span className="font-bold uppercase tracking-wider text-rose-700 block">Note de Christaline Shop :</span>
-                    <p>{ticket.quote.adminNote}</p>
-                  </div>
-                )}
+                  {ticket.quote.adminNote && (
+                    <div className="mt-4 p-3.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-700 space-y-1">
+                      <span className="font-bold uppercase tracking-wider text-stone-600 block">Message de Christaline Shop :</span>
+                      <p>{ticket.quote.adminNote}</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Carte de validation de l'acompte */}
+              {/* Carte Modalités de Réservation & Bouton d'Instruction */}
               <div className="bg-gradient-to-br from-rose-50 via-pink-50 to-amber-50 rounded-3xl p-6 border border-rose-200 shadow-xs flex flex-col justify-between space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-rose-800 bg-white/80 px-2.5 py-1 rounded-full border border-rose-200">
-                      Modalités de réservation
+                      Réservation par Acompte (Bénin)
                     </span>
                     <Crown className="w-5 h-5 text-amber-500" />
                   </div>
 
                   <h3 className="text-xl font-black text-stone-900 font-serif">
-                    Validation par Acompte
+                    Modalités de Règlement
                   </h3>
                   <p className="text-xs text-stone-600 leading-relaxed">
-                    Les commandes chez le fournisseur se font <strong>sur réservation</strong> après validation d'un acompte. Le solde est réglé à la livraison de vos articles.
+                    Les commandes se font <strong>sur réservation</strong> après versement de l'acompte. Le reste est réglé à la livraison à Cotonou ou dans votre ville au Bénin.
                   </p>
 
                   <div className="bg-white p-4 rounded-2xl border border-rose-100 space-y-3">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-stone-600 font-medium">Acompte demandé :</span>
+                      <span className="text-stone-600 font-medium">Acompte à payer :</span>
                       <span className="font-black text-rose-700 text-lg">
                         {formatCFA(ticket.quote.depositRequiredCFA)}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-stone-600 font-medium">Acompte déjà réglé :</span>
+                      <span className="text-stone-600 font-medium">Acompte déjà versé :</span>
                       <span className={`font-bold ${ticket.quote.depositPaidCFA > 0 ? 'text-emerald-600' : 'text-stone-400'}`}>
                         {ticket.quote.depositPaidCFA > 0 ? formatCFA(ticket.quote.depositPaidCFA) : '0 FCFA'}
                       </span>
@@ -451,19 +427,17 @@ export default function TicketTrackingView({ ticket }: Props) {
                   </div>
                 </div>
 
-                {/* Bouton de confirmation WhatsApp */}
+                {/* BOUTON PRINCIPAL : OUVRE LE MODAL D'INSTRUCTIONS DE PAIEMENT */}
                 <div className="space-y-2 no-print">
-                  <a
-                    href={getWhatsAppMessage()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-5 py-3.5 rounded-2xl text-sm shadow-md shadow-emerald-200 transition-all hover:scale-102"
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-extrabold px-5 py-4 rounded-2xl text-sm sm:text-base shadow-lg shadow-rose-200 transition-all hover:scale-102 cursor-pointer"
                   >
-                    <MessageCircle className="w-5 h-5 fill-white" />
+                    <CreditCard className="w-5 h-5" />
                     <span>Valider mon devis & Régler mon acompte</span>
-                  </a>
+                  </button>
                   <p className="text-[11px] text-center text-stone-500">
-                    Paiement accepté : Wave, Orange Money, MTN MoMo, Moov Money
+                    MTN Mobile Money • Moov Money • Celtiis Cash Bénin
                   </p>
                 </div>
 
@@ -478,11 +452,10 @@ export default function TicketTrackingView({ ticket }: Props) {
       {/* ONGLET 2 : SUIVI COLIS EN DIRECT */}
       {activeTab === 'tracking' && (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-8">
-          
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-rose-600">
-                Acheminement International
+                Acheminement International vers le Bénin
               </span>
               <h2 className="text-2xl font-black text-stone-900 mt-1">
                 Suivi de votre Colis
@@ -495,7 +468,7 @@ export default function TicketTrackingView({ ticket }: Props) {
             </div>
           </div>
 
-          {/* Cartes d'informations d'expédition si disponibles */}
+          {/* Numéros d'expédition si disponibles */}
           {(ticket.tracking.supplierOrderNumber || ticket.tracking.carrierTrackingNumber) && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {ticket.tracking.supplierOrderNumber && (
@@ -509,7 +482,7 @@ export default function TicketTrackingView({ ticket }: Props) {
 
               {ticket.tracking.carrierTrackingNumber && (
                 <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 text-xs space-y-1">
-                  <span className="text-stone-400 uppercase font-bold">N° Suivi / Transitaire ({ticket.tracking.carrierName || 'Express'})</span>
+                  <span className="text-stone-400 uppercase font-bold">N° Suivi Fret International ({ticket.tracking.carrierName || 'Cargo'})</span>
                   <div className="font-mono font-bold text-rose-700 text-sm flex items-center justify-between">
                     <span>{ticket.tracking.carrierTrackingNumber}</span>
                     {ticket.tracking.carrierTrackingUrl && (
@@ -528,18 +501,16 @@ export default function TicketTrackingView({ ticket }: Props) {
             </div>
           )}
 
-          {/* TIMELINE VISUELLE INTERACTIVE */}
+          {/* TIMELINE VISUELLE */}
           <div className="space-y-6 pt-2">
             <h3 className="font-bold text-stone-900 text-base">
-              Chronologie des étapes
+              Chronologie des étapes d'expédition
             </h3>
 
             <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-stone-200">
               {ticket.tracking.events.map((event, idx) => {
                 return (
                   <div key={event.id || idx} className="relative group">
-                    
-                    {/* Pastille */}
                     <div className={`absolute -left-6 sm:-left-8 top-0.5 flex items-center justify-center w-6 h-6 rounded-full border-2 transition-all ${
                       event.current
                         ? 'bg-rose-600 border-white text-white shadow-md ring-4 ring-rose-200'
@@ -554,7 +525,6 @@ export default function TicketTrackingView({ ticket }: Props) {
                       )}
                     </div>
 
-                    {/* Contenu étape */}
                     <div className={`p-4 rounded-2xl border transition-all ${
                       event.current 
                         ? 'bg-rose-50/70 border-rose-200 shadow-xs' 
@@ -582,21 +552,11 @@ export default function TicketTrackingView({ ticket }: Props) {
                         </div>
                       )}
                     </div>
-
                   </div>
                 );
               })}
             </div>
           </div>
-
-          {/* Mention de réassurance */}
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-3">
-            <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-            <p>
-              Notre équipe surveille votre colis quotidiennement. Vous êtes notifié(e) par WhatsApp dès qu'il atterrit à Abidjan pour la livraison !
-            </p>
-          </div>
-
         </div>
       )}
 
@@ -605,7 +565,7 @@ export default function TicketTrackingView({ ticket }: Props) {
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
           <h2 className="text-xl font-bold text-stone-900 flex items-center gap-2">
             <User className="w-5 h-5 text-rose-600" />
-            <span>Coordonnées de Livraison</span>
+            <span>Coordonnées de Livraison au Bénin</span>
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
@@ -623,19 +583,11 @@ export default function TicketTrackingView({ ticket }: Props) {
 
             <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200">
               <span className="text-xs text-stone-400 uppercase font-bold block mb-1">Numéro WhatsApp</span>
-              <a 
-                href={`https://wa.me/225${ticket.client.whatsapp.replace(/\D/g, '')}`} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-emerald-600 font-bold hover:underline flex items-center gap-1.5"
-              >
-                <MessageCircle className="w-4 h-4 fill-emerald-600 text-white" />
-                <span>{ticket.client.whatsapp}</span>
-              </a>
+              <span className="text-emerald-700 font-bold">{ticket.client.whatsapp}</span>
             </div>
 
             <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200">
-              <span className="text-xs text-stone-400 uppercase font-bold block mb-1">Ville & Commune</span>
+              <span className="text-xs text-stone-400 uppercase font-bold block mb-1">Ville / Commune (Bénin)</span>
               <span className="text-stone-900 font-bold">{ticket.client.city}</span>
             </div>
 
@@ -645,32 +597,158 @@ export default function TicketTrackingView({ ticket }: Props) {
                 <span className="text-stone-800">{ticket.client.address}</span>
               </div>
             )}
-
-            {ticket.client.notes && (
-              <div className="sm:col-span-2 p-4 bg-stone-50 rounded-2xl border border-stone-200">
-                <span className="text-xs text-stone-400 uppercase font-bold block mb-1">Instructions particulières</span>
-                <span className="text-stone-700 italic">&ldquo;{ticket.client.notes}&rdquo;</span>
-              </div>
-            )}
           </div>
         </div>
       )}
 
-      {/* FOOTER DU TICKET */}
-      <div className="text-center space-y-2 pt-4 no-print">
-        <p className="text-xs text-stone-500">
-          Une question concernant votre ticket ou votre commande ? Contactez le service client au <strong>0154072488</strong>.
-        </p>
-        <div className="flex items-center justify-center gap-4 text-xs font-semibold">
-          <Link href="/#commander" className="text-rose-600 hover:underline">
-            + Passer une autre commande
-          </Link>
-          <span className="text-stone-300">•</span>
-          <Link href="/suivi" className="text-stone-600 hover:underline">
-            Consulter un autre ticket
-          </Link>
+      {/* ============================================================ */}
+      {/* MODAL D'INSTRUCTIONS DE PAIEMENT MOBILE MONEY BÉNIN */}
+      {/* ============================================================ */}
+      {showPaymentModal && (
+        <div 
+          onClick={() => setShowPaymentModal(false)}
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+        >
+          <div 
+            onClick={e => e.stopPropagation()}
+            className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-rose-200 p-6 sm:p-8 space-y-6 my-auto animate-fade-in relative"
+          >
+            {/* Bouton Fermer */}
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="absolute top-5 right-5 p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* En-tête Modal */}
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center mx-auto shadow-md">
+                <CreditCard className="w-7 h-7" />
+              </div>
+              <h3 className="text-2xl font-black text-stone-900 font-serif">
+                {settings?.paymentInstructions?.title || 'Instructions de Paiement Mobile Money'}
+              </h3>
+              <p className="text-xs text-stone-500">
+                Réglez votre acompte pour lancer l'achat immédiat auprès des fournisseurs
+              </p>
+            </div>
+
+            {/* Boîte Récapitulative du Montant & Référence */}
+            <div className="bg-gradient-to-r from-rose-50 to-pink-50 p-4 rounded-2xl border border-rose-200 text-center space-y-2">
+              <span className="text-xs font-bold uppercase text-stone-500 block">
+                Montant de l'acompte à transférer
+              </span>
+              <div className="text-3xl font-black text-rose-700">
+                {formatCFA(ticket.quote.depositRequiredCFA)}
+              </div>
+
+              {/* Référence Ticket à copier */}
+              <div className="pt-2 flex items-center justify-center gap-2">
+                <span className="text-xs text-stone-600 font-medium">Motif du transfert :</span>
+                <span className="font-mono font-black text-stone-900 bg-white px-2 py-0.5 rounded border border-rose-200 text-xs">
+                  {ticket.id}
+                </span>
+                <button
+                  onClick={copyTicketRef}
+                  className="p-1 rounded-md bg-white hover:bg-rose-100 text-rose-600 border border-rose-200 text-[11px] font-bold cursor-pointer"
+                  title="Copier le N° de Ticket"
+                >
+                  {copiedTicketRef ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Texte d'instructions défini par l'admin */}
+            <p className="text-xs text-stone-600 leading-relaxed text-center">
+              {settings?.paymentInstructions?.instructionsText || 
+                'Effectuez le transfert de votre acompte sur l\'un de nos comptes Mobile Money officiels ci-dessous. Mentionnez impérativement votre N° de ticket en motif.'
+              }
+            </p>
+
+            {/* LISTE DES COMPTES MOBILE MONEY BÉNIN */}
+            <div className="space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-700 block">
+                Comptes de paiement officiels (Bénin) :
+              </span>
+
+              {(settings?.paymentInstructions?.accounts || [
+                { id: '1', operator: 'MTN Mobile Money Bénin', number: '0154072488', holderName: 'Christaline Shop Bénin', badgeColor: 'bg-yellow-400 text-stone-900 border-yellow-500' },
+                { id: '2', operator: 'Moov Money Bénin', number: '0154072488', holderName: 'Christaline Shop Bénin', badgeColor: 'bg-blue-600 text-white border-blue-700' },
+                { id: '3', operator: 'Celtiis Cash Bénin', number: '0154072488', holderName: 'Christaline Shop Bénin', badgeColor: 'bg-purple-600 text-white border-purple-700' }
+              ]).map((acc: PaymentAccount) => (
+                <div 
+                  key={acc.id} 
+                  className="p-3.5 bg-stone-50 hover:bg-stone-100/80 rounded-2xl border border-stone-200 flex items-center justify-between gap-3 transition-colors"
+                >
+                  <div className="space-y-0.5">
+                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border inline-block ${acc.badgeColor || 'bg-stone-800 text-white'}`}>
+                      {acc.operator}
+                    </span>
+                    <div className="text-base font-black font-mono text-stone-900">
+                      {acc.number}
+                    </div>
+                    <div className="text-[11px] text-stone-500 font-medium">
+                      Titulaire : {acc.holderName}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => copyNumber(acc.number)}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-rose-50 border border-stone-300 hover:border-rose-300 rounded-xl text-xs font-bold text-stone-700 transition-colors cursor-pointer shrink-0"
+                    title="Copier le numéro"
+                  >
+                    {copiedAccNumber === acc.number ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">Copié</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Copier</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Note de confirmation */}
+            <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-[11px] text-amber-900 space-y-1">
+              <div className="font-bold flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                <span>Après avoir effectué le transfert :</span>
+              </div>
+              <p>
+                {settings?.paymentInstructions?.confirmationNote || 
+                  'Veuillez nous envoyer la capture d\'écran ou le SMS de confirmation sur WhatsApp avec votre N° de ticket.'}
+              </p>
+            </div>
+
+            {/* Bouton de confirmation WhatsApp */}
+            <div className="pt-1 space-y-2">
+              <a
+                href={getWhatsAppPaymentProofMessage()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-5 py-3.5 rounded-2xl text-xs sm:text-sm shadow-md shadow-emerald-200 transition-all hover:scale-102"
+              >
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>J'ai payé • Envoyer ma preuve sur WhatsApp</span>
+              </a>
+
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full py-2.5 rounded-xl border border-stone-200 text-stone-500 text-xs font-bold hover:bg-stone-100 transition-colors cursor-pointer"
+              >
+                Fermer cette fenêtre
+              </button>
+            </div>
+
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

@@ -34,12 +34,12 @@ interface ItemInput {
 export default function OrderForm() {
   const router = useRouter();
 
-  // État Client
+  // État Client (Bénin)
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [sameAsPhone, setSameAsPhone] = useState(true);
-  const [city, setCity] = useState('Abidjan - Cocody');
+  const [city, setCity] = useState('Cotonou');
   const [address, setAddress] = useState('');
   const [generalNotes, setGeneralNotes] = useState('');
 
@@ -97,7 +97,6 @@ export default function OrderForm() {
     e.preventDefault();
     setErrorMsg(null);
 
-    // Validation
     if (!name.trim()) {
       setErrorMsg('Veuillez renseigner votre nom complet.');
       return;
@@ -149,7 +148,7 @@ export default function OrderForm() {
         throw new Error(data.error || 'Erreur lors de la création de la commande');
       }
 
-      // Sauvegarder dans le localStorage pour faciliter le suivi client
+      // Sauvegarder dans le localStorage
       try {
         const saved = JSON.parse(localStorage.getItem('cs_recent_tickets') || '[]');
         if (!saved.includes(data.ticket.id)) {
@@ -157,7 +156,7 @@ export default function OrderForm() {
           localStorage.setItem('cs_recent_tickets', JSON.stringify(saved.slice(0, 10)));
         }
       } catch (e) {
-        // Ignorer si localStorage désactivé
+        // Ignorer
       }
 
       setCreatedTicket({
@@ -179,14 +178,19 @@ export default function OrderForm() {
     setTimeout(() => setCopiedTicket(false), 3000);
   };
 
-  // Message WhatsApp pré-rempli pour le client
+  // WhatsApp de notification pour Christaline Shop Bénin
   const generateWhatsAppUrl = () => {
     if (!createdTicket) return '';
-    const message = `Bonjour Christaline Shop ! 🌸\nJe viens de créer mon ticket de précommande sur votre site :\n\n🎫 *Ticket N° : ${createdTicket.id}*\n👤 Client : ${name}\n📦 Nombre d'articles : ${items.length}\n📍 Ville : ${city}\n\nMerci de m'envoyer le devis calculé pour que je puisse valider l'acompte !`;
-    return `https://wa.me/2250154072488?text=${encodeURIComponent(message)}`;
+    const message = `Bonjour Christaline Shop Bénin ! 🌸\n`
+      + `Je viens d'enregistrer ma précommande sur votre site :\n\n`
+      + `🎫 *Ticket N° : ${createdTicket.id}*\n`
+      + `👤 Client : ${name}\n`
+      + `📦 Nombre d'articles : ${items.length}\n`
+      + `📍 Ville : ${city} (Bénin)\n\n`
+      + `Merci de me communiquer le montant total de ma commande !`;
+    return `https://wa.me/2290154072488?text=${encodeURIComponent(message)}`;
   };
 
-  // Si le ticket a été créé avec succès, afficher l'écran de confirmation
   if (createdTicket) {
     return (
       <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-xl border border-rose-100 max-w-3xl mx-auto text-center space-y-8 animate-fade-in">
@@ -196,13 +200,13 @@ export default function OrderForm() {
 
         <div className="space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
-            Demande enregistrée avec succès !
+            Demande enregistrée avec succès au Bénin !
           </span>
           <h2 className="text-3xl font-extrabold text-stone-900 font-serif">
             Félicitations {createdTicket.name} !
           </h2>
           <p className="text-stone-600 text-sm max-w-lg mx-auto">
-            Votre demande de précommande a été transmise à l'équipe Christaline Shop. Voici votre numéro de ticket officiel :
+            Votre demande de précommande a été transmise à l'équipe Christaline Shop Bénin. Voici votre numéro de ticket officiel :
           </p>
         </div>
 
@@ -213,7 +217,7 @@ export default function OrderForm() {
             {createdTicket.id}
           </div>
           <p className="text-xs text-stone-500 mt-2">
-            Conservez précieusement ce numéro pour consulter votre devis et suivre votre colis.
+            Conservez ce numéro pour consulter le prix de vos articles et suivre l'avancée de votre colis.
           </p>
 
           <button
@@ -225,17 +229,17 @@ export default function OrderForm() {
           </button>
         </div>
 
-        {/* Instructions de suite */}
+        {/* Instructions */}
         <div className="bg-stone-50 p-5 rounded-2xl text-left border border-stone-200 space-y-2 text-sm text-stone-700 max-w-lg mx-auto">
           <div className="font-bold text-stone-900 flex items-center gap-2">
             <Info className="w-4 h-4 text-amber-500 shrink-0" />
-            Que se passe-t-il maintenant ?
+            Prochaines étapes :
           </div>
           <ol className="list-decimal pl-5 space-y-1 text-xs text-stone-600">
-            <li>Notre équipe consulte vos liens pour calculer le fret et la douane en FCFA.</li>
-            <li>Le devis individuel et total apparaîtra sur votre page de suivi de ticket.</li>
-            <li>Vous pourrez verser votre acompte pour lancer l'achat chez le fournisseur.</li>
-            <li>Votre colis vous parviendra dans le délai de <strong>7 à 12 jours ouvrables</strong>.</li>
+            <li>Notre équipe calcule le prix total de vos articles en FCFA.</li>
+            <li>Vous consultez le montant total et les instructions de paiement Mobile Money.</li>
+            <li>Vous versez votre acompte pour valider la réservation.</li>
+            <li>Votre colis est acheminé au Bénin dans un délai de <strong>7 à 12 jours ouvrables</strong>.</li>
           </ol>
         </div>
 
@@ -248,7 +252,7 @@ export default function OrderForm() {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3.5 rounded-xl text-sm shadow-md shadow-emerald-200 transition-all hover:scale-102"
           >
             <MessageCircle className="w-5 h-5 fill-white" />
-            <span>Envoyer à Christaline sur WhatsApp (0154072488)</span>
+            <span>Envoyer à Christaline sur WhatsApp (Bénin)</span>
           </a>
 
           <button
@@ -291,13 +295,13 @@ export default function OrderForm() {
       <div className="border-b border-rose-100 pb-6">
         <div className="inline-flex items-center gap-2 text-rose-600 bg-rose-50 px-3 py-1 rounded-full text-xs font-bold mb-3 border border-rose-200">
           <Sparkles className="w-3.5 h-3.5" />
-          Formulaire de Précommande Sécurisée
+          Précommandes Sécurisées • Bénin
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 font-serif">
           Ajoutez vos articles Shein, Temu ou Alibaba
         </h2>
         <p className="text-stone-600 text-sm mt-1">
-          Collez le lien de chaque article souhaité. Notre équipe calculera votre devis détaillé en FCFA avec fret et douane inclus.
+          Collez le lien de chaque article. Notre équipe calcule le prix total de vos articles en FCFA sans frais cachés.
         </p>
       </div>
 
@@ -308,10 +312,10 @@ export default function OrderForm() {
         </div>
       )}
 
-      {/* SECTION 1 : VOS COORDONNÉES */}
+      {/* SECTION 1 : VOS COORDONNÉES AU BÉNIN */}
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2 border-l-4 border-rose-500 pl-3">
-          <span>1. Vos Coordonnées de Contact</span>
+          <span>1. Vos Coordonnées au Bénin</span>
           <span className="text-xs font-normal text-stone-500">(Pour recevoir le devis et être livré)</span>
         </h3>
 
@@ -323,7 +327,7 @@ export default function OrderForm() {
             <input
               type="text"
               required
-              placeholder="Ex: Kouamé Affoué Marie"
+              placeholder="Ex: Tossou Sophie"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm outline-hidden bg-stone-50/50"
@@ -371,25 +375,31 @@ export default function OrderForm() {
 
           <div>
             <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-              Ville & Commune <span className="text-rose-500">*</span>
+              Ville & Commune (Bénin) <span className="text-rose-500">*</span>
             </label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Abidjan Cocody, Yopougon, Bouaké..."
+            <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm outline-hidden bg-stone-50/50"
-            />
+              className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 text-sm outline-hidden bg-stone-50/50 font-medium"
+            >
+              <option value="Cotonou">Cotonou</option>
+              <option value="Abomey-Calavi">Abomey-Calavi</option>
+              <option value="Porto-Novo">Porto-Novo</option>
+              <option value="Parakou">Parakou</option>
+              <option value="Bohicon">Bohicon</option>
+              <option value="Ouidah">Ouidah</option>
+              <option value="Natitingou">Natitingou</option>
+              <option value="Autre ville Bénin">Autre ville (Bénin)</option>
+            </select>
           </div>
 
           <div className="sm:col-span-2">
             <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-              Adresse ou repère de livraison (Optionnel)
+              Quartier / Repère de livraison au Bénin (Optionnel)
             </label>
             <input
               type="text"
-              placeholder="Ex: Angré 7e tranche, près de la pharmacie..."
+              placeholder="Ex: Haie Vive, Akpakpa, Menontin, Cadjehoun, Arconville..."
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm outline-hidden bg-stone-50/50"
@@ -421,7 +431,6 @@ export default function OrderForm() {
               key={index} 
               className="p-5 sm:p-6 rounded-2xl bg-gradient-to-b from-stone-50 to-white border border-stone-200 shadow-xs relative space-y-4 hover:border-rose-300 transition-colors"
             >
-              {/* Badge numéro article & suppression */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="flex items-center justify-center w-7 h-7 rounded-full bg-stone-900 text-white text-xs font-bold">
@@ -499,9 +508,6 @@ export default function OrderForm() {
                     </a>
                   )}
                 </div>
-                <p className="text-[11px] text-stone-500 mt-1">
-                  💡 Astuce : Sur l'application Shein ou Temu, cliquez sur "Partager" puis "Copier le lien".
-                </p>
               </div>
 
               {/* Détails du produit */}
@@ -566,7 +572,7 @@ export default function OrderForm() {
 
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    Prix indicatif affiché sur le site (Optionnel)
+                    Prix indicatif sur le site (Optionnel)
                   </label>
                   <div className="flex items-center gap-2">
                     <input
@@ -590,11 +596,11 @@ export default function OrderForm() {
                 </div>
               </div>
 
-              {/* Notes additionnelles pour cet article */}
+              {/* Remarques */}
               <div>
                 <input
                   type="text"
-                  placeholder="Remarque particulière (ex: prendre une taille au-dessus si ça taille petit)"
+                  placeholder="Remarque particulière (ex: prendre du L si ça taille petit)"
                   value={item.notes}
                   onChange={(e) => updateItem(index, 'notes', e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-dashed border-stone-300 text-xs outline-hidden bg-white/70 text-stone-600"
@@ -605,7 +611,6 @@ export default function OrderForm() {
           ))}
         </div>
 
-        {/* Bouton Ajouter un autre article */}
         <button
           type="button"
           onClick={addItem}
@@ -623,7 +628,7 @@ export default function OrderForm() {
         </label>
         <textarea
           rows={2}
-          placeholder="Ex: Événement prévu pour le 25, besoin d'une confirmation rapide..."
+          placeholder="Ex: Besoin urgent pour un mariage le 20 du mois..."
           value={generalNotes}
           onChange={(e) => setGeneralNotes(e.target.value)}
           className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 text-sm outline-hidden bg-stone-50/50"
@@ -634,11 +639,11 @@ export default function OrderForm() {
       <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-700">
         <div className="flex items-center gap-2.5">
           <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-          <span>Délai de livraison garanti : <strong>7 à 12 jours ouvrables</strong> après validation de l'acompte.</span>
+          <span>Délai de livraison au Bénin : <strong>7 à 12 jours ouvrables</strong> après validation de l'acompte.</span>
         </div>
         <div className="flex items-center gap-1.5 font-bold text-rose-700">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Paiement sécurisé par acompte</span>
+          <span>Paiement sécurisé Mobile Money</span>
         </div>
       </div>
 

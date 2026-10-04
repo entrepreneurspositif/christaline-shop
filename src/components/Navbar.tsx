@@ -20,7 +20,7 @@ export default function Navbar() {
           </div>
           <div className="flex items-center gap-4 text-xs font-semibold">
             <a 
-              href="https://wa.me/2250154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20des%20renseignements%20pour%20une%20commande" 
+              href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20des%20renseignements%20pour%20une%20commande" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:underline bg-white/15 px-2 py-0.5 rounded-full"
@@ -89,7 +89,7 @@ export default function Navbar() {
           {/* Boutons d'action Desktop */}
           <div className="hidden lg:flex items-center gap-3">
             <a
-              href="https://wa.me/2250154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
+              href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm shadow-emerald-200 transition-all hover:-translate-y-0.5"
@@ -171,7 +171,7 @@ export default function Navbar() {
               <span>Appeler : 0154072488</span>
             </a>
             <a
-              href="https://wa.me/2250154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
+              href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-600 text-white font-bold text-sm"

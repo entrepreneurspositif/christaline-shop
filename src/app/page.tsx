@@ -327,7 +327,7 @@ export default function Home() {
                 Comment passer votre commande en 4 étapes
               </h2>
               <p className="text-stone-600 text-sm max-w-lg mx-auto">
-                De la sélection de vos articles jusqu'à la remise de votre colis en Côte d'Ivoire.
+                De la sélection de vos articles jusqu'à la remise de votre colis au Bénin.
               </p>
             </div>
 
@@ -426,7 +426,7 @@ export default function Home() {
             </p>
             <div className="pt-2">
               <a
-                href="https://wa.me/2250154072488?text=Bonjour%20Christaline%20Shop%2C%20j%27aimerais%20une%20assistance%20pour%20une%20commande"
+                href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20j%27aimerais%20une%20assistance%20pour%20une%20commande"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3.5 rounded-2xl text-sm shadow-md shadow-emerald-200 transition-all hover:scale-102"

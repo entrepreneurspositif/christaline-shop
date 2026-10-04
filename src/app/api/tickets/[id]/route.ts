@@ -35,32 +35,39 @@ export async function PATCH(
 
     const body = await request.json();
 
-    // 1. Mise à jour des articles (devis individuel)
+    // 1. Mise à jour des articles
     let updatedItems = ticket.items;
     if (body.items && Array.isArray(body.items)) {
       updatedItems = body.items.map((it: Partial<OrderItem> & { id: string }) => {
         const existing = ticket.items.find(e => e.id === it.id);
         if (!existing) return it as OrderItem;
 
+        const quantity = typeof it.quantity === 'number' && it.quantity > 0 ? it.quantity : existing.quantity;
         const unitPriceCFA = typeof it.unitPriceCFA === 'number' ? it.unitPriceCFA : existing.unitPriceCFA;
-        const shippingFeeCFA = typeof it.shippingFeeCFA === 'number' ? it.shippingFeeCFA : existing.shippingFeeCFA;
-        const serviceFeeCFA = typeof it.serviceFeeCFA === 'number' ? it.serviceFeeCFA : existing.serviceFeeCFA;
-        const customsFeeCFA = typeof it.customsFeeCFA === 'number' ? it.customsFeeCFA : existing.customsFeeCFA;
-        const quantity = typeof it.quantity === 'number' ? it.quantity : existing.quantity;
+        const shippingFeeCFA = typeof it.shippingFeeCFA === 'number' ? it.shippingFeeCFA : (existing.shippingFeeCFA || 0);
+        const serviceFeeCFA = typeof it.serviceFeeCFA === 'number' ? it.serviceFeeCFA : (existing.serviceFeeCFA || 0);
+        const customsFeeCFA = typeof it.customsFeeCFA === 'number' ? it.customsFeeCFA : (existing.customsFeeCFA || 0);
 
-        // Calcul du total pour cet article individuel
-        const totalItemCFA = (unitPriceCFA * quantity) + shippingFeeCFA + serviceFeeCFA + customsFeeCFA;
+        // Si l'admin a renseigné directement le prix total de l'article, on le prend en priorité
+        let totalItemCFA: number;
+        if (typeof it.totalItemCFA === 'number' && it.totalItemCFA > 0) {
+          totalItemCFA = it.totalItemCFA;
+        } else if (unitPriceCFA > 0) {
+          totalItemCFA = (unitPriceCFA * quantity) + shippingFeeCFA + serviceFeeCFA + customsFeeCFA;
+        } else {
+          totalItemCFA = existing.totalItemCFA || 0;
+        }
 
         return {
           ...existing,
           ...it,
-          unitPriceCFA,
+          quantity,
+          unitPriceCFA: unitPriceCFA || totalItemCFA,
           shippingFeeCFA,
           serviceFeeCFA,
           customsFeeCFA,
-          quantity,
           totalItemCFA,
-          status: it.status || (unitPriceCFA > 0 ? 'quoted' : existing.status)
+          status: it.status || (totalItemCFA > 0 ? 'quoted' : existing.status)
         };
       });
     }
@@ -68,16 +75,12 @@ export async function PATCH(
     // 2. Mise à jour du devis global
     let updatedQuote = { ...ticket.quote };
     if (body.quote) {
-      // Si des articles ont été modifiés, on recalcule les totaux automatiquement sauf si explicitement écrasés
-      const subtotalItems = updatedItems.reduce((acc, it) => acc + (it.unitPriceCFA * it.quantity), 0);
-      const totalShipping = updatedItems.reduce((acc, it) => acc + it.shippingFeeCFA, 0);
-      const totalService = updatedItems.reduce((acc, it) => acc + it.serviceFeeCFA, 0);
-      const totalCustoms = updatedItems.reduce((acc, it) => acc + it.customsFeeCFA, 0);
+      const itemsSum = updatedItems.reduce((acc, it) => acc + (it.totalItemCFA || 0), 0);
+      const discount = typeof body.quote.discountCFA === 'number' ? body.quote.discountCFA : (ticket.quote.discountCFA || 0);
       
-      const discount = typeof body.quote.discountCFA === 'number' ? body.quote.discountCFA : ticket.quote.discountCFA;
       const grandTotal = typeof body.quote.grandTotalCFA === 'number' && body.quote.grandTotalCFA > 0
         ? body.quote.grandTotalCFA
-        : (subtotalItems + totalShipping + totalService + totalCustoms - discount);
+        : Math.max(0, itemsSum - discount);
 
       const depositRequired = typeof body.quote.depositRequiredCFA === 'number' 
         ? body.quote.depositRequiredCFA 
@@ -92,10 +95,7 @@ export async function PATCH(
       updatedQuote = {
         ...updatedQuote,
         ...body.quote,
-        subtotalItemsCFA: subtotalItems,
-        totalShippingCFA: totalShipping,
-        totalServiceFeeCFA: totalService,
-        totalCustomsCFA: totalCustoms,
+        subtotalItemsCFA: itemsSum,
         discountCFA: discount,
         grandTotalCFA: grandTotal,
         depositRequiredCFA: depositRequired,
@@ -113,8 +113,6 @@ export async function PATCH(
       updatedQuote.status = newStatus;
       updatedTracking.currentStatus = newStatus;
       updatedTracking.statusLabel = STATUS_MAP[newStatus]?.label || newStatus;
-
-      // Mettre à jour la timeline
       updatedTracking.events = createDefaultTimeline(newStatus, ticket.createdAt);
     }
 
@@ -125,7 +123,6 @@ export async function PATCH(
       };
 
       if (body.tracking.customEvent) {
-        // Ajouter un événement personnalisé à la timeline
         const customEv: TrackingEvent = {
           id: `ev-${Date.now()}`,
           title: body.tracking.customEvent.title,
@@ -137,17 +134,15 @@ export async function PATCH(
             hour: '2-digit',
             minute: '2-digit',
           }),
-          location: body.tracking.customEvent.location || 'Hub Christaline',
+          location: body.tracking.customEvent.location || 'Hub Cotonou',
           completed: true,
           current: true,
         };
-        // Marquer les précédents comme non 'current'
         const previousEvents = updatedTracking.events.map(e => ({ ...e, current: false }));
         updatedTracking.events = [...previousEvents, customEv];
       }
     }
 
-    // Mise à jour finale
     const updated = updateTicket(id, {
       items: updatedItems,
       quote: updatedQuote,

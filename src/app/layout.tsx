@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Christaline Shop • Précommandes Shein, Temu & Alibaba | Devis & Suivi Colis",
   description: "Passez vos commandes sur Shein, Temu et Alibaba facilement. Obtenez votre ticket officiel, consultez votre devis en FCFA et suivez votre colis en temps réel. Livraison 7 à 12 jours ouvrables. WhatsApp : 0154072488.",
-  keywords: ["Christaline Shop", "Shein", "Temu", "Alibaba", "précommande", "devis", "suivi colis", "Abidjan", "Côte d'Ivoire"],
+  keywords: ["Christaline Shop", "Shein", "Temu", "Alibaba", "précommande", "devis", "suivi colis", "Cotonou", "Bénin", "Calavi", "Mobile Money"],
   icons: {
     icon: "/favicon.ico",
   },

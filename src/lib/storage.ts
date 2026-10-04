@@ -30,25 +30,25 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
     {
       id: 'step-0',
       title: 'Demande enregistrée',
-      description: 'Vos liens et choix d\'articles ont été reçus par l\'équipe Christaline Shop.',
+      description: 'Vos liens et choix d\'articles ont été reçus par l\'équipe Christaline Shop Bénin.',
       date: formatDate(now),
-      location: 'Christaline Shop - Réception',
+      location: 'Christaline Shop - Réception Cotonou',
       completed: currentStep >= 0,
       current: currentStep === 0,
     },
     {
       id: 'step-1',
       title: 'Devis calculé par Christaline',
-      description: 'L\'équipe a vérifié les prix, calculé le fret et la douane en FCFA.',
+      description: 'L\'équipe a vérifié la disponibilité et calculé le prix total de vos articles en FCFA.',
       date: currentStep >= 1 ? formatDate(new Date(now.getTime() + 2 * 3600 * 1000)) : 'À venir',
-      location: 'Christaline Shop - Gestion Devis',
+      location: 'Christaline Shop Bénin - Gestion Devis',
       completed: currentStep >= 1,
       current: currentStep === 1,
     },
     {
       id: 'step-2',
       title: 'Devis validé & Acompte reçu',
-      description: 'Acompte confirmé via WhatsApp / Mobile Money. Validation pour achat.',
+      description: 'Acompte confirmé via Mobile Money (MTN / MoMo / Moov / Celtiis Bénin).',
       date: currentStep >= 3 ? formatDate(new Date(now.getTime() + 6 * 3600 * 1000)) : 'En attente validation',
       location: 'Christaline Shop - Trésorerie',
       completed: currentStep >= 3,
@@ -66,7 +66,7 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
     {
       id: 'step-4',
       title: 'Expédition & Transit International',
-      description: 'Le colis a quitté l\'entrepôt international et est en vol fret aérien.',
+      description: 'Le colis a quitté l\'entrepôt international et est en vol fret aérien vers le Bénin.',
       date: currentStep >= 5 ? formatDate(new Date(now.getTime() + 48 * 3600 * 1000)) : 'Délai 7 à 12 jours ouvrables',
       location: 'Fret Aérien International',
       completed: currentStep >= 5,
@@ -74,19 +74,19 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
     },
     {
       id: 'step-5',
-      title: 'Arrivée au pays & Dédouanement',
-      description: 'Colis réceptionné à l\'aéroport / douane, inspection et tri.',
+      title: 'Arrivée au Bénin & Dédouanement',
+      description: 'Colis réceptionné à l\'aéroport de Cotonou (Cadjehoun), inspection et tri.',
       date: currentStep >= 6 ? formatDate(new Date(now.getTime() + 7 * 86400 * 1000)) : 'En attente d\'atterrissage',
-      location: 'Douane & Hub Abidjan',
+      location: 'Douane & Hub Cotonou',
       completed: currentStep >= 6,
       current: currentStep === 6,
     },
     {
       id: 'step-6',
       title: 'Prêt pour livraison / retrait',
-      description: 'Colis disponible dans les locaux ou confié au livreur.',
+      description: 'Colis disponible à l\'agence de Cotonou ou confié au livreur.',
       date: currentStep >= 7 ? formatDate(new Date(now.getTime() + 9 * 86400 * 1000)) : 'À venir',
-      location: 'Agence Christaline Shop',
+      location: 'Agence Christaline Shop Cotonou',
       completed: currentStep >= 7,
       current: currentStep === 7,
     },
@@ -95,7 +95,7 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
       title: 'Colis remis au client',
       description: 'Commande livrée en main propre. Merci de faire confiance à Christaline Shop !',
       date: currentStep >= 8 ? formatDate(new Date(now.getTime() + 10 * 86400 * 1000)) : 'En attente de remise',
-      location: 'Client',
+      location: 'Client (Bénin)',
       completed: currentStep >= 8,
       current: currentStep === 8,
     },
@@ -108,11 +108,11 @@ const SEED_DATA: TicketOrder[] = [
     createdAt: new Date(Date.now() - 5 * 86400 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
     client: {
-      name: 'Sophie Yao',
+      name: 'Sophie Tossou',
       phone: '0154072488',
       whatsapp: '0154072488',
-      city: 'Abidjan - Cocody Angré',
-      address: '7ème Tranche, près de la pharmacie du Soleil',
+      city: 'Cotonou - Haie Vive',
+      address: 'Près du restaurant Livingstone',
       notes: 'Merci de bien vérifier la taille 38 pour les talons s’il vous plaît.'
     },
     items: [
@@ -126,10 +126,10 @@ const SEED_DATA: TicketOrder[] = [
         originalPrice: 28.99,
         originalCurrency: 'EUR',
         notes: 'Prendre exactement le rose du flyer Christaline',
-        unitPriceCFA: 22000,
-        shippingFeeCFA: 4500,
-        serviceFeeCFA: 3000,
-        customsFeeCFA: 1500,
+        unitPriceCFA: 31000,
+        shippingFeeCFA: 0,
+        serviceFeeCFA: 0,
+        customsFeeCFA: 0,
         totalItemCFA: 31000,
         status: 'ordered'
       },
@@ -143,36 +143,36 @@ const SEED_DATA: TicketOrder[] = [
         originalPrice: 24.50,
         originalCurrency: 'EUR',
         notes: 'Bien emballer pour ne pas abîmer la boîte',
-        unitPriceCFA: 19500,
-        shippingFeeCFA: 5000,
-        serviceFeeCFA: 2000,
-        customsFeeCFA: 1000,
+        unitPriceCFA: 27500,
+        shippingFeeCFA: 0,
+        serviceFeeCFA: 0,
+        customsFeeCFA: 0,
         totalItemCFA: 27500,
         status: 'ordered'
       }
     ],
     quote: {
       status: 'in_transit',
-      subtotalItemsCFA: 41500,
-      totalShippingCFA: 9500,
-      totalServiceFeeCFA: 5000,
-      totalCustomsCFA: 2500,
+      subtotalItemsCFA: 58500,
+      totalShippingCFA: 0,
+      totalServiceFeeCFA: 0,
+      totalCustomsCFA: 0,
       discountCFA: 0,
       grandTotalCFA: 58500,
       depositRequiredCFA: 35000,
       depositPaidCFA: 35000,
       balanceRemainingCFA: 23500,
-      adminNote: 'Articles commandés avec succès sur Shein ! Colis groupé en vol avec notre transitaire régulier.',
+      adminNote: 'Articles commandés avec succès sur Shein ! Colis groupé en vol fret aérien vers Cotonou.',
       quotedAt: new Date(Date.now() - 4 * 86400 * 1000).toISOString()
     },
     tracking: {
       currentStatus: 'in_transit',
-      statusLabel: 'En transit international (Vol régulier)',
+      statusLabel: 'En transit international (Vol vers Cotonou)',
       estimatedDelivery: '7 à 12 jours ouvrables',
       estimatedDeliveryDate: new Date(Date.now() + 4 * 86400 * 1000).toISOString().split('T')[0],
       supplierOrderNumber: 'SHEIN-FR-98230192',
-      carrierName: 'Christaline Air Cargo Express',
-      carrierTrackingNumber: 'CST-CI-2026-98124',
+      carrierName: 'Christaline Air Cargo Bénin',
+      carrierTrackingNumber: 'CST-BEN-2026-98124',
       carrierTrackingUrl: 'https://www.17track.net',
       events: createDefaultTimeline('in_transit', new Date(Date.now() - 5 * 86400 * 1000).toISOString())
     }
@@ -182,11 +182,11 @@ const SEED_DATA: TicketOrder[] = [
     createdAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
     client: {
-      name: 'Aïcha Koné',
-      phone: '0708991234',
-      whatsapp: '0708991234',
-      city: 'Abidjan - Yopougon Maroc',
-      address: 'Carrefour Bel Air, Immeuble Grace',
+      name: 'Aïcha Hounkpatin',
+      phone: '0154072488',
+      whatsapp: '0154072488',
+      city: 'Abomey-Calavi - Arconville',
+      address: 'Carrefour Kpota, face pharmacie',
       notes: 'C’est pour un anniversaire le mois prochain.'
     },
     items: [
@@ -200,10 +200,10 @@ const SEED_DATA: TicketOrder[] = [
         originalPrice: 12.99,
         originalCurrency: 'EUR',
         notes: '2 coffrets identiques',
-        unitPriceCFA: 9500,
-        shippingFeeCFA: 3000,
-        serviceFeeCFA: 2000,
-        customsFeeCFA: 1000,
+        unitPriceCFA: 12500,
+        shippingFeeCFA: 0,
+        serviceFeeCFA: 0,
+        customsFeeCFA: 0,
         totalItemCFA: 25000,
         status: 'quoted'
       },
@@ -217,26 +217,26 @@ const SEED_DATA: TicketOrder[] = [
         originalPrice: 14.50,
         originalCurrency: 'EUR',
         notes: 'Attention produit fragile',
-        unitPriceCFA: 11000,
-        shippingFeeCFA: 3000,
-        serviceFeeCFA: 2000,
-        customsFeeCFA: 1000,
+        unitPriceCFA: 17000,
+        shippingFeeCFA: 0,
+        serviceFeeCFA: 0,
+        customsFeeCFA: 0,
         totalItemCFA: 17000,
         status: 'quoted'
       }
     ],
     quote: {
       status: 'ready',
-      subtotalItemsCFA: 30000,
-      totalShippingCFA: 6000,
-      totalServiceFeeCFA: 4000,
-      totalCustomsCFA: 2000,
+      subtotalItemsCFA: 42000,
+      totalShippingCFA: 0,
+      totalServiceFeeCFA: 0,
+      totalCustomsCFA: 0,
       discountCFA: 0,
       grandTotalCFA: 42000,
       depositRequiredCFA: 25000,
       depositPaidCFA: 0,
       balanceRemainingCFA: 42000,
-      adminNote: 'Votre devis Temu a été calculé ! Versez l\'acompte de 25 000 FCFA pour valider l\'achat immédiat avant rupture de stock.',
+      adminNote: 'Votre devis Temu est prêt ! Réglez l\'acompte de 25 000 FCFA pour valider l\'achat immédiat.',
       quotedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
     },
     tracking: {
@@ -256,12 +256,12 @@ const SEED_DATA: TicketOrder[] = [
     createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
     client: {
-      name: 'Marc Kouamé',
-      phone: '0554129876',
-      whatsapp: '0554129876',
-      city: 'San-Pedro',
-      address: 'Quartier Cité, face pharmacie de l’Océan',
-      notes: 'Besoin d’expédition rapide vers San-Pedro une fois arrivé à Abidjan.'
+      name: 'Marc Gbaguidi',
+      phone: '0154072488',
+      whatsapp: '0154072488',
+      city: 'Porto-Novo - Ouando',
+      address: 'Près du grand marché Ouando',
+      notes: 'Besoin d’expédition vers Porto-Novo dès arrivée à Cotonou.'
     },
     items: [
       {
@@ -293,7 +293,7 @@ const SEED_DATA: TicketOrder[] = [
       depositRequiredCFA: 0,
       depositPaidCFA: 0,
       balanceRemainingCFA: 0,
-      adminNote: 'Demande reçue ! Notre équipe consulte le fournisseur Alibaba pour vous fournir le tarif le plus avantageux avec transport sécurisé.',
+      adminNote: 'Demande reçue ! Notre équipe consulte le fournisseur Alibaba pour vous fournir le tarif le plus avantageux avec transport sécurisé vers le Bénin.',
       quotedAt: null
     },
     tracking: {
@@ -313,11 +313,11 @@ const SEED_DATA: TicketOrder[] = [
     createdAt: new Date(Date.now() - 14 * 86400 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
     client: {
-      name: 'Grace Bamba',
+      name: 'Grace Dossou',
       phone: '0154072488',
       whatsapp: '0154072488',
-      city: 'Abidjan - Marcory Zone 4',
-      address: 'Rue Paul Langevin',
+      city: 'Cotonou - Cadjehoun',
+      address: 'Près de l\'Aéroport International',
       notes: 'Livraison impeccable effectuée.'
     },
     items: [
@@ -331,26 +331,26 @@ const SEED_DATA: TicketOrder[] = [
         originalPrice: 19.99,
         originalCurrency: 'EUR',
         notes: 'Parfait',
-        unitPriceCFA: 16000,
-        shippingFeeCFA: 4000,
-        serviceFeeCFA: 2000,
-        customsFeeCFA: 1000,
+        unitPriceCFA: 23000,
+        shippingFeeCFA: 0,
+        serviceFeeCFA: 0,
+        customsFeeCFA: 0,
         totalItemCFA: 23000,
         status: 'ordered'
       }
     ],
     quote: {
       status: 'delivered',
-      subtotalItemsCFA: 16000,
-      totalShippingCFA: 4000,
-      totalServiceFeeCFA: 2000,
-      totalCustomsCFA: 1000,
+      subtotalItemsCFA: 23000,
+      totalShippingCFA: 0,
+      totalServiceFeeCFA: 0,
+      totalCustomsCFA: 0,
       discountCFA: 0,
       grandTotalCFA: 23000,
       depositRequiredCFA: 15000,
       depositPaidCFA: 23000,
       balanceRemainingCFA: 0,
-      adminNote: 'Colis livré et solde entièrement réglé. Merci pour votre fidélité !',
+      adminNote: 'Colis livré à Cotonou et solde entièrement réglé. Merci pour votre fidélité !',
       quotedAt: new Date(Date.now() - 13 * 86400 * 1000).toISOString()
     },
     tracking: {
@@ -359,7 +359,7 @@ const SEED_DATA: TicketOrder[] = [
       estimatedDelivery: '7 à 12 jours ouvrables (Respecté)',
       estimatedDeliveryDate: new Date(Date.now() - 2 * 86400 * 1000).toISOString().split('T')[0],
       supplierOrderNumber: 'SHEIN-FR-889123',
-      carrierName: 'Christaline Express Abidjan',
+      carrierName: 'Christaline Express Cotonou',
       carrierTrackingNumber: 'CST-LIV-0921',
       carrierTrackingUrl: null,
       events: createDefaultTimeline('delivered', new Date(Date.now() - 14 * 86400 * 1000).toISOString())
@@ -381,7 +381,6 @@ export function getAllTickets(): TicketOrder[] {
   try {
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
     const data = JSON.parse(raw) as TicketOrder[];
-    // Trier par date décroissante
     return data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (err) {
     console.error('Erreur lecture tickets.json:', err);
@@ -472,7 +471,7 @@ export function createNewTicket(payload: CreateTicketPayload): TicketOrder {
       depositRequiredCFA: 0,
       depositPaidCFA: 0,
       balanceRemainingCFA: 0,
-      adminNote: 'Votre demande a bien été reçue par Christaline Shop ! Nous analysons vos liens et nous vous préparons votre devis sous peu.',
+      adminNote: 'Votre demande a bien été reçue par Christaline Shop Bénin ! Nous analysons vos liens et nous vous communiquons le montant total de vos articles.',
       quotedAt: null
     },
     tracking: {

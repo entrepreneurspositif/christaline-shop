@@ -1,82 +1,99 @@
 [
   {
-    "id": "CS-844776",
-    "createdAt": "2026-10-04T19:58:42.912Z",
-    "updatedAt": "2026-10-04T19:59:16.576Z",
+    "id": "CS-784210",
+    "createdAt": "2026-09-29T21:14:19.350Z",
+    "updatedAt": "2026-10-03T21:14:19.350Z",
     "client": {
-      "name": "Koffi Anderson",
+      "name": "Sophie Tossou",
       "phone": "0154072488",
       "whatsapp": "0154072488",
-      "city": "Abidjan Plateau",
-      "address": "Immeuble CCIA",
-      "notes": "Besoin urgent"
+      "city": "Cotonou - Haie Vive",
+      "address": "Près du restaurant Livingstone",
+      "notes": "Merci de bien vérifier la taille 38 pour les talons s’il vous plaît."
     },
     "items": [
       {
-        "id": "item-1-1791143922912",
+        "id": "item-1",
         "platform": "shein",
-        "url": "https://shein.com/fr/robe-de-soiree-noire-p-102938.html",
-        "name": "Robe de soir�e chic noire",
-        "variant": "Taille 38",
+        "url": "https://shein.com/fr/robe-cocktail-satin-rose-poudree-p-2938472.html",
+        "name": "Robe de cocktail satin rose poudrée plissée",
+        "variant": "Taille M / Rose poudré",
         "quantity": 1,
-        "originalPrice": 29.99,
+        "originalPrice": 28.99,
         "originalCurrency": "EUR",
-        "notes": "Noir intense",
-        "unitPriceCFA": 20000,
-        "shippingFeeCFA": 4000,
-        "serviceFeeCFA": 2500,
-        "customsFeeCFA": 1000,
+        "notes": "Prendre exactement le rose du flyer Christaline",
+        "unitPriceCFA": 31000,
+        "shippingFeeCFA": 0,
+        "serviceFeeCFA": 0,
+        "customsFeeCFA": 0,
+        "totalItemCFA": 31000,
+        "status": "ordered"
+      },
+      {
+        "id": "item-2",
+        "platform": "shein",
+        "url": "https://shein.com/fr/escarpins-talons-hauts-dore-strass-p-1092837.html",
+        "name": "Escarpins dorés à strass élégants talons 9cm",
+        "variant": "Pointure 38 / Doré champagne",
+        "quantity": 1,
+        "originalPrice": 24.5,
+        "originalCurrency": "EUR",
+        "notes": "Bien emballer pour ne pas abîmer la boîte",
+        "unitPriceCFA": 27500,
+        "shippingFeeCFA": 0,
+        "serviceFeeCFA": 0,
+        "customsFeeCFA": 0,
         "totalItemCFA": 27500,
-        "status": "quoted"
+        "status": "ordered"
       }
     ],
     "quote": {
       "status": "in_transit",
-      "subtotalItemsCFA": 20000,
-      "totalShippingCFA": 4000,
-      "totalServiceFeeCFA": 2500,
-      "totalCustomsCFA": 1000,
+      "subtotalItemsCFA": 58500,
+      "totalShippingCFA": 0,
+      "totalServiceFeeCFA": 0,
+      "totalCustomsCFA": 0,
       "discountCFA": 0,
-      "grandTotalCFA": 27500,
-      "depositRequiredCFA": 18000,
-      "depositPaidCFA": 0,
-      "balanceRemainingCFA": 27500,
-      "adminNote": "Devis calcul� avec fret express pour Abidjan Plateau.",
-      "quotedAt": "2026-10-04T19:58:59.168Z"
+      "grandTotalCFA": 58500,
+      "depositRequiredCFA": 35000,
+      "depositPaidCFA": 35000,
+      "balanceRemainingCFA": 23500,
+      "adminNote": "Articles commandés avec succès sur Shein ! Colis groupé en vol fret aérien vers Cotonou.",
+      "quotedAt": "2026-09-30T21:14:19.350Z"
     },
     "tracking": {
       "currentStatus": "in_transit",
-      "statusLabel": "En transit international",
+      "statusLabel": "En transit international (Vol vers Cotonou)",
       "estimatedDelivery": "7 à 12 jours ouvrables",
-      "estimatedDeliveryDate": null,
-      "supplierOrderNumber": "SHEIN-CI-2026-8812",
-      "carrierName": "Cargo A�rien Christaline Express",
-      "carrierTrackingNumber": "CST-ABJ-9042",
+      "estimatedDeliveryDate": "2026-10-08",
+      "supplierOrderNumber": "SHEIN-FR-98230192",
+      "carrierName": "Christaline Air Cargo Bénin",
+      "carrierTrackingNumber": "CST-BEN-2026-98124",
       "carrierTrackingUrl": "https://www.17track.net",
       "events": [
         {
           "id": "step-0",
           "title": "Demande enregistrée",
-          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop.",
-          "date": "04 oct. 2026, 20:58",
-          "location": "Christaline Shop - Réception",
+          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop Bénin.",
+          "date": "29 sept. 2026, 22:14",
+          "location": "Christaline Shop - Réception Cotonou",
           "completed": true,
           "current": false
         },
         {
           "id": "step-1",
           "title": "Devis calculé par Christaline",
-          "description": "L'équipe a vérifié les prix, calculé le fret et la douane en FCFA.",
-          "date": "04 oct. 2026, 22:58",
-          "location": "Christaline Shop - Gestion Devis",
+          "description": "L'équipe a vérifié la disponibilité et calculé le prix total de vos articles en FCFA.",
+          "date": "30 sept. 2026, 00:14",
+          "location": "Christaline Shop Bénin - Gestion Devis",
           "completed": true,
           "current": false
         },
         {
           "id": "step-2",
           "title": "Devis validé & Acompte reçu",
-          "description": "Acompte confirmé via WhatsApp / Mobile Money. Validation pour achat.",
-          "date": "05 oct. 2026, 02:58",
+          "description": "Acompte confirmé via Mobile Money (MTN / MoMo / Moov / Celtiis Bénin).",
+          "date": "30 sept. 2026, 04:14",
           "location": "Christaline Shop - Trésorerie",
           "completed": true,
           "current": false
@@ -85,7 +102,7 @@
           "id": "step-3",
           "title": "Commande validée chez le fournisseur",
           "description": "Articles commandés avec succès chez Shein, Temu ou Alibaba.",
-          "date": "05 oct. 2026, 20:58",
+          "date": "30 sept. 2026, 22:14",
           "location": "Plateforme Fournisseur",
           "completed": true,
           "current": false
@@ -93,27 +110,27 @@
         {
           "id": "step-4",
           "title": "Expédition & Transit International",
-          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien.",
-          "date": "06 oct. 2026, 20:58",
+          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien vers le Bénin.",
+          "date": "01 oct. 2026, 22:14",
           "location": "Fret Aérien International",
           "completed": true,
           "current": true
         },
         {
           "id": "step-5",
-          "title": "Arrivée au pays & Dédouanement",
-          "description": "Colis réceptionné à l'aéroport / douane, inspection et tri.",
+          "title": "Arrivée au Bénin & Dédouanement",
+          "description": "Colis réceptionné à l'aéroport de Cotonou (Cadjehoun), inspection et tri.",
           "date": "En attente d'atterrissage",
-          "location": "Douane & Hub Abidjan",
+          "location": "Douane & Hub Cotonou",
           "completed": false,
           "current": false
         },
         {
           "id": "step-6",
           "title": "Prêt pour livraison / retrait",
-          "description": "Colis disponible dans les locaux ou confié au livreur.",
+          "description": "Colis disponible à l'agence de Cotonou ou confié au livreur.",
           "date": "À venir",
-          "location": "Agence Christaline Shop",
+          "location": "Agence Christaline Shop Cotonou",
           "completed": false,
           "current": false
         },
@@ -122,7 +139,154 @@
           "title": "Colis remis au client",
           "description": "Commande livrée en main propre. Merci de faire confiance à Christaline Shop !",
           "date": "En attente de remise",
-          "location": "Client",
+          "location": "Client (Bénin)",
+          "completed": false,
+          "current": false
+        }
+      ]
+    }
+  },
+  {
+    "id": "CS-918234",
+    "createdAt": "2026-10-03T21:14:19.389Z",
+    "updatedAt": "2026-10-04T17:14:19.389Z",
+    "client": {
+      "name": "Aïcha Hounkpatin",
+      "phone": "0154072488",
+      "whatsapp": "0154072488",
+      "city": "Abomey-Calavi - Arconville",
+      "address": "Carrefour Kpota, face pharmacie",
+      "notes": "C’est pour un anniversaire le mois prochain."
+    },
+    "items": [
+      {
+        "id": "item-1",
+        "platform": "temu",
+        "url": "https://temu.com/fr/kit-pinceaux-maquillage-professionnel-18-pieces.html",
+        "name": "Set de pinceaux de maquillage luxe 18 pièces avec étui cuir",
+        "variant": "Couleur Or Rose / 18 pcs",
+        "quantity": 2,
+        "originalPrice": 12.99,
+        "originalCurrency": "EUR",
+        "notes": "2 coffrets identiques",
+        "unitPriceCFA": 12500,
+        "shippingFeeCFA": 0,
+        "serviceFeeCFA": 0,
+        "customsFeeCFA": 0,
+        "totalItemCFA": 25000,
+        "status": "quoted"
+      },
+      {
+        "id": "item-2",
+        "platform": "temu",
+        "url": "https://temu.com/fr/palette-fards-a-paupieres-nude-glamour.html",
+        "name": "Palette fards à paupières 35 teintes nudes & paillettes",
+        "variant": "Modèle Glamour Nude",
+        "quantity": 1,
+        "originalPrice": 14.5,
+        "originalCurrency": "EUR",
+        "notes": "Attention produit fragile",
+        "unitPriceCFA": 17000,
+        "shippingFeeCFA": 0,
+        "serviceFeeCFA": 0,
+        "customsFeeCFA": 0,
+        "totalItemCFA": 17000,
+        "status": "quoted"
+      }
+    ],
+    "quote": {
+      "status": "ready",
+      "subtotalItemsCFA": 42000,
+      "totalShippingCFA": 0,
+      "totalServiceFeeCFA": 0,
+      "totalCustomsCFA": 0,
+      "discountCFA": 0,
+      "grandTotalCFA": 42000,
+      "depositRequiredCFA": 25000,
+      "depositPaidCFA": 0,
+      "balanceRemainingCFA": 42000,
+      "adminNote": "Votre devis Temu est prêt ! Réglez l'acompte de 25 000 FCFA pour valider l'achat immédiat.",
+      "quotedAt": "2026-10-04T17:14:19.389Z"
+    },
+    "tracking": {
+      "currentStatus": "ready",
+      "statusLabel": "Devis prêt (En attente de paiement acompte)",
+      "estimatedDelivery": "7 à 12 jours ouvrables dès validation",
+      "estimatedDeliveryDate": null,
+      "supplierOrderNumber": null,
+      "carrierName": null,
+      "carrierTrackingNumber": null,
+      "carrierTrackingUrl": null,
+      "events": [
+        {
+          "id": "step-0",
+          "title": "Demande enregistrée",
+          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop Bénin.",
+          "date": "03 oct. 2026, 22:14",
+          "location": "Christaline Shop - Réception Cotonou",
+          "completed": true,
+          "current": false
+        },
+        {
+          "id": "step-1",
+          "title": "Devis calculé par Christaline",
+          "description": "L'équipe a vérifié la disponibilité et calculé le prix total de vos articles en FCFA.",
+          "date": "04 oct. 2026, 00:14",
+          "location": "Christaline Shop Bénin - Gestion Devis",
+          "completed": true,
+          "current": true
+        },
+        {
+          "id": "step-2",
+          "title": "Devis validé & Acompte reçu",
+          "description": "Acompte confirmé via Mobile Money (MTN / MoMo / Moov / Celtiis Bénin).",
+          "date": "En attente validation",
+          "location": "Christaline Shop - Trésorerie",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-3",
+          "title": "Commande validée chez le fournisseur",
+          "description": "Articles commandés avec succès chez Shein, Temu ou Alibaba.",
+          "date": "À venir",
+          "location": "Plateforme Fournisseur",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-4",
+          "title": "Expédition & Transit International",
+          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien vers le Bénin.",
+          "date": "Délai 7 à 12 jours ouvrables",
+          "location": "Fret Aérien International",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-5",
+          "title": "Arrivée au Bénin & Dédouanement",
+          "description": "Colis réceptionné à l'aéroport de Cotonou (Cadjehoun), inspection et tri.",
+          "date": "En attente d'atterrissage",
+          "location": "Douane & Hub Cotonou",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-6",
+          "title": "Prêt pour livraison / retrait",
+          "description": "Colis disponible à l'agence de Cotonou ou confié au livreur.",
+          "date": "À venir",
+          "location": "Agence Christaline Shop Cotonou",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-7",
+          "title": "Colis remis au client",
+          "description": "Commande livrée en main propre. Merci de faire confiance à Christaline Shop !",
+          "date": "En attente de remise",
+          "location": "Client (Bénin)",
           "completed": false,
           "current": false
         }
@@ -131,15 +295,15 @@
   },
   {
     "id": "CS-334912",
-    "createdAt": "2026-10-04T19:23:30.246Z",
-    "updatedAt": "2026-10-04T19:23:30.246Z",
+    "createdAt": "2026-10-04T20:39:19.389Z",
+    "updatedAt": "2026-10-04T20:39:19.389Z",
     "client": {
-      "name": "Marc Kouamé",
-      "phone": "0554129876",
-      "whatsapp": "0554129876",
-      "city": "San-Pedro",
-      "address": "Quartier Cité, face pharmacie de l’Océan",
-      "notes": "Besoin d’expédition rapide vers San-Pedro une fois arrivé à Abidjan."
+      "name": "Marc Gbaguidi",
+      "phone": "0154072488",
+      "whatsapp": "0154072488",
+      "city": "Porto-Novo - Ouando",
+      "address": "Près du grand marché Ouando",
+      "notes": "Besoin d’expédition vers Porto-Novo dès arrivée à Cotonou."
     },
     "items": [
       {
@@ -171,7 +335,7 @@
       "depositRequiredCFA": 0,
       "depositPaidCFA": 0,
       "balanceRemainingCFA": 0,
-      "adminNote": "Demande reçue ! Notre équipe consulte le fournisseur Alibaba pour vous fournir le tarif le plus avantageux avec transport sécurisé.",
+      "adminNote": "Demande reçue ! Notre équipe consulte le fournisseur Alibaba pour vous fournir le tarif le plus avantageux avec transport sécurisé vers le Bénin.",
       "quotedAt": null
     },
     "tracking": {
@@ -187,25 +351,25 @@
         {
           "id": "step-0",
           "title": "Demande enregistrée",
-          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop.",
-          "date": "04 oct. 2026, 20:23",
-          "location": "Christaline Shop - Réception",
+          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop Bénin.",
+          "date": "04 oct. 2026, 21:39",
+          "location": "Christaline Shop - Réception Cotonou",
           "completed": true,
           "current": true
         },
         {
           "id": "step-1",
           "title": "Devis calculé par Christaline",
-          "description": "L'équipe a vérifié les prix, calculé le fret et la douane en FCFA.",
+          "description": "L'équipe a vérifié la disponibilité et calculé le prix total de vos articles en FCFA.",
           "date": "À venir",
-          "location": "Christaline Shop - Gestion Devis",
+          "location": "Christaline Shop Bénin - Gestion Devis",
           "completed": false,
           "current": false
         },
         {
           "id": "step-2",
           "title": "Devis validé & Acompte reçu",
-          "description": "Acompte confirmé via WhatsApp / Mobile Money. Validation pour achat.",
+          "description": "Acompte confirmé via Mobile Money (MTN / MoMo / Moov / Celtiis Bénin).",
           "date": "En attente validation",
           "location": "Christaline Shop - Trésorerie",
           "completed": false,
@@ -223,7 +387,7 @@
         {
           "id": "step-4",
           "title": "Expédition & Transit International",
-          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien.",
+          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien vers le Bénin.",
           "date": "Délai 7 à 12 jours ouvrables",
           "location": "Fret Aérien International",
           "completed": false,
@@ -231,19 +395,19 @@
         },
         {
           "id": "step-5",
-          "title": "Arrivée au pays & Dédouanement",
-          "description": "Colis réceptionné à l'aéroport / douane, inspection et tri.",
+          "title": "Arrivée au Bénin & Dédouanement",
+          "description": "Colis réceptionné à l'aéroport de Cotonou (Cadjehoun), inspection et tri.",
           "date": "En attente d'atterrissage",
-          "location": "Douane & Hub Abidjan",
+          "location": "Douane & Hub Cotonou",
           "completed": false,
           "current": false
         },
         {
           "id": "step-6",
           "title": "Prêt pour livraison / retrait",
-          "description": "Colis disponible dans les locaux ou confié au livreur.",
+          "description": "Colis disponible à l'agence de Cotonou ou confié au livreur.",
           "date": "À venir",
-          "location": "Agence Christaline Shop",
+          "location": "Agence Christaline Shop Cotonou",
           "completed": false,
           "current": false
         },
@@ -252,301 +416,7 @@
           "title": "Colis remis au client",
           "description": "Commande livrée en main propre. Merci de faire confiance à Christaline Shop !",
           "date": "En attente de remise",
-          "location": "Client",
-          "completed": false,
-          "current": false
-        }
-      ]
-    }
-  },
-  {
-    "id": "CS-918234",
-    "createdAt": "2026-10-03T19:58:30.246Z",
-    "updatedAt": "2026-10-04T15:58:30.246Z",
-    "client": {
-      "name": "Aïcha Koné",
-      "phone": "0708991234",
-      "whatsapp": "0708991234",
-      "city": "Abidjan - Yopougon Maroc",
-      "address": "Carrefour Bel Air, Immeuble Grace",
-      "notes": "C’est pour un anniversaire le mois prochain."
-    },
-    "items": [
-      {
-        "id": "item-1",
-        "platform": "temu",
-        "url": "https://temu.com/fr/kit-pinceaux-maquillage-professionnel-18-pieces.html",
-        "name": "Set de pinceaux de maquillage luxe 18 pièces avec étui cuir",
-        "variant": "Couleur Or Rose / 18 pcs",
-        "quantity": 2,
-        "originalPrice": 12.99,
-        "originalCurrency": "EUR",
-        "notes": "2 coffrets identiques",
-        "unitPriceCFA": 9500,
-        "shippingFeeCFA": 3000,
-        "serviceFeeCFA": 2000,
-        "customsFeeCFA": 1000,
-        "totalItemCFA": 25000,
-        "status": "quoted"
-      },
-      {
-        "id": "item-2",
-        "platform": "temu",
-        "url": "https://temu.com/fr/palette-fards-a-paupieres-nude-glamour.html",
-        "name": "Palette fards à paupières 35 teintes nudes & paillettes",
-        "variant": "Modèle Glamour Nude",
-        "quantity": 1,
-        "originalPrice": 14.5,
-        "originalCurrency": "EUR",
-        "notes": "Attention produit fragile",
-        "unitPriceCFA": 11000,
-        "shippingFeeCFA": 3000,
-        "serviceFeeCFA": 2000,
-        "customsFeeCFA": 1000,
-        "totalItemCFA": 17000,
-        "status": "quoted"
-      }
-    ],
-    "quote": {
-      "status": "ready",
-      "subtotalItemsCFA": 30000,
-      "totalShippingCFA": 6000,
-      "totalServiceFeeCFA": 4000,
-      "totalCustomsCFA": 2000,
-      "discountCFA": 0,
-      "grandTotalCFA": 42000,
-      "depositRequiredCFA": 25000,
-      "depositPaidCFA": 0,
-      "balanceRemainingCFA": 42000,
-      "adminNote": "Votre devis Temu a été calculé ! Versez l'acompte de 25 000 FCFA pour valider l'achat immédiat avant rupture de stock.",
-      "quotedAt": "2026-10-04T15:58:30.246Z"
-    },
-    "tracking": {
-      "currentStatus": "ready",
-      "statusLabel": "Devis prêt (En attente de paiement acompte)",
-      "estimatedDelivery": "7 à 12 jours ouvrables dès validation",
-      "estimatedDeliveryDate": null,
-      "supplierOrderNumber": null,
-      "carrierName": null,
-      "carrierTrackingNumber": null,
-      "carrierTrackingUrl": null,
-      "events": [
-        {
-          "id": "step-0",
-          "title": "Demande enregistrée",
-          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop.",
-          "date": "03 oct. 2026, 20:58",
-          "location": "Christaline Shop - Réception",
-          "completed": true,
-          "current": false
-        },
-        {
-          "id": "step-1",
-          "title": "Devis calculé par Christaline",
-          "description": "L'équipe a vérifié les prix, calculé le fret et la douane en FCFA.",
-          "date": "03 oct. 2026, 22:58",
-          "location": "Christaline Shop - Gestion Devis",
-          "completed": true,
-          "current": true
-        },
-        {
-          "id": "step-2",
-          "title": "Devis validé & Acompte reçu",
-          "description": "Acompte confirmé via WhatsApp / Mobile Money. Validation pour achat.",
-          "date": "En attente validation",
-          "location": "Christaline Shop - Trésorerie",
-          "completed": false,
-          "current": false
-        },
-        {
-          "id": "step-3",
-          "title": "Commande validée chez le fournisseur",
-          "description": "Articles commandés avec succès chez Shein, Temu ou Alibaba.",
-          "date": "À venir",
-          "location": "Plateforme Fournisseur",
-          "completed": false,
-          "current": false
-        },
-        {
-          "id": "step-4",
-          "title": "Expédition & Transit International",
-          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien.",
-          "date": "Délai 7 à 12 jours ouvrables",
-          "location": "Fret Aérien International",
-          "completed": false,
-          "current": false
-        },
-        {
-          "id": "step-5",
-          "title": "Arrivée au pays & Dédouanement",
-          "description": "Colis réceptionné à l'aéroport / douane, inspection et tri.",
-          "date": "En attente d'atterrissage",
-          "location": "Douane & Hub Abidjan",
-          "completed": false,
-          "current": false
-        },
-        {
-          "id": "step-6",
-          "title": "Prêt pour livraison / retrait",
-          "description": "Colis disponible dans les locaux ou confié au livreur.",
-          "date": "À venir",
-          "location": "Agence Christaline Shop",
-          "completed": false,
-          "current": false
-        },
-        {
-          "id": "step-7",
-          "title": "Colis remis au client",
-          "description": "Commande livrée en main propre. Merci de faire confiance à Christaline Shop !",
-          "date": "En attente de remise",
-          "location": "Client",
-          "completed": false,
-          "current": false
-        }
-      ]
-    }
-  },
-  {
-    "id": "CS-784210",
-    "createdAt": "2026-09-29T19:58:30.216Z",
-    "updatedAt": "2026-10-03T19:58:30.217Z",
-    "client": {
-      "name": "Sophie Yao",
-      "phone": "0154072488",
-      "whatsapp": "0154072488",
-      "city": "Abidjan - Cocody Angré",
-      "address": "7ème Tranche, près de la pharmacie du Soleil",
-      "notes": "Merci de bien vérifier la taille 38 pour les talons s’il vous plaît."
-    },
-    "items": [
-      {
-        "id": "item-1",
-        "platform": "shein",
-        "url": "https://shein.com/fr/robe-cocktail-satin-rose-poudree-p-2938472.html",
-        "name": "Robe de cocktail satin rose poudrée plissée",
-        "variant": "Taille M / Rose poudré",
-        "quantity": 1,
-        "originalPrice": 28.99,
-        "originalCurrency": "EUR",
-        "notes": "Prendre exactement le rose du flyer Christaline",
-        "unitPriceCFA": 22000,
-        "shippingFeeCFA": 4500,
-        "serviceFeeCFA": 3000,
-        "customsFeeCFA": 1500,
-        "totalItemCFA": 31000,
-        "status": "ordered"
-      },
-      {
-        "id": "item-2",
-        "platform": "shein",
-        "url": "https://shein.com/fr/escarpins-talons-hauts-dore-strass-p-1092837.html",
-        "name": "Escarpins dorés à strass élégants talons 9cm",
-        "variant": "Pointure 38 / Doré champagne",
-        "quantity": 1,
-        "originalPrice": 24.5,
-        "originalCurrency": "EUR",
-        "notes": "Bien emballer pour ne pas abîmer la boîte",
-        "unitPriceCFA": 19500,
-        "shippingFeeCFA": 5000,
-        "serviceFeeCFA": 2000,
-        "customsFeeCFA": 1000,
-        "totalItemCFA": 27500,
-        "status": "ordered"
-      }
-    ],
-    "quote": {
-      "status": "in_transit",
-      "subtotalItemsCFA": 41500,
-      "totalShippingCFA": 9500,
-      "totalServiceFeeCFA": 5000,
-      "totalCustomsCFA": 2500,
-      "discountCFA": 0,
-      "grandTotalCFA": 58500,
-      "depositRequiredCFA": 35000,
-      "depositPaidCFA": 35000,
-      "balanceRemainingCFA": 23500,
-      "adminNote": "Articles commandés avec succès sur Shein ! Colis groupé en vol avec notre transitaire régulier.",
-      "quotedAt": "2026-09-30T19:58:30.217Z"
-    },
-    "tracking": {
-      "currentStatus": "in_transit",
-      "statusLabel": "En transit international (Vol régulier)",
-      "estimatedDelivery": "7 à 12 jours ouvrables",
-      "estimatedDeliveryDate": "2026-10-08",
-      "supplierOrderNumber": "SHEIN-FR-98230192",
-      "carrierName": "Christaline Air Cargo Express",
-      "carrierTrackingNumber": "CST-CI-2026-98124",
-      "carrierTrackingUrl": "https://www.17track.net",
-      "events": [
-        {
-          "id": "step-0",
-          "title": "Demande enregistrée",
-          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop.",
-          "date": "29 sept. 2026, 20:58",
-          "location": "Christaline Shop - Réception",
-          "completed": true,
-          "current": false
-        },
-        {
-          "id": "step-1",
-          "title": "Devis calculé par Christaline",
-          "description": "L'équipe a vérifié les prix, calculé le fret et la douane en FCFA.",
-          "date": "29 sept. 2026, 22:58",
-          "location": "Christaline Shop - Gestion Devis",
-          "completed": true,
-          "current": false
-        },
-        {
-          "id": "step-2",
-          "title": "Devis validé & Acompte reçu",
-          "description": "Acompte confirmé via WhatsApp / Mobile Money. Validation pour achat.",
-          "date": "30 sept. 2026, 02:58",
-          "location": "Christaline Shop - Trésorerie",
-          "completed": true,
-          "current": false
-        },
-        {
-          "id": "step-3",
-          "title": "Commande validée chez le fournisseur",
-          "description": "Articles commandés avec succès chez Shein, Temu ou Alibaba.",
-          "date": "30 sept. 2026, 20:58",
-          "location": "Plateforme Fournisseur",
-          "completed": true,
-          "current": false
-        },
-        {
-          "id": "step-4",
-          "title": "Expédition & Transit International",
-          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien.",
-          "date": "01 oct. 2026, 20:58",
-          "location": "Fret Aérien International",
-          "completed": true,
-          "current": true
-        },
-        {
-          "id": "step-5",
-          "title": "Arrivée au pays & Dédouanement",
-          "description": "Colis réceptionné à l'aéroport / douane, inspection et tri.",
-          "date": "En attente d'atterrissage",
-          "location": "Douane & Hub Abidjan",
-          "completed": false,
-          "current": false
-        },
-        {
-          "id": "step-6",
-          "title": "Prêt pour livraison / retrait",
-          "description": "Colis disponible dans les locaux ou confié au livreur.",
-          "date": "À venir",
-          "location": "Agence Christaline Shop",
-          "completed": false,
-          "current": false
-        },
-        {
-          "id": "step-7",
-          "title": "Colis remis au client",
-          "description": "Commande livrée en main propre. Merci de faire confiance à Christaline Shop !",
-          "date": "En attente de remise",
-          "location": "Client",
+          "location": "Client (Bénin)",
           "completed": false,
           "current": false
         }
@@ -555,14 +425,14 @@
   },
   {
     "id": "CS-652190",
-    "createdAt": "2026-09-20T19:58:30.246Z",
-    "updatedAt": "2026-10-02T19:58:30.246Z",
+    "createdAt": "2026-09-20T21:14:19.389Z",
+    "updatedAt": "2026-10-02T21:14:19.389Z",
     "client": {
-      "name": "Grace Bamba",
+      "name": "Grace Dossou",
       "phone": "0154072488",
       "whatsapp": "0154072488",
-      "city": "Abidjan - Marcory Zone 4",
-      "address": "Rue Paul Langevin",
+      "city": "Cotonou - Cadjehoun",
+      "address": "Près de l'Aéroport International",
       "notes": "Livraison impeccable effectuée."
     },
     "items": [
@@ -576,27 +446,27 @@
         "originalPrice": 19.99,
         "originalCurrency": "EUR",
         "notes": "Parfait",
-        "unitPriceCFA": 16000,
-        "shippingFeeCFA": 4000,
-        "serviceFeeCFA": 2000,
-        "customsFeeCFA": 1000,
+        "unitPriceCFA": 23000,
+        "shippingFeeCFA": 0,
+        "serviceFeeCFA": 0,
+        "customsFeeCFA": 0,
         "totalItemCFA": 23000,
         "status": "ordered"
       }
     ],
     "quote": {
       "status": "delivered",
-      "subtotalItemsCFA": 16000,
-      "totalShippingCFA": 4000,
-      "totalServiceFeeCFA": 2000,
-      "totalCustomsCFA": 1000,
+      "subtotalItemsCFA": 23000,
+      "totalShippingCFA": 0,
+      "totalServiceFeeCFA": 0,
+      "totalCustomsCFA": 0,
       "discountCFA": 0,
       "grandTotalCFA": 23000,
       "depositRequiredCFA": 15000,
       "depositPaidCFA": 23000,
       "balanceRemainingCFA": 0,
-      "adminNote": "Colis livré et solde entièrement réglé. Merci pour votre fidélité !",
-      "quotedAt": "2026-09-21T19:58:30.246Z"
+      "adminNote": "Colis livré à Cotonou et solde entièrement réglé. Merci pour votre fidélité !",
+      "quotedAt": "2026-09-21T21:14:19.389Z"
     },
     "tracking": {
       "currentStatus": "delivered",
@@ -604,33 +474,33 @@
       "estimatedDelivery": "7 à 12 jours ouvrables (Respecté)",
       "estimatedDeliveryDate": "2026-10-02",
       "supplierOrderNumber": "SHEIN-FR-889123",
-      "carrierName": "Christaline Express Abidjan",
+      "carrierName": "Christaline Express Cotonou",
       "carrierTrackingNumber": "CST-LIV-0921",
       "carrierTrackingUrl": null,
       "events": [
         {
           "id": "step-0",
           "title": "Demande enregistrée",
-          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop.",
-          "date": "20 sept. 2026, 20:58",
-          "location": "Christaline Shop - Réception",
+          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop Bénin.",
+          "date": "20 sept. 2026, 22:14",
+          "location": "Christaline Shop - Réception Cotonou",
           "completed": true,
           "current": false
         },
         {
           "id": "step-1",
           "title": "Devis calculé par Christaline",
-          "description": "L'équipe a vérifié les prix, calculé le fret et la douane en FCFA.",
-          "date": "20 sept. 2026, 22:58",
-          "location": "Christaline Shop - Gestion Devis",
+          "description": "L'équipe a vérifié la disponibilité et calculé le prix total de vos articles en FCFA.",
+          "date": "21 sept. 2026, 00:14",
+          "location": "Christaline Shop Bénin - Gestion Devis",
           "completed": true,
           "current": false
         },
         {
           "id": "step-2",
           "title": "Devis validé & Acompte reçu",
-          "description": "Acompte confirmé via WhatsApp / Mobile Money. Validation pour achat.",
-          "date": "21 sept. 2026, 02:58",
+          "description": "Acompte confirmé via Mobile Money (MTN / MoMo / Moov / Celtiis Bénin).",
+          "date": "21 sept. 2026, 04:14",
           "location": "Christaline Shop - Trésorerie",
           "completed": true,
           "current": false
@@ -639,7 +509,7 @@
           "id": "step-3",
           "title": "Commande validée chez le fournisseur",
           "description": "Articles commandés avec succès chez Shein, Temu ou Alibaba.",
-          "date": "21 sept. 2026, 20:58",
+          "date": "21 sept. 2026, 22:14",
           "location": "Plateforme Fournisseur",
           "completed": true,
           "current": false
@@ -647,27 +517,27 @@
         {
           "id": "step-4",
           "title": "Expédition & Transit International",
-          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien.",
-          "date": "22 sept. 2026, 20:58",
+          "description": "Le colis a quitté l'entrepôt international et est en vol fret aérien vers le Bénin.",
+          "date": "22 sept. 2026, 22:14",
           "location": "Fret Aérien International",
           "completed": true,
           "current": false
         },
         {
           "id": "step-5",
-          "title": "Arrivée au pays & Dédouanement",
-          "description": "Colis réceptionné à l'aéroport / douane, inspection et tri.",
-          "date": "27 sept. 2026, 20:58",
-          "location": "Douane & Hub Abidjan",
+          "title": "Arrivée au Bénin & Dédouanement",
+          "description": "Colis réceptionné à l'aéroport de Cotonou (Cadjehoun), inspection et tri.",
+          "date": "27 sept. 2026, 22:14",
+          "location": "Douane & Hub Cotonou",
           "completed": true,
           "current": false
         },
         {
           "id": "step-6",
           "title": "Prêt pour livraison / retrait",
-          "description": "Colis disponible dans les locaux ou confié au livreur.",
-          "date": "29 sept. 2026, 20:58",
-          "location": "Agence Christaline Shop",
+          "description": "Colis disponible à l'agence de Cotonou ou confié au livreur.",
+          "date": "29 sept. 2026, 22:14",
+          "location": "Agence Christaline Shop Cotonou",
           "completed": true,
           "current": false
         },
@@ -675,8 +545,8 @@
           "id": "step-7",
           "title": "Colis remis au client",
           "description": "Commande livrée en main propre. Merci de faire confiance à Christaline Shop !",
-          "date": "30 sept. 2026, 20:58",
-          "location": "Client",
+          "date": "30 sept. 2026, 22:14",
+          "location": "Client (Bénin)",
           "completed": true,
           "current": true
         }
