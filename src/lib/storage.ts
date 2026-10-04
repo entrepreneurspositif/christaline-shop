@@ -1,0 +1,511 @@
+import fs from 'fs';
+import path from 'path';
+import { TicketOrder, QuoteStatus, OrderItem, TrackingEvent, TrackingInfo, QuoteDetails, STATUS_MAP } from './types';
+
+const DATA_DIR = path.join(process.cwd(), 'data');
+const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
+
+// Générateur d'ID Ticket unique et lisible (ex: CS-92841)
+export function generateTicketId(): string {
+  const randomNum = Math.floor(100000 + Math.random() * 900000);
+  return `CS-${randomNum}`;
+}
+
+export function createDefaultTimeline(status: QuoteStatus, createdAt: string): TrackingEvent[] {
+  const now = new Date(createdAt);
+  
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const currentStep = STATUS_MAP[status]?.stepIndex ?? 0;
+
+  return [
+    {
+      id: 'step-0',
+      title: 'Demande enregistrée',
+      description: 'Vos liens et choix d\'articles ont été reçus par l\'équipe Christaline Shop.',
+      date: formatDate(now),
+      location: 'Christaline Shop - Réception',
+      completed: currentStep >= 0,
+      current: currentStep === 0,
+    },
+    {
+      id: 'step-1',
+      title: 'Devis calculé par Christaline',
+      description: 'L\'équipe a vérifié les prix, calculé le fret et la douane en FCFA.',
+      date: currentStep >= 1 ? formatDate(new Date(now.getTime() + 2 * 3600 * 1000)) : 'À venir',
+      location: 'Christaline Shop - Gestion Devis',
+      completed: currentStep >= 1,
+      current: currentStep === 1,
+    },
+    {
+      id: 'step-2',
+      title: 'Devis validé & Acompte reçu',
+      description: 'Acompte confirmé via WhatsApp / Mobile Money. Validation pour achat.',
+      date: currentStep >= 3 ? formatDate(new Date(now.getTime() + 6 * 3600 * 1000)) : 'En attente validation',
+      location: 'Christaline Shop - Trésorerie',
+      completed: currentStep >= 3,
+      current: currentStep === 2 || currentStep === 3,
+    },
+    {
+      id: 'step-3',
+      title: 'Commande validée chez le fournisseur',
+      description: 'Articles commandés avec succès chez Shein, Temu ou Alibaba.',
+      date: currentStep >= 4 ? formatDate(new Date(now.getTime() + 24 * 3600 * 1000)) : 'À venir',
+      location: 'Plateforme Fournisseur',
+      completed: currentStep >= 4,
+      current: currentStep === 4,
+    },
+    {
+      id: 'step-4',
+      title: 'Expédition & Transit International',
+      description: 'Le colis a quitté l\'entrepôt international et est en vol fret aérien.',
+      date: currentStep >= 5 ? formatDate(new Date(now.getTime() + 48 * 3600 * 1000)) : 'Délai 7 à 12 jours ouvrables',
+      location: 'Fret Aérien International',
+      completed: currentStep >= 5,
+      current: currentStep === 5,
+    },
+    {
+      id: 'step-5',
+      title: 'Arrivée au pays & Dédouanement',
+      description: 'Colis réceptionné à l\'aéroport / douane, inspection et tri.',
+      date: currentStep >= 6 ? formatDate(new Date(now.getTime() + 7 * 86400 * 1000)) : 'En attente d\'atterrissage',
+      location: 'Douane & Hub Abidjan',
+      completed: currentStep >= 6,
+      current: currentStep === 6,
+    },
+    {
+      id: 'step-6',
+      title: 'Prêt pour livraison / retrait',
+      description: 'Colis disponible dans les locaux ou confié au livreur.',
+      date: currentStep >= 7 ? formatDate(new Date(now.getTime() + 9 * 86400 * 1000)) : 'À venir',
+      location: 'Agence Christaline Shop',
+      completed: currentStep >= 7,
+      current: currentStep === 7,
+    },
+    {
+      id: 'step-7',
+      title: 'Colis remis au client',
+      description: 'Commande livrée en main propre. Merci de faire confiance à Christaline Shop !',
+      date: currentStep >= 8 ? formatDate(new Date(now.getTime() + 10 * 86400 * 1000)) : 'En attente de remise',
+      location: 'Client',
+      completed: currentStep >= 8,
+      current: currentStep === 8,
+    },
+  ];
+}
+
+const SEED_DATA: TicketOrder[] = [
+  {
+    id: 'CS-784210',
+    createdAt: new Date(Date.now() - 5 * 86400 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
+    client: {
+      name: 'Sophie Yao',
+      phone: '0154072488',
+      whatsapp: '0154072488',
+      city: 'Abidjan - Cocody Angré',
+      address: '7ème Tranche, près de la pharmacie du Soleil',
+      notes: 'Merci de bien vérifier la taille 38 pour les talons s’il vous plaît.'
+    },
+    items: [
+      {
+        id: 'item-1',
+        platform: 'shein',
+        url: 'https://shein.com/fr/robe-cocktail-satin-rose-poudree-p-2938472.html',
+        name: 'Robe de cocktail satin rose poudrée plissée',
+        variant: 'Taille M / Rose poudré',
+        quantity: 1,
+        originalPrice: 28.99,
+        originalCurrency: 'EUR',
+        notes: 'Prendre exactement le rose du flyer Christaline',
+        unitPriceCFA: 22000,
+        shippingFeeCFA: 4500,
+        serviceFeeCFA: 3000,
+        customsFeeCFA: 1500,
+        totalItemCFA: 31000,
+        status: 'ordered'
+      },
+      {
+        id: 'item-2',
+        platform: 'shein',
+        url: 'https://shein.com/fr/escarpins-talons-hauts-dore-strass-p-1092837.html',
+        name: 'Escarpins dorés à strass élégants talons 9cm',
+        variant: 'Pointure 38 / Doré champagne',
+        quantity: 1,
+        originalPrice: 24.50,
+        originalCurrency: 'EUR',
+        notes: 'Bien emballer pour ne pas abîmer la boîte',
+        unitPriceCFA: 19500,
+        shippingFeeCFA: 5000,
+        serviceFeeCFA: 2000,
+        customsFeeCFA: 1000,
+        totalItemCFA: 27500,
+        status: 'ordered'
+      }
+    ],
+    quote: {
+      status: 'in_transit',
+      subtotalItemsCFA: 41500,
+      totalShippingCFA: 9500,
+      totalServiceFeeCFA: 5000,
+      totalCustomsCFA: 2500,
+      discountCFA: 0,
+      grandTotalCFA: 58500,
+      depositRequiredCFA: 35000,
+      depositPaidCFA: 35000,
+      balanceRemainingCFA: 23500,
+      adminNote: 'Articles commandés avec succès sur Shein ! Colis groupé en vol avec notre transitaire régulier.',
+      quotedAt: new Date(Date.now() - 4 * 86400 * 1000).toISOString()
+    },
+    tracking: {
+      currentStatus: 'in_transit',
+      statusLabel: 'En transit international (Vol régulier)',
+      estimatedDelivery: '7 à 12 jours ouvrables',
+      estimatedDeliveryDate: new Date(Date.now() + 4 * 86400 * 1000).toISOString().split('T')[0],
+      supplierOrderNumber: 'SHEIN-FR-98230192',
+      carrierName: 'Christaline Air Cargo Express',
+      carrierTrackingNumber: 'CST-CI-2026-98124',
+      carrierTrackingUrl: 'https://www.17track.net',
+      events: createDefaultTimeline('in_transit', new Date(Date.now() - 5 * 86400 * 1000).toISOString())
+    }
+  },
+  {
+    id: 'CS-918234',
+    createdAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    client: {
+      name: 'Aïcha Koné',
+      phone: '0708991234',
+      whatsapp: '0708991234',
+      city: 'Abidjan - Yopougon Maroc',
+      address: 'Carrefour Bel Air, Immeuble Grace',
+      notes: 'C’est pour un anniversaire le mois prochain.'
+    },
+    items: [
+      {
+        id: 'item-1',
+        platform: 'temu',
+        url: 'https://temu.com/fr/kit-pinceaux-maquillage-professionnel-18-pieces.html',
+        name: 'Set de pinceaux de maquillage luxe 18 pièces avec étui cuir',
+        variant: 'Couleur Or Rose / 18 pcs',
+        quantity: 2,
+        originalPrice: 12.99,
+        originalCurrency: 'EUR',
+        notes: '2 coffrets identiques',
+        unitPriceCFA: 9500,
+        shippingFeeCFA: 3000,
+        serviceFeeCFA: 2000,
+        customsFeeCFA: 1000,
+        totalItemCFA: 25000,
+        status: 'quoted'
+      },
+      {
+        id: 'item-2',
+        platform: 'temu',
+        url: 'https://temu.com/fr/palette-fards-a-paupieres-nude-glamour.html',
+        name: 'Palette fards à paupières 35 teintes nudes & paillettes',
+        variant: 'Modèle Glamour Nude',
+        quantity: 1,
+        originalPrice: 14.50,
+        originalCurrency: 'EUR',
+        notes: 'Attention produit fragile',
+        unitPriceCFA: 11000,
+        shippingFeeCFA: 3000,
+        serviceFeeCFA: 2000,
+        customsFeeCFA: 1000,
+        totalItemCFA: 17000,
+        status: 'quoted'
+      }
+    ],
+    quote: {
+      status: 'ready',
+      subtotalItemsCFA: 30000,
+      totalShippingCFA: 6000,
+      totalServiceFeeCFA: 4000,
+      totalCustomsCFA: 2000,
+      discountCFA: 0,
+      grandTotalCFA: 42000,
+      depositRequiredCFA: 25000,
+      depositPaidCFA: 0,
+      balanceRemainingCFA: 42000,
+      adminNote: 'Votre devis Temu a été calculé ! Versez l\'acompte de 25 000 FCFA pour valider l\'achat immédiat avant rupture de stock.',
+      quotedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
+    },
+    tracking: {
+      currentStatus: 'ready',
+      statusLabel: 'Devis prêt (En attente de paiement acompte)',
+      estimatedDelivery: '7 à 12 jours ouvrables dès validation',
+      estimatedDeliveryDate: null,
+      supplierOrderNumber: null,
+      carrierName: null,
+      carrierTrackingNumber: null,
+      carrierTrackingUrl: null,
+      events: createDefaultTimeline('ready', new Date(Date.now() - 1 * 86400 * 1000).toISOString())
+    }
+  },
+  {
+    id: 'CS-334912',
+    createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    client: {
+      name: 'Marc Kouamé',
+      phone: '0554129876',
+      whatsapp: '0554129876',
+      city: 'San-Pedro',
+      address: 'Quartier Cité, face pharmacie de l’Océan',
+      notes: 'Besoin d’expédition rapide vers San-Pedro une fois arrivé à Abidjan.'
+    },
+    items: [
+      {
+        id: 'item-1',
+        platform: 'alibaba',
+        url: 'https://french.alibaba.com/p-detail/costume-trois-pieces-homme-mariage-1600829182.html',
+        name: 'Costume 3 pièces homme coupe ajustée Bleu Nuit',
+        variant: 'Taille Veste 52 / Pantalon 44 / Bleu Nuit',
+        quantity: 1,
+        originalPrice: 45.00,
+        originalCurrency: 'USD',
+        notes: 'Vérifier la grille des tailles du fournisseur',
+        unitPriceCFA: 0,
+        shippingFeeCFA: 0,
+        serviceFeeCFA: 0,
+        customsFeeCFA: 0,
+        totalItemCFA: 0,
+        status: 'pending'
+      }
+    ],
+    quote: {
+      status: 'pending',
+      subtotalItemsCFA: 0,
+      totalShippingCFA: 0,
+      totalServiceFeeCFA: 0,
+      totalCustomsCFA: 0,
+      discountCFA: 0,
+      grandTotalCFA: 0,
+      depositRequiredCFA: 0,
+      depositPaidCFA: 0,
+      balanceRemainingCFA: 0,
+      adminNote: 'Demande reçue ! Notre équipe consulte le fournisseur Alibaba pour vous fournir le tarif le plus avantageux avec transport sécurisé.',
+      quotedAt: null
+    },
+    tracking: {
+      currentStatus: 'pending',
+      statusLabel: 'En attente de chiffrage par Christaline Shop',
+      estimatedDelivery: '7 à 12 jours ouvrables après validation',
+      estimatedDeliveryDate: null,
+      supplierOrderNumber: null,
+      carrierName: null,
+      carrierTrackingNumber: null,
+      carrierTrackingUrl: null,
+      events: createDefaultTimeline('pending', new Date(Date.now() - 35 * 60 * 1000).toISOString())
+    }
+  },
+  {
+    id: 'CS-652190',
+    createdAt: new Date(Date.now() - 14 * 86400 * 1000).toISOString(),
+    updatedAt: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
+    client: {
+      name: 'Grace Bamba',
+      phone: '0154072488',
+      whatsapp: '0154072488',
+      city: 'Abidjan - Marcory Zone 4',
+      address: 'Rue Paul Langevin',
+      notes: 'Livraison impeccable effectuée.'
+    },
+    items: [
+      {
+        id: 'item-1',
+        platform: 'shein',
+        url: 'https://shein.com/fr/jogging-polaire-ensemble-femme-p-382910.html',
+        name: 'Ensemble jogging sweat capuche beige molletonné',
+        variant: 'Taille L / Couleur Beige',
+        quantity: 1,
+        originalPrice: 19.99,
+        originalCurrency: 'EUR',
+        notes: 'Parfait',
+        unitPriceCFA: 16000,
+        shippingFeeCFA: 4000,
+        serviceFeeCFA: 2000,
+        customsFeeCFA: 1000,
+        totalItemCFA: 23000,
+        status: 'ordered'
+      }
+    ],
+    quote: {
+      status: 'delivered',
+      subtotalItemsCFA: 16000,
+      totalShippingCFA: 4000,
+      totalServiceFeeCFA: 2000,
+      totalCustomsCFA: 1000,
+      discountCFA: 0,
+      grandTotalCFA: 23000,
+      depositRequiredCFA: 15000,
+      depositPaidCFA: 23000,
+      balanceRemainingCFA: 0,
+      adminNote: 'Colis livré et solde entièrement réglé. Merci pour votre fidélité !',
+      quotedAt: new Date(Date.now() - 13 * 86400 * 1000).toISOString()
+    },
+    tracking: {
+      currentStatus: 'delivered',
+      statusLabel: 'Colis livré avec succès',
+      estimatedDelivery: '7 à 12 jours ouvrables (Respecté)',
+      estimatedDeliveryDate: new Date(Date.now() - 2 * 86400 * 1000).toISOString().split('T')[0],
+      supplierOrderNumber: 'SHEIN-FR-889123',
+      carrierName: 'Christaline Express Abidjan',
+      carrierTrackingNumber: 'CST-LIV-0921',
+      carrierTrackingUrl: null,
+      events: createDefaultTimeline('delivered', new Date(Date.now() - 14 * 86400 * 1000).toISOString())
+    }
+  }
+];
+
+function ensureDataFile() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(SEED_DATA, null, 2), 'utf-8');
+  }
+}
+
+export function getAllTickets(): TicketOrder[] {
+  ensureDataFile();
+  try {
+    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+    const data = JSON.parse(raw) as TicketOrder[];
+    // Trier par date décroissante
+    return data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  } catch (err) {
+    console.error('Erreur lecture tickets.json:', err);
+    return SEED_DATA;
+  }
+}
+
+export function saveTickets(tickets: TicketOrder[]): void {
+  ensureDataFile();
+  fs.writeFileSync(DATA_FILE, JSON.stringify(tickets, null, 2), 'utf-8');
+}
+
+export function getTicketById(id: string): TicketOrder | null {
+  const tickets = getAllTickets();
+  const cleanId = id.trim().toUpperCase();
+  return tickets.find(t => t.id.toUpperCase() === cleanId) || null;
+}
+
+export interface CreateTicketPayload {
+  client: {
+    name: string;
+    phone: string;
+    whatsapp: string;
+    city: string;
+    address?: string;
+    notes?: string;
+  };
+  items: Array<{
+    platform: 'shein' | 'temu' | 'alibaba' | 'autre';
+    url: string;
+    name: string;
+    variant?: string;
+    quantity: number;
+    originalPrice?: number | null;
+    originalCurrency?: string;
+    notes?: string;
+  }>;
+}
+
+export function createNewTicket(payload: CreateTicketPayload): TicketOrder {
+  const tickets = getAllTickets();
+  const now = new Date().toISOString();
+  
+  let newId = generateTicketId();
+  while (tickets.some(t => t.id === newId)) {
+    newId = generateTicketId();
+  }
+
+  const items: OrderItem[] = payload.items.map((it, idx) => ({
+    id: `item-${idx + 1}-${Date.now()}`,
+    platform: it.platform,
+    url: it.url.trim(),
+    name: it.name.trim() || `Article ${it.platform.toUpperCase()} #${idx + 1}`,
+    variant: it.variant?.trim() || '',
+    quantity: Number(it.quantity) > 0 ? Number(it.quantity) : 1,
+    originalPrice: it.originalPrice ? Number(it.originalPrice) : null,
+    originalCurrency: it.originalCurrency || 'EUR',
+    notes: it.notes?.trim() || '',
+    unitPriceCFA: 0,
+    shippingFeeCFA: 0,
+    serviceFeeCFA: 0,
+    customsFeeCFA: 0,
+    totalItemCFA: 0,
+    status: 'pending'
+  }));
+
+  const newTicket: TicketOrder = {
+    id: newId,
+    createdAt: now,
+    updatedAt: now,
+    client: {
+      name: payload.client.name.trim(),
+      phone: payload.client.phone.trim(),
+      whatsapp: payload.client.whatsapp.trim() || payload.client.phone.trim(),
+      city: payload.client.city.trim(),
+      address: payload.client.address?.trim() || '',
+      notes: payload.client.notes?.trim() || ''
+    },
+    items,
+    quote: {
+      status: 'pending',
+      subtotalItemsCFA: 0,
+      totalShippingCFA: 0,
+      totalServiceFeeCFA: 0,
+      totalCustomsCFA: 0,
+      discountCFA: 0,
+      grandTotalCFA: 0,
+      depositRequiredCFA: 0,
+      depositPaidCFA: 0,
+      balanceRemainingCFA: 0,
+      adminNote: 'Votre demande a bien été reçue par Christaline Shop ! Nous analysons vos liens et nous vous préparons votre devis sous peu.',
+      quotedAt: null
+    },
+    tracking: {
+      currentStatus: 'pending',
+      statusLabel: 'En attente de chiffrage par l\'équipe Christaline',
+      estimatedDelivery: '7 à 12 jours ouvrables',
+      estimatedDeliveryDate: null,
+      supplierOrderNumber: null,
+      carrierName: null,
+      carrierTrackingNumber: null,
+      carrierTrackingUrl: null,
+      events: createDefaultTimeline('pending', now)
+    }
+  };
+
+  tickets.unshift(newTicket);
+  saveTickets(tickets);
+  return newTicket;
+}
+
+export function updateTicket(id: string, updates: Partial<TicketOrder>): TicketOrder | null {
+  const tickets = getAllTickets();
+  const index = tickets.findIndex(t => t.id.toUpperCase() === id.trim().toUpperCase());
+  if (index === -1) return null;
+
+  const current = tickets[index];
+  const updated: TicketOrder = {
+    ...current,
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+
+  tickets[index] = updated;
+  saveTickets(tickets);
+  return updated;
+}
