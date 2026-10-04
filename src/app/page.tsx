@@ -51,7 +51,7 @@ export default function Home() {
       title: 'Costumes Homme & Blazers',
       desc: 'Costumes 3 pièces, vestes de cérémonie',
       icon: '👔',
-      tag: 'Alibaba & Shein'
+      tag: 'Shein & Temu'
     },
     {
       title: 'Joggings & Streetwear',
@@ -71,41 +71,41 @@ export default function Home() {
     {
       num: '01',
       title: 'Choisissez & Copiez les Liens',
-      desc: 'Faites votre shopping sur l\'application Shein, Temu ou Alibaba. Cliquez sur "Partager" puis copiez le lien de vos articles préférés.'
+      desc: 'Faites votre shopping sur l\'application Shein, Temu ou toute autre plateforme partenaire. Cliquez sur "Partager" puis copiez le lien de vos articles préférés.'
     },
     {
       num: '02',
       title: 'Remplissez le Formulaire',
-      desc: 'Collez vos liens dans notre formulaire ci-dessous avec vos tailles et options. Vous recevez immédiatement votre numéro de Ticket officiel.'
+      desc: 'Collez vos liens dans notre formulaire ci-dessous avec vos options et choisissez votre mode d\'expédition (Aérien ou Maritime). Vous recevez immédiatement votre numéro de Ticket officiel.'
     },
     {
       num: '03',
       title: 'Consultez votre Devis en FCFA',
-      desc: 'L\'équipe Christaline calcule le coût réel en FCFA incluant l\'achat en devises, le fret aérien et la douane. Devis individuel et total transparent.'
+      desc: 'L\'équipe Christaline calcule le prix total de vos articles en FCFA incluant tous les frais. Vous voyez directement le montant net par article sans calcul complexe.'
     },
     {
       num: '04',
       title: 'Validez & Suivez votre Colis',
-      desc: 'Validez votre réservation avec un acompte. Suivez en temps réel chaque étape de l\'expédition jusqu\'à la livraison (7 à 12 jours ouvrables).'
+      desc: 'Validez votre réservation avec un acompte via Mobile Money Bénin. Suivez en temps réel chaque étape de l\'acheminement jusqu\'à la livraison (Aérien : au plus 1 mois • Maritime : 2 à 3 mois).'
     }
   ];
 
   const faqs = [
     {
       q: 'Comment fonctionne le calcul du devis en FCFA ?',
-      a: 'Le devis prend en compte le prix d\'achat chez le fournisseur converti en FCFA, le fret aérien au poids/volume, les frais de douane et la commission Christaline Shop. Aucun frais caché : vous connaissez le montant exact avant tout engagement.'
+      a: 'Le devis prend en compte le prix d\'achat chez le fournisseur converti en FCFA, le fret international et l\'acheminement. Vous obtenez un prix net transparent par article avant tout versement.'
     },
     {
-      q: 'Quel est le délai de livraison ?',
-      a: 'Le délai standard est de 7 à 12 jours ouvrables à compter de la validation de votre acompte et de la commande chez le fournisseur. Comme le dit notre devise : "La qualité vaut parfois quelques jours d\'attente !"'
+      q: 'Quels sont les délais de livraison au Bénin ?',
+      a: 'Le délai dépend du mode d\'expédition choisi : au plus 1 mois par voie aérienne (recommandé pour les articles urgents et légers) et 2 à 3 mois par voie maritime (recommandé pour les colis lourds ou volumineux).'
     },
     {
-      q: 'Comment s\'effectue le paiement ?',
-      a: 'Les commandes se font sur réservation. Vous versez un acompte (généralement 50% à 60%) par Wave, Orange Money, MTN MoMo ou Moov Money pour valider l\'achat. Le solde est payé à la réception de vos articles.'
+      q: 'Comment s\'effectue le paiement de l\'acompte ?',
+      a: 'Les commandes sont traitées sur réservation. Vous versez un acompte via Mobile Money Bénin (MTN MoMo, Moov Money ou Celtiis Cash) selon les instructions présentées à la validation du devis. Le solde est versé à la remise du colis.'
     },
     {
-      q: 'Puis-je commander sur d\'autres sites qu\'Alibaba, Temu et Shein ?',
-      a: 'Oui ! Nous prenons également en charge AliExpress, Fashion Nova, Zara, Amazon et d\'autres sites marchands. Choisissez simplement l\'option "Autre" dans le sélecteur de plateforme.'
+      q: 'Puis-je commander sur d\'autres sites que Shein et Temu ?',
+      a: 'Oui ! Notre équipe peut traiter vos achats sur AliExpress, Zara et d\'autres boutiques en ligne. Choisissez simplement la plateforme appropriée ou sélectionnez "Autre" dans le formulaire.'
     }
   ];
 
@@ -140,10 +140,10 @@ export default function Home() {
 
                 <h1 className="text-4xl sm:text-6xl font-black text-stone-900 font-serif tracking-tight leading-tight">
                   Précommandez sur <br />
-                  <span className="text-stone-900 bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-200 text-3xl sm:text-5xl">SHEIN</span>,{' '}
-                  <span className="text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 text-3xl sm:text-5xl">TEMU</span>{' '}
+                  <span className="text-stone-900 bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-200 text-3xl sm:text-5xl">SHEIN</span>{' '}
                   <span className="font-sans font-light">&</span>{' '}
-                  <span className="text-orange-600 bg-orange-100 px-2 py-0.5 rounded-lg border border-orange-200 text-3xl sm:text-5xl">ALIBABA</span>
+                  <span className="text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 text-3xl sm:text-5xl">TEMU</span>
+                  <span className="block text-2xl sm:text-3xl font-sans font-normal text-stone-500 mt-2">en toute sérénité au Bénin</span>
                 </h1>
 
                 <p className="text-base sm:text-lg text-stone-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
@@ -158,11 +158,11 @@ export default function Home() {
                   </div>
                   <div className="flex items-center gap-2 bg-amber-100/80 text-amber-900 px-3.5 py-2 rounded-xl border border-amber-200">
                     <Truck className="w-4 h-4 text-amber-600" />
-                    <span>Livraison 7 à 12 jours ouvrables</span>
+                    <span>Aérien : ≤ 1 mois • Maritime : 2 à 3 mois</span>
                   </div>
                   <div className="flex items-center gap-2 bg-emerald-100/80 text-emerald-800 px-3.5 py-2 rounded-xl border border-emerald-200">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Acompte & Suivi transparent</span>
+                    <span>Acompte Mobile Money Bénin</span>
                   </div>
                 </div>
 
@@ -284,7 +284,7 @@ export default function Home() {
               Ce que vous pouvez commander
             </h2>
             <p className="text-stone-600 text-sm max-w-lg mx-auto">
-              Repéré sur Shein, Temu ou Alibaba ? Envoyez-nous le lien et nous nous chargeons du reste !
+              Repéré sur Shein, Temu ou ailleurs ? Envoyez-nous le lien et nous nous chargeons du reste !
             </p>
           </div>
 
@@ -355,13 +355,13 @@ export default function Home() {
               <div className="space-y-2 text-center md:text-left">
                 <div className="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-bold">
                   <Truck className="w-4 h-4" />
-                  <span>DÉLAI DE LIVRAISON OFFICIEL</span>
+                  <span>MODES & DÉLAIS DE LIVRAISON AU BÉNIN</span>
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black">
-                  7 à 12 jours ouvrables
+                  Aérien : au plus 1 mois • Maritime : 2 à 3 mois
                 </h3>
                 <p className="text-xs text-white/90">
-                  Après validation de la commande auprès des fournisseurs internationaux.
+                  Optez pour la voie aérienne pour vos commandes rapides ou la voie maritime pour vos colis volumineux et économiques.
                 </p>
               </div>
 

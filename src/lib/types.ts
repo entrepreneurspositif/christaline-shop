@@ -1,20 +1,22 @@
-export type PlatformType = 'shein' | 'temu' | 'alibaba' | 'autre';
+export type PlatformType = string;
+
+export type ShippingModeType = 'air' | 'sea';
 
 export type QuoteStatus = 
   | 'pending'          // En attente de chiffrage par l'admin
   | 'ready'            // Devis calculé par l'admin, en attente de paiement acompte
   | 'accepted'         // Devis validé par le client
   | 'paid_deposit'     // Acompte reçu par Christaline Shop
-  | 'ordered'          // Commande passée auprès de Shein / Temu / Alibaba
+  | 'ordered'          // Commande passée auprès du fournisseur
   | 'in_transit'       // En cours d'acheminement international
-  | 'customs'          // Arrivé au pays / En dédouanement
+  | 'customs'          // Arrivé au Bénin / En dédouanement
   | 'ready_for_pickup' // Disponible / En cours de livraison client
   | 'delivered'        // Colis livré au client
   | 'cancelled';       // Annulée
 
 export interface OrderItem {
   id: string;
-  platform: PlatformType;
+  platform: string; // 'shein' | 'temu' | 'alibaba' | custom platform
   url: string;
   name: string;
   variant?: string; // Taille, couleur, modèle
@@ -23,12 +25,12 @@ export interface OrderItem {
   originalCurrency?: string; // EUR, USD, etc.
   notes?: string;
   
-  // Devis individuel rempli par l'admin
-  unitPriceCFA: number;       // Prix d'achat de l'article en FCFA
-  shippingFeeCFA: number;     // Fret / transport unitaire en FCFA
-  serviceFeeCFA: number;      // Commission unitaire Christaline en FCFA
-  customsFeeCFA: number;      // Douane unitaire en FCFA
-  totalItemCFA: number;       // Total pour cet article (quantité prise en compte)
+  // Devis en FCFA
+  unitPriceCFA: number;       // Prix de l'article en FCFA
+  shippingFeeCFA: number;     // Fret éventuel
+  serviceFeeCFA: number;      // Commission éventuelle
+  customsFeeCFA: number;      // Douane éventuelle
+  totalItemCFA: number;       // Total net pour cet article affiché au client
   status: 'pending' | 'quoted' | 'ordered' | 'unavailable';
 }
 
@@ -45,11 +47,12 @@ export interface TrackingEvent {
 export interface TrackingInfo {
   currentStatus: QuoteStatus;
   statusLabel: string;
-  estimatedDelivery: string; // Ex: "7 à 12 jours ouvrables"
+  shippingMode: ShippingModeType; // 'air' (au plus 1 mois) ou 'sea' (2 à 3 mois)
+  estimatedDelivery: string; // Ex: "Au plus 1 mois" ou "2 à 3 mois"
   estimatedDeliveryDate?: string | null;
-  supplierOrderNumber?: string | null; // Numéro de commande Shein / Temu / Alibaba
-  carrierName?: string | null;        // Ex: DHL, Cargo Aérien, Temu Express
-  carrierTrackingNumber?: string | null; // Numéro de suivi colis
+  supplierOrderNumber?: string | null;
+  carrierName?: string | null;
+  carrierTrackingNumber?: string | null;
   carrierTrackingUrl?: string | null;
   events: TrackingEvent[];
 }
@@ -82,13 +85,14 @@ export interface TicketOrder {
   id: string; // Ex: CS-489215
   createdAt: string;
   updatedAt: string;
+  shippingMode: ShippingModeType; // 'air' | 'sea'
   client: ClientInfo;
   items: OrderItem[];
   quote: QuoteDetails;
   tracking: TrackingInfo;
 }
 
-export const PLATFORM_CONFIG: Record<PlatformType, { name: string; color: string; bg: string; border: string; logoText: string }> = {
+export const PLATFORM_CONFIG: Record<string, { name: string; color: string; bg: string; border: string; logoText: string }> = {
   shein: {
     name: 'Shein',
     color: 'text-black',
@@ -111,7 +115,7 @@ export const PLATFORM_CONFIG: Record<PlatformType, { name: string; color: string
     logoText: 'ALIBABA'
   },
   autre: {
-    name: 'Autre / AliExpress',
+    name: 'Autre plateforme',
     color: 'text-rose-600',
     bg: 'bg-rose-500 text-white',
     border: 'border-rose-400',
@@ -157,7 +161,7 @@ export const STATUS_MAP: Record<QuoteStatus, { label: string; badgeClass: string
     icon: 'Plane'
   },
   customs: {
-    label: 'Arrivé au pays (Dédouanement)',
+    label: 'Arrivé au Bénin (Dédouanement)',
     badgeClass: 'bg-amber-100 text-amber-900 border-amber-400',
     stepIndex: 6,
     icon: 'Building'

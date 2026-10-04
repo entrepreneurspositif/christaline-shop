@@ -9,9 +9,10 @@ import {
   OrderItem, 
   QuoteStatus, 
   STATUS_MAP, 
-  PLATFORM_CONFIG 
+  PLATFORM_CONFIG,
+  ShippingModeType
 } from '@/lib/types';
-import { AppSettings, PaymentAccount } from '@/lib/settings';
+import { AppSettings, PaymentAccount, StorePlatform } from '@/lib/settings';
 import { 
   ShieldCheck, 
   Lock, 
@@ -31,9 +32,12 @@ import {
   RefreshCw,
   Plus,
   Plane,
+  Ship,
   CreditCard,
   Settings,
-  Phone
+  Layers,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -46,11 +50,16 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'settings'>('tickets');
+  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'platforms' | 'settings'>('tickets');
 
-  // Paramètres de paiement & boutique
+  // Paramètres & Plateformes
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
+
+  // Formulaire d'ajout de nouvelle plateforme
+  const [newPlatformName, setNewPlatformName] = useState('');
+  const [newPlatformBadge, setNewPlatformBadge] = useState('');
+  const [newPlatformBg, setNewPlatformBg] = useState('bg-purple-600 text-white');
 
   // Modal d'édition Ticket
   const [selectedTicket, setSelectedTicket] = useState<TicketOrder | null>(null);
@@ -60,6 +69,7 @@ export default function AdminPage() {
 
   // Formulaire d'édition dans le modal
   const [editStatus, setEditStatus] = useState<QuoteStatus>('pending');
+  const [editShippingMode, setEditShippingMode] = useState<ShippingModeType>('air');
   const [editItems, setEditItems] = useState<OrderItem[]>([]);
   const [editAdminNote, setEditAdminNote] = useState('');
   const [editDepositRequired, setEditDepositRequired] = useState(0);
@@ -125,40 +135,88 @@ export default function AdminPage() {
     }
   };
 
-  const handleSaveSettings = async () => {
-    if (!settings) return;
+  const saveSettingsToServer = async (newSettings: AppSettings) => {
     try {
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(newSettings)
       });
       const data = await res.json();
       if (data.success) {
+        setSettings(data.settings);
         setSettingsSuccess(true);
         setTimeout(() => setSettingsSuccess(false), 3000);
       }
     } catch (err) {
-      alert('Erreur enregistrement paramètres');
+      alert('Erreur enregistrement');
     }
   };
 
-  const updateAccountField = (idx: number, field: keyof PaymentAccount, val: string) => {
+  // Basculer l'état actif/inactif d'une plateforme (ex: réactiver Alibaba en 1 clic)
+  const togglePlatform = (pltId: string) => {
     if (!settings) return;
-    const accounts = [...settings.paymentInstructions.accounts];
-    accounts[idx] = { ...accounts[idx], [field]: val };
-    setSettings({
+    const updated = settings.platforms.map(p => 
+      p.id === pltId ? { ...p, enabled: !p.enabled } : p
+    );
+    const newSettings = { ...settings, platforms: updated };
+    setSettings(newSettings);
+    saveSettingsToServer(newSettings);
+  };
+
+  // Ajouter une nouvelle plateforme de vente
+  const handleAddPlatform = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!settings || !newPlatformName.trim()) return;
+
+    const id = newPlatformName.trim().toLowerCase().replace(/\s+/g, '-');
+    if (settings.platforms.some(p => p.id === id)) {
+      alert('Cette plateforme existe déjà !');
+      return;
+    }
+
+    const newPlt: StorePlatform = {
+      id,
+      name: newPlatformName.trim(),
+      logoText: (newPlatformBadge.trim() || newPlatformName.trim()).toUpperCase(),
+      bg: newPlatformBg,
+      border: 'border-transparent',
+      color: 'text-white',
+      enabled: true
+    };
+
+    const newSettings = {
       ...settings,
-      paymentInstructions: {
-        ...settings.paymentInstructions,
-        accounts
-      }
-    });
+      platforms: [...settings.platforms, newPlt]
+    };
+
+    setSettings(newSettings);
+    saveSettingsToServer(newSettings);
+    setNewPlatformName('');
+    setNewPlatformBadge('');
+  };
+
+  // Supprimer une plateforme personnalisée
+  const handleDeletePlatform = (pltId: string) => {
+    if (!settings) return;
+    if (pltId === 'shein' || pltId === 'temu') {
+      alert('Vous ne pouvez pas supprimer Shein ou Temu. Vous pouvez simplement les désactiver.');
+      return;
+    }
+    if (!confirm('Supprimer cette plateforme ?')) return;
+
+    const newSettings = {
+      ...settings,
+      platforms: settings.platforms.filter(p => p.id !== pltId)
+    };
+    setSettings(newSettings);
+    saveSettingsToServer(newSettings);
   };
 
   const openEditModal = (t: TicketOrder) => {
     setSelectedTicket(t);
     setEditStatus(t.quote.status);
+    setEditShippingMode(t.shippingMode || 'air');
     setEditItems(JSON.parse(JSON.stringify(t.items)));
     setEditAdminNote(t.quote.adminNote || '');
     setEditDepositRequired(t.quote.depositRequiredCFA || 0);
@@ -166,7 +224,7 @@ export default function AdminPage() {
     setEditDiscount(t.quote.discountCFA || 0);
     setEditSupplierOrderNumber(t.tracking.supplierOrderNumber || '');
     setEditCarrierTrackingNumber(t.tracking.carrierTrackingNumber || '');
-    setEditCarrierName(t.tracking.carrierName || 'Cargo Aérien Cotonou');
+    setEditCarrierName(t.tracking.carrierName || (t.shippingMode === 'sea' ? 'Fret Maritime Cotonou' : 'Cargo Aérien Cotonou'));
     setNewTimelineStepTitle('');
     setNewTimelineStepDesc('');
     setSaveSuccess(false);
@@ -174,7 +232,6 @@ export default function AdminPage() {
     setIsEditing(true);
   };
 
-  // Mise à jour directe du prix de l'article en FCFA (très intuitif pour l'admin !)
   const updateItemTotalPrice = (idx: number, val: number) => {
     const updated = [...editItems];
     const it = { ...updated[idx], totalItemCFA: val, unitPriceCFA: val };
@@ -182,7 +239,6 @@ export default function AdminPage() {
     setEditItems(updated);
   };
 
-  // Calculs financiers automatiques
   const computedGrandTotal = Math.max(0, editItems.reduce((acc, it) => acc + (it.totalItemCFA || 0), 0) - editDiscount);
   const computedBalanceRemaining = Math.max(0, computedGrandTotal - editDepositPaid);
 
@@ -192,7 +248,10 @@ export default function AdminPage() {
     setSaveSuccess(false);
 
     try {
+      const estimatedDelivery = editShippingMode === 'sea' ? '2 à 3 mois' : 'Au plus 1 mois';
+
       const payload: any = {
+        shippingMode: editShippingMode,
         items: editItems,
         status: editStatus,
         quote: {
@@ -206,6 +265,8 @@ export default function AdminPage() {
           adminNote: editAdminNote
         },
         tracking: {
+          shippingMode: editShippingMode,
+          estimatedDelivery,
           supplierOrderNumber: editSupplierOrderNumber.trim() || null,
           carrierTrackingNumber: editCarrierTrackingNumber.trim() || null,
           carrierName: editCarrierName.trim() || null
@@ -216,7 +277,7 @@ export default function AdminPage() {
         payload.tracking.customEvent = {
           title: newTimelineStepTitle.trim(),
           description: newTimelineStepDesc.trim() || 'Étape enregistrée par Christaline Shop Bénin',
-          location: 'Hub Cotonou'
+          location: editShippingMode === 'sea' ? 'Port Autonome de Cotonou' : 'Hub Cotonou'
         };
       }
 
@@ -261,11 +322,11 @@ export default function AdminPage() {
     }
   };
 
-  // WhatsApp client avec indicatif Bénin (+229)
   const generateClientWhatsAppMessage = (t: TicketOrder) => {
     const total = t.quote.grandTotalCFA > 0 ? `${new Intl.NumberFormat('fr-FR').format(t.quote.grandTotalCFA)} FCFA` : '';
     const deposit = t.quote.depositRequiredCFA > 0 ? `${new Intl.NumberFormat('fr-FR').format(t.quote.depositRequiredCFA)} FCFA` : '';
     const currentUrl = typeof window !== 'undefined' ? `${window.location.origin}/ticket/${t.id}` : `https://christaline.shop/ticket/${t.id}`;
+    const modeLabel = t.shippingMode === 'sea' ? 'Voie Maritime (2 à 3 mois)' : 'Voie Aérienne (Au plus 1 mois)';
 
     let msg = `Bonjour ${t.client.name} ! 🌸\nC'est l'équipe Christaline Shop Bénin concernant votre ticket *${t.id}*.\n\n`;
 
@@ -273,16 +334,16 @@ export default function AdminPage() {
       msg += `✨ Votre devis est prêt !\n`
         + `💰 Montant total de vos articles : *${total}*\n`
         + `💵 Acompte pour valider la commande : *${deposit}*\n`
-        + `📦 Délai : 7 à 12 jours ouvrables à compter de l'acompte.\n\n`
+        + `📦 Mode de livraison : *${modeLabel}*\n\n`
         + `👉 Consultez votre ticket et les instructions de paiement Mobile Money ici :\n${currentUrl}\n\n`
         + `Paiement accepté : MTN Mobile Money Bénin, Moov Money Bénin, Celtiis Cash.`;
     } else if (t.quote.status === 'in_transit') {
-      msg += `✈️ Bonne nouvelle ! Vos articles ont été expédiés et sont en vol vers le Bénin.\n`
+      msg += `🚢✈️ Bonne nouvelle ! Vos articles ont été expédiés (${modeLabel}) et sont en route vers le Bénin.\n`
         + `👉 Suivez l'avancée de votre colis en direct sur votre ticket :\n${currentUrl}`;
     } else if (t.quote.status === 'ready_for_pickup') {
       msg += `🎉 Vos articles sont arrivés à Cotonou et sont prêts pour la livraison !\n`
         + `💵 Solde restant à régler : ${new Intl.NumberFormat('fr-FR').format(t.quote.balanceRemainingCFA)} FCFA\n`
-        + `Merci de nous confirmer votre disponibilité et adresse exacte pour la remise du colis.`;
+        + `Merci de nous confirmer votre adresse exacte pour la remise du colis.`;
     } else {
       msg += `📌 Mise à jour de votre commande : *${t.tracking.statusLabel}*\n`
         + `👉 Consultez l'état d'avancement ici : ${currentUrl}`;
@@ -371,8 +432,8 @@ export default function AdminPage() {
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
         
-        {/* BANDEAU EN-TÊTE ADMIN */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* BANDEAU EN-TÊTE ADMIN AVEC ONGLETS */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-md border border-rose-200">
@@ -381,26 +442,55 @@ export default function AdminPage() {
               <span className="text-xs text-stone-400">Christaline Shop</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-stone-900 font-serif mt-1">
-              Gestion des Commandes, Devis & Paiements
+              Tableau de Bord & Paramètres
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Boutons d'onglets */}
             <button
-              onClick={() => setActiveAdminTab(activeAdminTab === 'tickets' ? 'settings' : 'tickets')}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition-colors cursor-pointer"
+              onClick={() => setActiveAdminTab('tickets')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeAdminTab === 'tickets'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
             >
-              <Settings className="w-3.5 h-3.5 text-rose-600" />
-              <span>{activeAdminTab === 'tickets' ? 'Comptes Mobile Money' : 'Retour aux Commandes'}</span>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span>Commandes ({tickets.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('platforms')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeAdminTab === 'platforms'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Plateformes de Vente</span>
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('settings')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeAdminTab === 'settings'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Mobile Money Bénin</span>
             </button>
 
             <button
               onClick={fetchTickets}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
+              title="Actualiser"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              <span>Actualiser</span>
             </button>
 
             <button
@@ -413,7 +503,7 @@ export default function AdminPage() {
         </div>
 
         {/* ============================================================ */}
-        {/* ONGLET 1 : GESTION DES TICKETS ET COMMANDES */}
+        {/* ONGLET 1 : GESTION DES COMMANDES & DEVIS */}
         {/* ============================================================ */}
         {activeAdminTab === 'tickets' && (
           <div className="space-y-8">
@@ -514,9 +604,9 @@ export default function AdminPage() {
                     <tr>
                       <th className="py-3 px-4">Ticket</th>
                       <th className="py-3 px-4">Client (Bénin)</th>
-                      <th className="py-3 px-4">Articles</th>
+                      <th className="py-3 px-4">Articles & Mode</th>
                       <th className="py-3 px-4">Statut</th>
-                      <th className="py-3 px-4">Prix Total Commande</th>
+                      <th className="py-3 px-4">Prix Total</th>
                       <th className="py-3 px-4">Acompte</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
@@ -531,6 +621,8 @@ export default function AdminPage() {
                     ) : (
                       filteredTickets.map((t) => {
                         const st = STATUS_MAP[t.quote.status] || STATUS_MAP.pending;
+                        const isSea = t.shippingMode === 'sea';
+
                         return (
                           <tr key={t.id} className="hover:bg-rose-50/30 transition-colors">
                             <td className="py-3.5 px-4 font-mono font-black text-rose-700 whitespace-nowrap">
@@ -550,21 +642,23 @@ export default function AdminPage() {
                             </td>
 
                             <td className="py-3.5 px-4">
-                              <div className="flex flex-wrap gap-1">
-                                {t.items.map((it, i) => {
-                                  const cfg = PLATFORM_CONFIG[it.platform] || PLATFORM_CONFIG.autre;
-                                  return (
-                                    <span 
-                                      key={i} 
-                                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${cfg.bg}`}
-                                    >
-                                      {cfg.name} (x{it.quantity})
-                                    </span>
-                                  );
-                                })}
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                  isSea ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                                }`}>
+                                  {isSea ? <Ship className="w-2.5 h-2.5" /> : <Plane className="w-2.5 h-2.5" />}
+                                  <span>{isSea ? 'Maritime (2-3 mois)' : 'Aérien (≤ 1 mois)'}</span>
+                                </span>
                               </div>
-                              <div className="text-[11px] text-stone-500 truncate max-w-[180px] mt-0.5">
-                                {t.items[0]?.name}
+                              <div className="flex flex-wrap gap-1">
+                                {t.items.map((it, i) => (
+                                  <span 
+                                    key={i} 
+                                    className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-stone-800 text-white uppercase"
+                                  >
+                                    {it.platform} (x{it.quantity})
+                                  </span>
+                                ))}
                               </div>
                             </td>
 
@@ -642,7 +736,153 @@ export default function AdminPage() {
         )}
 
         {/* ============================================================ */}
-        {/* ONGLET 2 : PARAMÈTRES & INSTRUCTIONS DE PAIEMENT MOBILE MONEY */}
+        {/* ONGLET 2 : GESTION DES PLATEFORMES DE VENTE (NOUVEAU) */}
+        {/* ============================================================ */}
+        {activeAdminTab === 'platforms' && settings && (
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-8">
+            <div className="border-b border-stone-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h2 className="text-xl font-black text-stone-900 font-serif flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-rose-600" />
+                  <span>Gestion des Plateformes de Vente</span>
+                </h2>
+                <p className="text-xs text-stone-500">
+                  Activez, désactivez ou ajoutez de nouvelles plateformes d'achat proposées aux clients sur le formulaire.
+                </p>
+              </div>
+
+              {settingsSuccess && (
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Plateformes mises à jour !</span>
+                </div>
+              )}
+            </div>
+
+            {/* Liste des plateformes existantes */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-stone-700 uppercase tracking-wider">
+                Plateformes configurées :
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {settings.platforms.map((plt) => (
+                  <div 
+                    key={plt.id} 
+                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                      plt.enabled ? 'bg-stone-50 border-stone-300' : 'bg-stone-100/60 border-dashed border-stone-300 opacity-60'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${plt.bg}`}>
+                          {plt.logoText || plt.name}
+                        </span>
+                        <span className="font-bold text-stone-900 text-sm">{plt.name}</span>
+                      </div>
+                      <div className="text-xs text-stone-500">
+                        Statut : {plt.enabled ? <strong className="text-emerald-600">Active sur le site</strong> : <span className="text-stone-400">Désactivée</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {/* Bouton Toggle Actif / Inactif */}
+                      <button
+                        onClick={() => togglePlatform(plt.id)}
+                        className={`p-1.5 rounded-xl border transition-colors cursor-pointer text-xs font-bold flex items-center gap-1 ${
+                          plt.enabled 
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200' 
+                            : 'bg-stone-200 text-stone-700 border-stone-300 hover:bg-stone-300'
+                        }`}
+                        title={plt.enabled ? 'Désactiver' : 'Activer'}
+                      >
+                        {plt.enabled ? 'Activée' : 'Désactivée'}
+                      </button>
+
+                      {plt.id !== 'shein' && plt.id !== 'temu' && plt.id !== 'alibaba' && (
+                        <button
+                          onClick={() => handleDeletePlatform(plt.id)}
+                          className="p-1.5 text-stone-400 hover:text-red-600 transition-colors cursor-pointer"
+                          title="Supprimer cette plateforme"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Formulaire d'ajout d'une nouvelle plateforme */}
+            <form onSubmit={handleAddPlatform} className="bg-rose-50/50 p-6 rounded-3xl border border-rose-200 space-y-4">
+              <h3 className="font-bold text-stone-900 text-base flex items-center gap-2">
+                <Plus className="w-4 h-4 text-rose-600" />
+                <span>Ajouter une nouvelle plateforme de vente</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Nom de la plateforme <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: AliExpress, Zara, Amazon..."
+                    value={newPlatformName}
+                    onChange={(e) => setNewPlatformName(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs sm:text-sm font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Texte court du badge
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: ALIEXPRESS, ZARA..."
+                    value={newPlatformBadge}
+                    onChange={(e) => setNewPlatformBadge(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs sm:text-sm uppercase font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Couleur du badge
+                  </label>
+                  <select
+                    value={newPlatformBg}
+                    onChange={(e) => setNewPlatformBg(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs sm:text-sm font-bold"
+                  >
+                    <option value="bg-purple-600 text-white">Violet / Purple</option>
+                    <option value="bg-blue-600 text-white">Bleu / Blue</option>
+                    <option value="bg-emerald-600 text-white">Vert / Green</option>
+                    <option value="bg-red-600 text-white">Rouge / Red</option>
+                    <option value="bg-stone-900 text-white">Noir / Black</option>
+                    <option value="bg-amber-600 text-white">Ambre / Orange</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-black shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Ajouter cette plateforme</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* ONGLET 3 : PARAMÈTRES & INSTRUCTIONS DE PAIEMENT MOBILE MONEY */}
         {/* ============================================================ */}
         {activeAdminTab === 'settings' && settings && (
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-8">
@@ -664,7 +904,6 @@ export default function AdminPage() {
               )}
             </div>
 
-            {/* Titre et Texte d'instructions */}
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
@@ -697,7 +936,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Comptes Mobile Money */}
             <div className="space-y-4">
               <h3 className="font-bold text-stone-900 text-sm border-l-4 border-rose-500 pl-3">
                 Comptes Mobile Money configurés (MTN, Moov, Celtiis Bénin)
@@ -711,7 +949,11 @@ export default function AdminPage() {
                       <input
                         type="text"
                         value={acc.operator}
-                        onChange={(e) => updateAccountField(idx, 'operator', e.target.value)}
+                        onChange={(e) => {
+                          const accounts = [...settings.paymentInstructions.accounts];
+                          accounts[idx] = { ...accounts[idx], operator: e.target.value };
+                          setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
+                        }}
                         className="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs font-bold bg-white"
                       />
                     </div>
@@ -721,7 +963,11 @@ export default function AdminPage() {
                       <input
                         type="text"
                         value={acc.number}
-                        onChange={(e) => updateAccountField(idx, 'number', e.target.value)}
+                        onChange={(e) => {
+                          const accounts = [...settings.paymentInstructions.accounts];
+                          accounts[idx] = { ...accounts[idx], number: e.target.value };
+                          setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
+                        }}
                         className="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm font-mono font-bold bg-white text-rose-700"
                       />
                     </div>
@@ -731,7 +977,11 @@ export default function AdminPage() {
                       <input
                         type="text"
                         value={acc.holderName}
-                        onChange={(e) => updateAccountField(idx, 'holderName', e.target.value)}
+                        onChange={(e) => {
+                          const accounts = [...settings.paymentInstructions.accounts];
+                          accounts[idx] = { ...accounts[idx], holderName: e.target.value };
+                          setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
+                        }}
                         className="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs bg-white"
                       />
                     </div>
@@ -740,7 +990,6 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Note de confirmation */}
             <div>
               <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
                 Instruction après le transfert (ex: envoyer capture d'écran)
@@ -758,7 +1007,7 @@ export default function AdminPage() {
 
             <div className="pt-2 flex justify-end">
               <button
-                onClick={handleSaveSettings}
+                onClick={() => saveSettingsToServer(settings)}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-sm shadow-md cursor-pointer"
               >
                 <Save className="w-4 h-4" />
@@ -805,7 +1054,7 @@ export default function AdminPage() {
             {saveSuccess && (
               <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Devis et statut mis à jour ! Le client verra directement le prix de ses articles.</span>
+                <span>Ticket et statut mis à jour !</span>
               </div>
             )}
 
@@ -816,27 +1065,43 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* STATUT DU COLIS */}
-            <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
-              <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
-                Mettre à jour le Statut du Colis & Devis
-              </label>
-              <select
-                value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value as QuoteStatus)}
-                className="w-full px-4 py-2.5 rounded-xl border border-stone-300 bg-white text-sm font-bold text-stone-800 outline-hidden"
-              >
-                <option value="pending">⏳ En attente de devis (Calcul par Christaline)</option>
-                <option value="ready">📋 Devis prêt (Transmis au client avec montant total)</option>
-                <option value="accepted">✅ Devis validé par le client</option>
-                <option value="paid_deposit">💳 Acompte reçu (Prêt pour achat fournisseur)</option>
-                <option value="ordered">🛍️ Commande effectuée chez le fournisseur (Shein/Temu/Alibaba)</option>
-                <option value="in_transit">✈️ En transit international vers le Bénin</option>
-                <option value="customs">🏛️ Arrivé au Bénin / Dédouanement (Aéroport Cadjehoun / Cotonou)</option>
-                <option value="ready_for_pickup">🚚 Prêt pour livraison client / retrait agence Cotonou</option>
-                <option value="delivered">📦 Colis livré avec succès au client</option>
-                <option value="cancelled">❌ Commande annulée</option>
-              </select>
+            {/* STATUT DU COLIS & CHOIX DU MODE D'EXPÉDITION */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Mettre à jour le Statut
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as QuoteStatus)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-stone-300 bg-white text-sm font-bold text-stone-800 outline-hidden"
+                >
+                  <option value="pending">⏳ En attente de devis (Calcul par Christaline)</option>
+                  <option value="ready">📋 Devis prêt (Transmis au client avec montant total)</option>
+                  <option value="accepted">✅ Devis validé par le client</option>
+                  <option value="paid_deposit">💳 Acompte reçu (Prêt pour achat fournisseur)</option>
+                  <option value="ordered">🛍️ Commande effectuée chez le fournisseur</option>
+                  <option value="in_transit">✈️ En transit international vers le Bénin</option>
+                  <option value="customs">🏛️ Arrivé au Bénin / Dédouanement (Cotonou)</option>
+                  <option value="ready_for_pickup">🚚 Prêt pour livraison client / retrait agence</option>
+                  <option value="delivered">📦 Colis livré avec succès</option>
+                  <option value="cancelled">❌ Commande annulée</option>
+                </select>
+              </div>
+
+              <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Mode de Livraison / Délais
+                </label>
+                <select
+                  value={editShippingMode}
+                  onChange={(e) => setEditShippingMode(e.target.value as ShippingModeType)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-stone-300 bg-white text-sm font-bold text-stone-800 outline-hidden"
+                >
+                  <option value="air">✈️ Voie Aérienne (Délai : Au plus 1 mois)</option>
+                  <option value="sea">🚢 Voie Maritime (Délai : 2 à 3 mois)</option>
+                </select>
+              </div>
             </div>
 
             {/* ARTICLES & PRIX TOTAL DE CHAQUE ARTICLE */}
@@ -851,60 +1116,56 @@ export default function AdminPage() {
               </div>
 
               <div className="space-y-4">
-                {editItems.map((item, idx) => {
-                  const cfg = PLATFORM_CONFIG[item.platform] || PLATFORM_CONFIG.autre;
-                  return (
-                    <div key={item.id} className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${cfg.bg}`}>
-                            {cfg.name}
-                          </span>
-                          <span className="font-bold text-stone-900 text-sm">
-                            {item.name} (Qté : {item.quantity})
-                          </span>
-                          {item.variant && (
-                            <span className="text-xs text-stone-500">[{item.variant}]</span>
-                          )}
-                        </div>
-
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 bg-white px-2.5 py-1 rounded-lg border border-rose-200"
-                        >
-                          <span>Voir le produit sur {cfg.name}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                {editItems.map((item, idx) => (
+                  <div key={item.id} className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-stone-800 text-white">
+                          {item.platform}
+                        </span>
+                        <span className="font-bold text-stone-900 text-sm">
+                          {item.name} (Qté : {item.quantity})
+                        </span>
+                        {item.variant && (
+                          <span className="text-xs text-stone-500">[{item.variant}]</span>
+                        )}
                       </div>
 
-                      {/* Champ du prix total de l'article */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                        <div>
-                          <label className="block text-xs font-bold text-stone-700 mb-1">
-                            Prix Total de cet article pour le client (FCFA)
-                          </label>
-                          <input
-                            type="number"
-                            value={item.totalItemCFA || ''}
-                            onChange={(e) => updateItemTotalPrice(idx, parseFloat(e.target.value) || 0)}
-                            placeholder="Ex: 31000"
-                            className="w-full px-4 py-2.5 rounded-xl border border-stone-300 bg-white font-black text-rose-700 text-base"
-                          />
-                        </div>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700 bg-white px-2.5 py-1 rounded-lg border border-rose-200"
+                      >
+                        <span>Voir l'article</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
 
-                        <div className="text-xs text-stone-500">
-                          {item.originalPrice ? (
-                            <span>Prix repéré sur {cfg.name} : <strong>{item.originalPrice} {item.originalCurrency || 'EUR'}</strong></span>
-                          ) : (
-                            <span>Renseignez le montant net en FCFA qui sera facturé au client.</span>
-                          )}
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                      <div>
+                        <label className="block text-xs font-bold text-stone-700 mb-1">
+                          Prix Total de cet article pour le client (FCFA)
+                        </label>
+                        <input
+                          type="number"
+                          value={item.totalItemCFA || ''}
+                          onChange={(e) => updateItemTotalPrice(idx, parseFloat(e.target.value) || 0)}
+                          placeholder="Ex: 31000"
+                          className="w-full px-4 py-2.5 rounded-xl border border-stone-300 bg-white font-black text-rose-700 text-base"
+                        />
+                      </div>
+
+                      <div className="text-xs text-stone-500">
+                        {item.originalPrice ? (
+                          <span>Prix sur la plateforme : <strong>{item.originalPrice} {item.originalCurrency || 'EUR'}</strong></span>
+                        ) : (
+                          <span>Renseignez le montant net en FCFA qui sera facturé au client.</span>
+                        )}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -997,7 +1258,7 @@ export default function AdminPage() {
                     type="text"
                     value={editCarrierName}
                     onChange={(e) => setEditCarrierName(e.target.value)}
-                    placeholder="Ex: Cargo Express Cotonou"
+                    placeholder={editShippingMode === 'sea' ? 'Cargo Maritime Cotonou' : 'Cargo Aérien Cotonou'}
                     className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs"
                   />
                 </div>
@@ -1021,14 +1282,14 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <input
                     type="text"
-                    placeholder="Titre (ex: Colis inspecté à la douane de Cotonou)"
+                    placeholder="Titre (ex: Conteneur déchargé au Port de Cotonou)"
                     value={newTimelineStepTitle}
                     onChange={(e) => setNewTimelineStepTitle(e.target.value)}
                     className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs bg-white"
                   />
                   <input
                     type="text"
-                    placeholder="Détails (ex: Formalités complétées, en cours d'acheminement vers l'agence)"
+                    placeholder="Détails (ex: Inspection douanière en cours)"
                     value={newTimelineStepDesc}
                     onChange={(e) => setNewTimelineStepDesc(e.target.value)}
                     className="px-3 py-1.5 rounded-lg border border-stone-300 text-xs bg-white"

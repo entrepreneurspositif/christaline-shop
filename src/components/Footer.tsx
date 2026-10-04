@@ -20,7 +20,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-stone-400 text-sm leading-relaxed">
-              Votre service de confiance pour précommander facilement sur <strong>SHEIN</strong>, <strong>TEMU</strong> et <strong>ALIBABA</strong>. Nous nous occupons de l’achat en devises, du fret international et du dédouanement.
+              Votre service de confiance pour précommander facilement sur <strong>SHEIN</strong>, <strong>TEMU</strong> et vos plateformes préférées au Bénin. Nous nous occupons de l’achat en devises, du fret international et du dédouanement.
             </p>
             <div className="bg-stone-800/80 p-3.5 rounded-xl border border-stone-700 text-xs text-rose-300 flex items-start gap-2.5">
               <Heart className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
@@ -71,16 +71,16 @@ export default function Footer() {
             </h3>
             <div className="flex flex-wrap gap-2 text-xs">
               <span className="bg-stone-800 text-white px-2.5 py-1 rounded-md border border-stone-700 font-semibold">SHEIN</span>
-              <span className="bg-stone-800 text-orange-400 px-2.5 py-1 rounded-md border border-stone-700 font-semibold">TEMU</span>
-              <span className="bg-stone-800 text-amber-400 px-2.5 py-1 rounded-md border border-stone-700 font-semibold">ALIBABA</span>
+              <span className="bg-stone-800 text-amber-400 px-2.5 py-1 rounded-md border border-stone-700 font-semibold">TEMU</span>
               <span className="bg-stone-800 text-rose-400 px-2.5 py-1 rounded-md border border-stone-700 font-semibold">AliExpress</span>
+              <span className="bg-stone-800 text-stone-300 px-2.5 py-1 rounded-md border border-stone-700 font-semibold">Autres</span>
             </div>
             <p className="text-stone-400 text-xs leading-relaxed">
               Robes de soirée, costumes de mariage, chaussures habillées, maquillage & pinceaux, vestes & doudounes, joggings molletonnés, sacs et accessoires.
             </p>
             <div className="pt-2 text-xs text-amber-400 font-medium flex items-center gap-1.5">
               <Clock className="w-4 h-4 shrink-0" />
-              <span>Délai standard : <strong>7 à 12 jours ouvrables</strong></span>
+              <span>Délais : <strong>Aérien (au plus 1 mois) • Maritime (2 à 3 mois)</strong></span>
             </div>
           </div>
 

@@ -27,7 +27,8 @@ import {
   X,
   Smartphone,
   ShieldCheck,
-  Check
+  Check,
+  Ship
 } from 'lucide-react';
 
 interface Props {
@@ -193,11 +194,15 @@ export default function TicketTrackingView({ ticket }: Props) {
         {/* Délais */}
         <div className="bg-white p-5 rounded-2xl border border-amber-100 shadow-xs flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Clock className="w-6 h-6" />
+            {ticket.shippingMode === 'sea' ? <Ship className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
           </div>
           <div>
-            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Délai estimé</div>
-            <div className="text-sm font-black text-amber-800">{ticket.tracking.estimatedDelivery || '7 à 12 jours ouvrables'}</div>
+            <div className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">
+              {ticket.shippingMode === 'sea' ? 'Voie Maritime' : 'Voie Aérienne'}
+            </div>
+            <div className="text-sm font-black text-amber-800">
+              {ticket.tracking.estimatedDelivery || (ticket.shippingMode === 'sea' ? '2 à 3 mois' : 'Au plus 1 mois')}
+            </div>
           </div>
         </div>
 
@@ -463,8 +468,10 @@ export default function TicketTrackingView({ ticket }: Props) {
             </div>
 
             <div className="text-right">
-              <div className="text-xs text-stone-400">Délai contractuel</div>
-              <div className="text-sm font-bold text-amber-700">7 à 12 jours ouvrables</div>
+              <div className="text-xs text-stone-400">Délai estimé ({ticket.shippingMode === 'sea' ? 'Maritime' : 'Aérien'})</div>
+              <div className="text-sm font-bold text-amber-700">
+                {ticket.shippingMode === 'sea' ? '2 à 3 mois' : 'Au plus 1 mois'}
+              </div>
             </div>
           </div>
 

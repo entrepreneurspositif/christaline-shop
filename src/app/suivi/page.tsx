@@ -48,7 +48,7 @@ export default function SuiviPage() {
             Suivre mon Ticket & Devis
           </h1>
           <p className="text-stone-600 text-sm sm:text-base max-w-xl mx-auto">
-            Consultez le chiffrage en FCFA de vos articles Shein, Temu ou Alibaba et suivez l'acheminement de votre colis jusqu'à la livraison.
+            Consultez le chiffrage en FCFA de vos articles Shein, Temu ou autres plateformes et suivez l'acheminement de votre colis jusqu'à la livraison au Bénin.
           </p>
         </div>
 
@@ -142,7 +142,7 @@ export default function SuiviPage() {
                 <span>CS-334912</span>
                 <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-sans">En attente</span>
               </div>
-              <div className="text-stone-500 mt-1">Marc Kouamé • Costume Alibaba (Chiffrage en cours)</div>
+              <div className="text-stone-500 mt-1">Marc Dossou • Costume & Cravate Shein (Chiffrage en cours)</div>
             </button>
 
             <button

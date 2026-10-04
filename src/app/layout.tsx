@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Christaline Shop • Précommandes Shein, Temu & Alibaba | Devis & Suivi Colis",
-  description: "Passez vos commandes sur Shein, Temu et Alibaba facilement. Obtenez votre ticket officiel, consultez votre devis en FCFA et suivez votre colis en temps réel. Livraison 7 à 12 jours ouvrables. WhatsApp : 0154072488.",
-  keywords: ["Christaline Shop", "Shein", "Temu", "Alibaba", "précommande", "devis", "suivi colis", "Cotonou", "Bénin", "Calavi", "Mobile Money"],
+  title: "Christaline Shop • Précommandes Shein & Temu au Bénin | Devis & Suivi Colis",
+  description: "Passez vos commandes sur Shein et Temu facilement au Bénin. Obtenez votre ticket officiel, consultez votre devis en FCFA et suivez votre colis en temps réel. Voie aérienne (au plus 1 mois) ou maritime (2 à 3 mois). WhatsApp : 0154072488.",
+  keywords: ["Christaline Shop", "Shein Bénin", "Temu Bénin", "précommande", "devis", "suivi colis", "Cotonou", "Bénin", "Calavi", "Mobile Money"],
   icons: {
     icon: "/favicon.ico",
   },

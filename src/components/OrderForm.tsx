@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Plus, 
@@ -16,12 +16,14 @@ import {
   Loader2,
   Clock,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Plane,
+  Ship
 } from 'lucide-react';
-import { PlatformType, PLATFORM_CONFIG } from '@/lib/types';
+import { StorePlatform, ShippingModeOption } from '@/lib/settings';
 
 interface ItemInput {
-  platform: PlatformType;
+  platform: string;
   url: string;
   name: string;
   variant: string;
@@ -33,6 +35,16 @@ interface ItemInput {
 
 export default function OrderForm() {
   const router = useRouter();
+
+  // Plateformes & Modes d'expédition dynamiques
+  const [availablePlatforms, setAvailablePlatforms] = useState<StorePlatform[]>([
+    { id: 'shein', name: 'Shein', logoText: 'SHEIN', bg: 'bg-black text-white', border: 'border-black', color: 'text-black', enabled: true },
+    { id: 'temu', name: 'Temu', logoText: 'TEMU', bg: 'bg-gradient-to-r from-orange-500 to-amber-600 text-white', border: 'border-orange-500', color: 'text-amber-600', enabled: true },
+    { id: 'autre', name: 'Autre plateforme', logoText: 'AUTRE', bg: 'bg-rose-500 text-white', border: 'border-rose-400', color: 'text-rose-600', enabled: true }
+  ]);
+
+  // Mode d'expédition choisi par le client
+  const [shippingMode, setShippingMode] = useState<'air' | 'sea'>('air');
 
   // État Client (Bénin)
   const [name, setName] = useState('');
@@ -63,12 +75,30 @@ export default function OrderForm() {
   const [createdTicket, setCreatedTicket] = useState<{ id: string; name: string } | null>(null);
   const [copiedTicket, setCopiedTicket] = useState(false);
 
-  // Gestion des articles
+  // Charger les plateformes actives configurées par l'admin
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.settings?.platforms) {
+          const active = data.settings.platforms.filter((p: StorePlatform) => p.enabled);
+          if (active.length > 0) {
+            setAvailablePlatforms(active);
+            if (!active.some((p: StorePlatform) => p.id === items[0].platform)) {
+              updateItem(0, 'platform', active[0].id);
+            }
+          }
+        }
+      })
+      .catch(err => console.error('Erreur chargement plateformes:', err));
+  }, []);
+
   const addItem = () => {
+    const defaultPlt = availablePlatforms[0]?.id || 'shein';
     setItems([
       ...items,
       {
-        platform: 'shein',
+        platform: defaultPlt,
         url: '',
         name: '',
         variant: '',
@@ -92,7 +122,6 @@ export default function OrderForm() {
     setItems(updated);
   };
 
-  // Soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -116,6 +145,7 @@ export default function OrderForm() {
 
     try {
       const payload = {
+        shippingMode,
         client: {
           name: name.trim(),
           phone: phone.trim(),
@@ -148,7 +178,6 @@ export default function OrderForm() {
         throw new Error(data.error || 'Erreur lors de la création de la commande');
       }
 
-      // Sauvegarder dans le localStorage
       try {
         const saved = JSON.parse(localStorage.getItem('cs_recent_tickets') || '[]');
         if (!saved.includes(data.ticket.id)) {
@@ -178,16 +207,16 @@ export default function OrderForm() {
     setTimeout(() => setCopiedTicket(false), 3000);
   };
 
-  // WhatsApp de notification pour Christaline Shop Bénin
   const generateWhatsAppUrl = () => {
     if (!createdTicket) return '';
+    const modeLabel = shippingMode === 'sea' ? 'Voie Maritime (2 à 3 mois)' : 'Voie Aérienne (Au plus 1 mois)';
     const message = `Bonjour Christaline Shop Bénin ! 🌸\n`
       + `Je viens d'enregistrer ma précommande sur votre site :\n\n`
       + `🎫 *Ticket N° : ${createdTicket.id}*\n`
       + `👤 Client : ${name}\n`
-      + `📦 Nombre d'articles : ${items.length}\n`
+      + `📦 Mode choisi : *${modeLabel}*\n`
       + `📍 Ville : ${city} (Bénin)\n\n`
-      + `Merci de me communiquer le montant total de ma commande !`;
+      + `Merci de me communiquer le montant total de mes articles !`;
     return `https://wa.me/2290154072488?text=${encodeURIComponent(message)}`;
   };
 
@@ -206,7 +235,7 @@ export default function OrderForm() {
             Félicitations {createdTicket.name} !
           </h2>
           <p className="text-stone-600 text-sm max-w-lg mx-auto">
-            Votre demande de précommande a été transmise à l'équipe Christaline Shop Bénin. Voici votre numéro de ticket officiel :
+            Votre demande a été transmise à Christaline Shop Bénin. Mode retenu : <strong>{shippingMode === 'sea' ? 'Voie Maritime (2 à 3 mois)' : 'Voie Aérienne (Au plus 1 mois)'}</strong>.
           </p>
         </div>
 
@@ -227,20 +256,6 @@ export default function OrderForm() {
             <Copy className="w-4 h-4 text-rose-600" />
             {copiedTicket ? 'Copié dans le presse-papier !' : 'Copier le numéro de ticket'}
           </button>
-        </div>
-
-        {/* Instructions */}
-        <div className="bg-stone-50 p-5 rounded-2xl text-left border border-stone-200 space-y-2 text-sm text-stone-700 max-w-lg mx-auto">
-          <div className="font-bold text-stone-900 flex items-center gap-2">
-            <Info className="w-4 h-4 text-amber-500 shrink-0" />
-            Prochaines étapes :
-          </div>
-          <ol className="list-decimal pl-5 space-y-1 text-xs text-stone-600">
-            <li>Notre équipe calcule le prix total de vos articles en FCFA.</li>
-            <li>Vous consultez le montant total et les instructions de paiement Mobile Money.</li>
-            <li>Vous versez votre acompte pour valider la réservation.</li>
-            <li>Votre colis est acheminé au Bénin dans un délai de <strong>7 à 12 jours ouvrables</strong>.</li>
-          </ol>
         </div>
 
         {/* Actions principales */}
@@ -269,7 +284,7 @@ export default function OrderForm() {
             onClick={() => {
               setCreatedTicket(null);
               setItems([{
-                platform: 'shein',
+                platform: availablePlatforms[0]?.id || 'shein',
                 url: '',
                 name: '',
                 variant: '',
@@ -298,10 +313,10 @@ export default function OrderForm() {
           Précommandes Sécurisées • Bénin
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 font-serif">
-          Ajoutez vos articles Shein, Temu ou Alibaba
+          Ajoutez vos articles Shein, Temu & autres
         </h2>
         <p className="text-stone-600 text-sm mt-1">
-          Collez le lien de chaque article. Notre équipe calcule le prix total de vos articles en FCFA sans frais cachés.
+          Collez le lien de chaque article. Notre équipe calcule le montant total en FCFA et s'occupe de l'achat et de l'expédition vers le Bénin.
         </p>
       </div>
 
@@ -312,11 +327,77 @@ export default function OrderForm() {
         </div>
       )}
 
-      {/* SECTION 1 : VOS COORDONNÉES AU BÉNIN */}
+      {/* SECTION CHOIX DU MODE D'EXPÉDITION & DÉLAI */}
+      <div className="space-y-3 bg-gradient-to-br from-rose-50/60 to-amber-50/60 p-5 rounded-2xl border border-rose-200">
+        <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider">
+          Choisissez votre mode de livraison vers le Bénin <span className="text-rose-500">*</span>
+        </label>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
+          {/* Voie Aérienne */}
+          <div
+            onClick={() => setShippingMode('air')}
+            className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3.5 ${
+              shippingMode === 'air'
+                ? 'bg-white border-rose-600 shadow-md ring-2 ring-rose-200'
+                : 'bg-white/80 border-stone-200 hover:border-stone-300'
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl shrink-0 ${shippingMode === 'air' ? 'bg-rose-100 text-rose-600' : 'bg-stone-100 text-stone-500'}`}>
+              <Plane className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-stone-900 text-sm">Voie Aérienne (Avion)</span>
+                <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                  Rapide
+                </span>
+              </div>
+              <div className="text-xs font-bold text-rose-700">
+                Délai : Au plus 1 mois
+              </div>
+              <p className="text-[11px] text-stone-500 leading-tight">
+                Idéal pour vêtements, chaussures, maquillage et commandes urgentes.
+              </p>
+            </div>
+          </div>
+
+          {/* Voie Maritime */}
+          <div
+            onClick={() => setShippingMode('sea')}
+            className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-start gap-3.5 ${
+              shippingMode === 'sea'
+                ? 'bg-white border-amber-600 shadow-md ring-2 ring-amber-200'
+                : 'bg-white/80 border-stone-200 hover:border-stone-300'
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl shrink-0 ${shippingMode === 'sea' ? 'bg-amber-100 text-amber-600' : 'bg-stone-100 text-stone-500'}`}>
+              <Ship className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-stone-900 text-sm">Voie Maritime (Bateau)</span>
+                <span className="text-[10px] font-black uppercase bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                  Économique
+                </span>
+              </div>
+              <div className="text-xs font-bold text-amber-700">
+                Délai : 2 à 3 mois
+              </div>
+              <p className="text-[11px] text-stone-500 leading-tight">
+                Idéal pour gros volumes, colis lourds ou commandes en quantité.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* SECTION 1 : VOS COORDONNÉES */}
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2 border-l-4 border-rose-500 pl-3">
           <span>1. Vos Coordonnées au Bénin</span>
-          <span className="text-xs font-normal text-stone-500">(Pour recevoir le devis et être livré)</span>
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -327,7 +408,7 @@ export default function OrderForm() {
             <input
               type="text"
               required
-              placeholder="Ex: Tossou Sophie"
+              placeholder="Ex: Dossou Sophie"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm outline-hidden bg-stone-50/50"
@@ -416,7 +497,7 @@ export default function OrderForm() {
               2. Vos Articles Choisi(s)
             </h3>
             <p className="text-xs text-stone-500">
-              Vous pouvez ajouter plusieurs articles dans la même précommande.
+              Ajoutez les liens de vos articles choisis sur Shein, Temu ou autres plateformes.
             </p>
           </div>
           <span className="text-xs font-bold bg-amber-100 text-amber-800 px-3 py-1 rounded-full border border-amber-300">
@@ -454,28 +535,27 @@ export default function OrderForm() {
                 )}
               </div>
 
-              {/* Choix de la plateforme */}
+              {/* SÉLECTEUR DYNAMIQUE DE PLATEFORME (CHARGÉ DEPUIS L'ADMIN) */}
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
                   Plateforme d'achat <span className="text-rose-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {(['shein', 'temu', 'alibaba', 'autre'] as PlatformType[]).map((plt) => {
-                    const isSelected = item.platform === plt;
-                    const cfg = PLATFORM_CONFIG[plt];
+                  {availablePlatforms.map((plt) => {
+                    const isSelected = item.platform === plt.id;
                     return (
                       <button
-                        key={plt}
+                        key={plt.id}
                         type="button"
-                        onClick={() => updateItem(index, 'platform', plt)}
+                        onClick={() => updateItem(index, 'platform', plt.id)}
                         className={`py-2.5 px-3 rounded-xl text-xs font-black tracking-wide border-2 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                           isSelected
-                            ? `${cfg.bg} border-transparent shadow-sm scale-102`
+                            ? `${plt.bg || 'bg-rose-600 text-white'} border-transparent shadow-sm scale-102`
                             : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
                         }`}
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>{cfg.logoText}</span>
+                        <span>{plt.logoText || plt.name}</span>
                       </button>
                     );
                   })}
@@ -485,13 +565,13 @@ export default function OrderForm() {
               {/* Champ Lien Produit */}
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Lien du produit (URL Shein, Temu ou Alibaba) <span className="text-rose-500">*</span>
+                  Lien du produit <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type="url"
                     required
-                    placeholder={`Collez ici le lien exact ${item.platform.toUpperCase()} (ex: https://${item.platform === 'shein' ? 'shein.com/...' : item.platform === 'temu' ? 'temu.com/...' : 'alibaba.com/...'})`}
+                    placeholder={`Collez ici le lien exact de l'article`}
                     value={item.url}
                     onChange={(e) => updateItem(index, 'url', e.target.value)}
                     className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-xs sm:text-sm outline-hidden bg-white pr-10"
@@ -596,11 +676,10 @@ export default function OrderForm() {
                 </div>
               </div>
 
-              {/* Remarques */}
               <div>
                 <input
                   type="text"
-                  placeholder="Remarque particulière (ex: prendre du L si ça taille petit)"
+                  placeholder="Remarque spécifique (ex: prendre du L si ça taille petit)"
                   value={item.notes}
                   onChange={(e) => updateItem(index, 'notes', e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-dashed border-stone-300 text-xs outline-hidden bg-white/70 text-stone-600"
@@ -628,18 +707,20 @@ export default function OrderForm() {
         </label>
         <textarea
           rows={2}
-          placeholder="Ex: Besoin urgent pour un mariage le 20 du mois..."
+          placeholder="Ex: Événement prévu pour le mois prochain, besoin d'une confirmation rapide..."
           value={generalNotes}
           onChange={(e) => setGeneralNotes(e.target.value)}
           className="w-full px-4 py-3 rounded-xl border border-stone-300 focus:ring-2 focus:ring-rose-500 text-sm outline-hidden bg-stone-50/50"
         ></textarea>
       </div>
 
-      {/* RAPPEL DES ENGAGEMENTS */}
+      {/* RAPPEL DES DÉLAIS OFFICIELS */}
       <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-700">
         <div className="flex items-center gap-2.5">
           <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-          <span>Délai de livraison au Bénin : <strong>7 à 12 jours ouvrables</strong> après validation de l'acompte.</span>
+          <span>
+            Mode choisi : <strong>{shippingMode === 'sea' ? 'Voie Maritime (2 à 3 mois)' : 'Voie Aérienne (Au plus 1 mois)'}</strong> vers le Bénin.
+          </span>
         </div>
         <div className="flex items-center gap-1.5 font-bold text-rose-700">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />

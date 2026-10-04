@@ -1,17 +1,16 @@
 import fs from 'fs';
 import path from 'path';
-import { TicketOrder, QuoteStatus, OrderItem, TrackingEvent, TrackingInfo, QuoteDetails, STATUS_MAP } from './types';
+import { TicketOrder, QuoteStatus, OrderItem, TrackingEvent, TrackingInfo, QuoteDetails, STATUS_MAP, ShippingModeType } from './types';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
 
-// Générateur d'ID Ticket unique et lisible (ex: CS-92841)
 export function generateTicketId(): string {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
   return `CS-${randomNum}`;
 }
 
-export function createDefaultTimeline(status: QuoteStatus, createdAt: string): TrackingEvent[] {
+export function createDefaultTimeline(status: QuoteStatus, createdAt: string, shippingMode: ShippingModeType = 'air'): TrackingEvent[] {
   const now = new Date(createdAt);
   
   const formatDate = (date: Date) => {
@@ -25,6 +24,7 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
   };
 
   const currentStep = STATUS_MAP[status]?.stepIndex ?? 0;
+  const isSea = shippingMode === 'sea';
 
   return [
     {
@@ -48,7 +48,7 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
     {
       id: 'step-2',
       title: 'Devis validé & Acompte reçu',
-      description: 'Acompte confirmé via Mobile Money (MTN / MoMo / Moov / Celtiis Bénin).',
+      description: 'Acompte confirmé via Mobile Money (MTN / Moov / Celtiis Bénin).',
       date: currentStep >= 3 ? formatDate(new Date(now.getTime() + 6 * 3600 * 1000)) : 'En attente validation',
       location: 'Christaline Shop - Trésorerie',
       completed: currentStep >= 3,
@@ -57,7 +57,7 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
     {
       id: 'step-3',
       title: 'Commande validée chez le fournisseur',
-      description: 'Articles commandés avec succès chez Shein, Temu ou Alibaba.',
+      description: 'Articles commandés avec succès auprès de la plateforme partenaire.',
       date: currentStep >= 4 ? formatDate(new Date(now.getTime() + 24 * 3600 * 1000)) : 'À venir',
       location: 'Plateforme Fournisseur',
       completed: currentStep >= 4,
@@ -65,27 +65,31 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
     },
     {
       id: 'step-4',
-      title: 'Expédition & Transit International',
-      description: 'Le colis a quitté l\'entrepôt international et est en vol fret aérien vers le Bénin.',
-      date: currentStep >= 5 ? formatDate(new Date(now.getTime() + 48 * 3600 * 1000)) : 'Délai 7 à 12 jours ouvrables',
-      location: 'Fret Aérien International',
+      title: isSea ? 'Traversée Maritime (Bateau / Conteneur)' : 'Expédition Aérienne (Vol Fret Régulier)',
+      description: isSea 
+        ? 'Conteneur chargé et expédié par bateau vers le Port de Cotonou. Délai maritime : 2 à 3 mois.'
+        : 'Colis groupé expédié en vol fret aérien international vers Cotonou. Délai aérien : au plus 1 mois.',
+      date: currentStep >= 5 ? formatDate(new Date(now.getTime() + 48 * 3600 * 1000)) : (isSea ? 'Délai 2 à 3 mois' : 'Délai au plus 1 mois'),
+      location: isSea ? 'Fret Maritime International (Bateau)' : 'Fret Aérien International (Avion)',
       completed: currentStep >= 5,
       current: currentStep === 5,
     },
     {
       id: 'step-5',
       title: 'Arrivée au Bénin & Dédouanement',
-      description: 'Colis réceptionné à l\'aéroport de Cotonou (Cadjehoun), inspection et tri.',
-      date: currentStep >= 6 ? formatDate(new Date(now.getTime() + 7 * 86400 * 1000)) : 'En attente d\'atterrissage',
-      location: 'Douane & Hub Cotonou',
+      description: isSea 
+        ? 'Arrivée au Port Autonome de Cotonou, déchargement et formalités douanières.'
+        : 'Atterrissage à l\'Aéroport International de Cotonou (Cadjehoun), inspection et tri.',
+      date: currentStep >= 6 ? formatDate(new Date(now.getTime() + (isSea ? 60 : 15) * 86400 * 1000)) : 'En cours de transit',
+      location: isSea ? 'Port Autonome de Cotonou' : 'Aéroport Cadjehoun Cotonou',
       completed: currentStep >= 6,
       current: currentStep === 6,
     },
     {
       id: 'step-6',
       title: 'Prêt pour livraison / retrait',
-      description: 'Colis disponible à l\'agence de Cotonou ou confié au livreur.',
-      date: currentStep >= 7 ? formatDate(new Date(now.getTime() + 9 * 86400 * 1000)) : 'À venir',
+      description: 'Colis disponible à l\'agence Christaline Shop Cotonou ou confié au livreur.',
+      date: currentStep >= 7 ? formatDate(new Date(now.getTime() + (isSea ? 65 : 18) * 86400 * 1000)) : 'À venir',
       location: 'Agence Christaline Shop Cotonou',
       completed: currentStep >= 7,
       current: currentStep === 7,
@@ -93,8 +97,8 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string): T
     {
       id: 'step-7',
       title: 'Colis remis au client',
-      description: 'Commande livrée en main propre. Merci de faire confiance à Christaline Shop !',
-      date: currentStep >= 8 ? formatDate(new Date(now.getTime() + 10 * 86400 * 1000)) : 'En attente de remise',
+      description: 'Commande remise en main propre. Merci de faire confiance à Christaline Shop !',
+      date: currentStep >= 8 ? formatDate(new Date(now.getTime() + (isSea ? 70 : 20) * 86400 * 1000)) : 'En attente de remise',
       location: 'Client (Bénin)',
       completed: currentStep >= 8,
       current: currentStep === 8,
@@ -107,6 +111,7 @@ const SEED_DATA: TicketOrder[] = [
     id: 'CS-784210',
     createdAt: new Date(Date.now() - 5 * 86400 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
+    shippingMode: 'air',
     client: {
       name: 'Sophie Tossou',
       phone: '0154072488',
@@ -167,20 +172,22 @@ const SEED_DATA: TicketOrder[] = [
     },
     tracking: {
       currentStatus: 'in_transit',
-      statusLabel: 'En transit international (Vol vers Cotonou)',
-      estimatedDelivery: '7 à 12 jours ouvrables',
-      estimatedDeliveryDate: new Date(Date.now() + 4 * 86400 * 1000).toISOString().split('T')[0],
+      statusLabel: 'En transit international (Vol Aérien vers Cotonou)',
+      shippingMode: 'air',
+      estimatedDelivery: 'Au plus 1 mois',
+      estimatedDeliveryDate: new Date(Date.now() + 10 * 86400 * 1000).toISOString().split('T')[0],
       supplierOrderNumber: 'SHEIN-FR-98230192',
       carrierName: 'Christaline Air Cargo Bénin',
       carrierTrackingNumber: 'CST-BEN-2026-98124',
       carrierTrackingUrl: 'https://www.17track.net',
-      events: createDefaultTimeline('in_transit', new Date(Date.now() - 5 * 86400 * 1000).toISOString())
+      events: createDefaultTimeline('in_transit', new Date(Date.now() - 5 * 86400 * 1000).toISOString(), 'air')
     }
   },
   {
     id: 'CS-918234',
     createdAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    shippingMode: 'air',
     client: {
       name: 'Aïcha Hounkpatin',
       phone: '0154072488',
@@ -242,38 +249,40 @@ const SEED_DATA: TicketOrder[] = [
     tracking: {
       currentStatus: 'ready',
       statusLabel: 'Devis prêt (En attente de paiement acompte)',
-      estimatedDelivery: '7 à 12 jours ouvrables dès validation',
+      shippingMode: 'air',
+      estimatedDelivery: 'Au plus 1 mois dès validation',
       estimatedDeliveryDate: null,
       supplierOrderNumber: null,
       carrierName: null,
       carrierTrackingNumber: null,
       carrierTrackingUrl: null,
-      events: createDefaultTimeline('ready', new Date(Date.now() - 1 * 86400 * 1000).toISOString())
+      events: createDefaultTimeline('ready', new Date(Date.now() - 1 * 86400 * 1000).toISOString(), 'air')
     }
   },
   {
     id: 'CS-334912',
     createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    shippingMode: 'sea', // Bateau
     client: {
       name: 'Marc Gbaguidi',
       phone: '0154072488',
       whatsapp: '0154072488',
       city: 'Porto-Novo - Ouando',
       address: 'Près du grand marché Ouando',
-      notes: 'Besoin d’expédition vers Porto-Novo dès arrivée à Cotonou.'
+      notes: 'Commande volumineuse choisie par voie maritime.'
     },
     items: [
       {
         id: 'item-1',
-        platform: 'alibaba',
-        url: 'https://french.alibaba.com/p-detail/costume-trois-pieces-homme-mariage-1600829182.html',
-        name: 'Costume 3 pièces homme coupe ajustée Bleu Nuit',
-        variant: 'Taille Veste 52 / Pantalon 44 / Bleu Nuit',
-        quantity: 1,
-        originalPrice: 45.00,
-        originalCurrency: 'USD',
-        notes: 'Vérifier la grille des tailles du fournisseur',
+        platform: 'shein',
+        url: 'https://shein.com/fr/lot-vestes-costumes-homme-mariage.html',
+        name: 'Lot vestes & costumes complets homme',
+        variant: 'Taille Veste 52 / Bleu Nuit',
+        quantity: 3,
+        originalPrice: 35.00,
+        originalCurrency: 'EUR',
+        notes: 'Expédition par conteneur bateau',
         unitPriceCFA: 0,
         shippingFeeCFA: 0,
         serviceFeeCFA: 0,
@@ -293,25 +302,27 @@ const SEED_DATA: TicketOrder[] = [
       depositRequiredCFA: 0,
       depositPaidCFA: 0,
       balanceRemainingCFA: 0,
-      adminNote: 'Demande reçue ! Notre équipe consulte le fournisseur Alibaba pour vous fournir le tarif le plus avantageux avec transport sécurisé vers le Bénin.',
+      adminNote: 'Demande par voie maritime reçue ! Notre équipe prépare votre chiffrage économique.',
       quotedAt: null
     },
     tracking: {
       currentStatus: 'pending',
       statusLabel: 'En attente de chiffrage par Christaline Shop',
-      estimatedDelivery: '7 à 12 jours ouvrables après validation',
+      shippingMode: 'sea',
+      estimatedDelivery: '2 à 3 mois (Voie maritime)',
       estimatedDeliveryDate: null,
       supplierOrderNumber: null,
       carrierName: null,
       carrierTrackingNumber: null,
       carrierTrackingUrl: null,
-      events: createDefaultTimeline('pending', new Date(Date.now() - 35 * 60 * 1000).toISOString())
+      events: createDefaultTimeline('pending', new Date(Date.now() - 35 * 60 * 1000).toISOString(), 'sea')
     }
   },
   {
     id: 'CS-652190',
-    createdAt: new Date(Date.now() - 14 * 86400 * 1000).toISOString(),
+    createdAt: new Date(Date.now() - 25 * 86400 * 1000).toISOString(),
     updatedAt: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
+    shippingMode: 'air',
     client: {
       name: 'Grace Dossou',
       phone: '0154072488',
@@ -351,18 +362,19 @@ const SEED_DATA: TicketOrder[] = [
       depositPaidCFA: 23000,
       balanceRemainingCFA: 0,
       adminNote: 'Colis livré à Cotonou et solde entièrement réglé. Merci pour votre fidélité !',
-      quotedAt: new Date(Date.now() - 13 * 86400 * 1000).toISOString()
+      quotedAt: new Date(Date.now() - 24 * 86400 * 1000).toISOString()
     },
     tracking: {
       currentStatus: 'delivered',
       statusLabel: 'Colis livré avec succès',
-      estimatedDelivery: '7 à 12 jours ouvrables (Respecté)',
+      shippingMode: 'air',
+      estimatedDelivery: 'Au plus 1 mois (Respecté)',
       estimatedDeliveryDate: new Date(Date.now() - 2 * 86400 * 1000).toISOString().split('T')[0],
       supplierOrderNumber: 'SHEIN-FR-889123',
       carrierName: 'Christaline Express Cotonou',
       carrierTrackingNumber: 'CST-LIV-0921',
       carrierTrackingUrl: null,
-      events: createDefaultTimeline('delivered', new Date(Date.now() - 14 * 86400 * 1000).toISOString())
+      events: createDefaultTimeline('delivered', new Date(Date.now() - 25 * 86400 * 1000).toISOString(), 'air')
     }
   }
 ];
@@ -400,6 +412,7 @@ export function getTicketById(id: string): TicketOrder | null {
 }
 
 export interface CreateTicketPayload {
+  shippingMode?: ShippingModeType;
   client: {
     name: string;
     phone: string;
@@ -409,7 +422,7 @@ export interface CreateTicketPayload {
     notes?: string;
   };
   items: Array<{
-    platform: 'shein' | 'temu' | 'alibaba' | 'autre';
+    platform: string;
     url: string;
     name: string;
     variant?: string;
@@ -423,6 +436,7 @@ export interface CreateTicketPayload {
 export function createNewTicket(payload: CreateTicketPayload): TicketOrder {
   const tickets = getAllTickets();
   const now = new Date().toISOString();
+  const shippingMode = payload.shippingMode === 'sea' ? 'sea' : 'air';
   
   let newId = generateTicketId();
   while (tickets.some(t => t.id === newId)) {
@@ -447,10 +461,13 @@ export function createNewTicket(payload: CreateTicketPayload): TicketOrder {
     status: 'pending'
   }));
 
+  const estimatedDelivery = shippingMode === 'sea' ? '2 à 3 mois' : 'Au plus 1 mois';
+
   const newTicket: TicketOrder = {
     id: newId,
     createdAt: now,
     updatedAt: now,
+    shippingMode,
     client: {
       name: payload.client.name.trim(),
       phone: payload.client.phone.trim(),
@@ -471,19 +488,20 @@ export function createNewTicket(payload: CreateTicketPayload): TicketOrder {
       depositRequiredCFA: 0,
       depositPaidCFA: 0,
       balanceRemainingCFA: 0,
-      adminNote: 'Votre demande a bien été reçue par Christaline Shop Bénin ! Nous analysons vos liens et nous vous communiquons le montant total de vos articles.',
+      adminNote: `Demande reçue par Christaline Shop Bénin (Mode : ${shippingMode === 'sea' ? 'Voie Maritime' : 'Voie Aérienne'}). Chiffrage en cours.`,
       quotedAt: null
     },
     tracking: {
       currentStatus: 'pending',
       statusLabel: 'En attente de chiffrage par l\'équipe Christaline',
-      estimatedDelivery: '7 à 12 jours ouvrables',
+      shippingMode,
+      estimatedDelivery,
       estimatedDeliveryDate: null,
       supplierOrderNumber: null,
       carrierName: null,
       carrierTrackingNumber: null,
       carrierTrackingUrl: null,
-      events: createDefaultTimeline('pending', now)
+      events: createDefaultTimeline('pending', now, shippingMode)
     }
   };
 

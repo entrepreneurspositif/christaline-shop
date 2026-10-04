@@ -14,9 +14,9 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 font-medium">
             <Truck className="w-3.5 h-3.5 animate-pulse" />
-            <span>Délai de livraison : <strong>7 à 12 jours ouvrables</strong></span>
+            <span>Livraison Bénin : <strong>Aérien (≤ 1 mois) • Maritime (2 à 3 mois)</strong></span>
             <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">SHEIN • TEMU • ALIBABA</span>
+            <span className="hidden sm:inline">SHEIN • TEMU • MULTI-PLATEFORMES</span>
           </div>
           <div className="flex items-center gap-4 text-xs font-semibold">
             <a 
@@ -49,7 +49,7 @@ export default function Navbar() {
                 <span className="text-amber-500 text-xs uppercase tracking-widest font-sans font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">SHOP</span>
               </span>
               <span className="text-[11px] font-semibold text-stone-500 tracking-wider uppercase mt-1">
-                Précommandes Shein • Temu • Alibaba
+                Précommandes Shein • Temu & Plus
               </span>
             </div>
           </Link>
@@ -152,7 +152,7 @@ export default function Navbar() {
             className="flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 text-stone-700 font-medium"
           >
             <Truck className="w-5 h-5 text-amber-500" />
-            <span>Comment ça marche & Délais (7-12 jours)</span>
+            <span>Comment ça marche & Délais (Aérien ≤ 1 mois / Mer 2-3 mois)</span>
           </Link>
           <Link
             href="/admin"
