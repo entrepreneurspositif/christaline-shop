@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { joinGroupBuy } from '@/lib/groupBuyStorage';
+import { notifyGroupBuyJoinTelegram } from '@/lib/telegram';
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -28,6 +29,17 @@ export async function POST(req: NextRequest, { params }: Params) {
       variant: body.variant || '',
       notes: body.notes || ''
     });
+
+    // Déclencher l'alerte Telegram pour la réservation de vente en groupe
+    try {
+      const url = new URL(req.url);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      notifyGroupBuyJoinTelegram(result.groupBuy, result.participant, result.ticketId, baseUrl).catch(err => {
+        console.error('Erreur alerte Telegram vente en groupe:', err);
+      });
+    } catch (e) {
+      // Ignorer
+    }
 
     return NextResponse.json({
       success: true,

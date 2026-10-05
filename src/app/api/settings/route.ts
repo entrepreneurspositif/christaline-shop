@@ -22,6 +22,10 @@ export async function POST(request: Request) {
       paymentInstructions: {
         ...current.paymentInstructions,
         ...(body.paymentInstructions || {})
+      },
+      telegram: {
+        ...current.telegram,
+        ...(body.telegram || {})
       }
     };
     saveSettings(updated);

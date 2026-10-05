@@ -16,6 +16,10 @@ export function getSettings(): AppSettings {
         whatsappButtonTarget: parsed.whatsappButtonTarget ?? DEFAULT_SETTINGS.whatsappButtonTarget,
         platforms: parsed.platforms || DEFAULT_SETTINGS.platforms,
         shippingModes: parsed.shippingModes || DEFAULT_SETTINGS.shippingModes,
+        telegram: {
+          ...DEFAULT_SETTINGS.telegram,
+          ...(parsed.telegram || {})
+        },
         paymentInstructions: {
           ...DEFAULT_SETTINGS.paymentInstructions,
           ...(parsed.paymentInstructions || {})

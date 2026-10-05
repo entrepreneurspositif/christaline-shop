@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTicketById, updateTicket, getAllTickets, saveTickets, createDefaultTimeline } from '@/lib/storage';
 import { QuoteStatus, OrderItem, TrackingEvent, STATUS_MAP } from '@/lib/types';
+import { notifyTicketStatusUpdateTelegram } from '@/lib/telegram';
 
 export async function GET(
   request: Request,
@@ -149,6 +150,25 @@ export async function PATCH(
       tracking: updatedTracking,
       client: body.client ? { ...ticket.client, ...body.client } : ticket.client,
     });
+
+    if (!updated) {
+      return NextResponse.json({ success: false, error: 'Échec de la mise à jour' }, { status: 500 });
+    }
+
+    // Déclencher notification Telegram si le statut ou l'acompte a changé
+    try {
+      const statusChanged = updated.quote.status !== ticket.quote.status;
+      const depositChanged = updated.quote.depositPaidCFA !== ticket.quote.depositPaidCFA;
+      if (statusChanged || depositChanged) {
+        const url = new URL(request.url);
+        const baseUrl = `${url.protocol}//${url.host}`;
+        notifyTicketStatusUpdateTelegram(updated, ticket.quote.status, updated.quote.status, baseUrl).catch(err => {
+          console.error('Erreur alerte Telegram status ticket:', err);
+        });
+      }
+    } catch (e) {
+      // Ignorer
+    }
 
     return NextResponse.json({ success: true, ticket: updated });
   } catch (error) {

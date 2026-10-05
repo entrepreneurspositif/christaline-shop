@@ -12,6 +12,14 @@ const FALLBACK_SETTINGS: AppSettings = {
   whatsappButtonTarget: 'group',
   country: 'Bénin',
   defaultCity: 'Cotonou',
+  telegram: {
+    enabled: false,
+    botToken: '',
+    chatId: '',
+    notifyNewOrders: true,
+    notifyGroupBuys: true,
+    notifyPayments: true
+  },
   platforms: [
     {
       id: 'shein',

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAllTickets, createNewTicket, CreateTicketPayload } from '@/lib/storage';
+import { notifyNewTicketTelegram } from '@/lib/telegram';
 
 export async function GET(request: Request) {
   try {
@@ -60,6 +61,18 @@ export async function POST(request: Request) {
     }
 
     const created = createNewTicket(body);
+
+    // Déclencher l'alerte Telegram en arrière-plan sans bloquer la réponse HTTP
+    try {
+      const url = new URL(request.url);
+      const baseUrl = `${url.protocol}//${url.host}`;
+      notifyNewTicketTelegram(created, baseUrl).catch(err => {
+        console.error('Erreur notification Telegram ticket:', err);
+      });
+    } catch (e) {
+      // Ignorer
+    }
+
     return NextResponse.json({ success: true, ticket: created }, { status: 201 });
   } catch (error) {
     console.error('Error creating ticket:', error);

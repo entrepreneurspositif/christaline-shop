@@ -23,6 +23,15 @@ export interface ShippingModeOption {
   description: string;
 }
 
+export interface TelegramConfig {
+  enabled: boolean;
+  botToken: string;
+  chatId: string;
+  notifyNewOrders: boolean;
+  notifyGroupBuys: boolean;
+  notifyPayments: boolean;
+}
+
 export interface AppSettings {
   storeName: string;
   phone: string;
@@ -33,6 +42,7 @@ export interface AppSettings {
   defaultCity: string;
   platforms: StorePlatform[];
   shippingModes: ShippingModeOption[];
+  telegram: TelegramConfig;
   paymentInstructions: {
     title: string;
     instructionsText: string;
@@ -49,6 +59,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   whatsappButtonTarget: 'group',
   country: 'Bénin',
   defaultCity: 'Cotonou',
+  telegram: {
+    enabled: false,
+    botToken: '',
+    chatId: '',
+    notifyNewOrders: true,
+    notifyGroupBuys: true,
+    notifyPayments: true
+  },
   platforms: [
     {
       id: 'shein',
