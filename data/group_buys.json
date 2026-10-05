@@ -52,7 +52,7 @@
     "priceCFA": 18500,
     "originalPriceCFA": 28000,
     "minQuantity": 10,
-    "currentQuantity": 11,
+    "currentQuantity": 9,
     "orderDate": "2026-10-16",
     "shippingMode": "air",
     "platform": "shein",
@@ -63,21 +63,9 @@
       "Pointure 39 - Argent Étincelant",
       "Pointure 40 - Doré Champagne"
     ],
-    "status": "goal_reached",
+    "status": "open",
     "createdAt": "2026-10-01T22:13:19.204Z",
     "participants": [
-      {
-        "id": "part-muv4vn9f",
-        "clientName": "grer",
-        "whatsapp": "0143253465",
-        "city": "Cotonou",
-        "quantity": 2,
-        "variant": "Pointure 38 - Doré Champagne",
-        "notes": "",
-        "reservedAt": "2026-10-05T10:55:26.584Z",
-        "ticketId": "CS-276668",
-        "depositPaid": false
-      },
       {
         "id": "part-muurd9a9",
         "clientName": "Amina Bello",

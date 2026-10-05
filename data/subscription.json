@@ -10,52 +10,7 @@
     "mode": "SANDBOX",
     "callbackUrl": ""
   },
-  "paymentHistory": [
-    {
-      "id": "manual_1791211545723",
-      "reference": "GENERATION_SUPER_ADMIN",
-      "amountCFA": 0,
-      "date": "2026-10-05T14:45:45.723Z",
-      "status": "SUCCESS",
-      "operator": "Super Admin Manuel",
-      "generatedPassword": "CS-KHKJ4U",
-      "validUntil": "2026-11-04T14:45:45.723Z"
-    },
-    {
-      "id": "pay_1791209786496_cj8kz",
-      "reference": "FP_CS_1791209786463_GCAV",
-      "feexpayTransactionId": "FP_TX_ZP77GK",
-      "amountCFA": 15000,
-      "date": "2026-10-05T14:16:26.496Z",
-      "status": "SUCCESS",
-      "phoneNumber": "0154072488",
-      "operator": "MTN",
-      "generatedPassword": "CS-8NUVDZ",
-      "validUntil": "2026-12-04T14:01:30.257Z"
-    },
-    {
-      "id": "manual_1791208890257",
-      "reference": "GENERATION_SUPER_ADMIN",
-      "amountCFA": 0,
-      "date": "2026-10-05T14:01:30.257Z",
-      "status": "SUCCESS",
-      "operator": "Super Admin Manuel",
-      "generatedPassword": "CS-L4MG2Y",
-      "validUntil": "2026-11-04T14:01:30.257Z"
-    },
-    {
-      "id": "pay_1791208839099_7myg5",
-      "reference": "FP_CS_1791208838995_PIGU",
-      "feexpayTransactionId": "FP_TX_835PGZ",
-      "amountCFA": 15000,
-      "date": "2026-10-05T14:00:39.099Z",
-      "status": "SUCCESS",
-      "phoneNumber": "0154072488",
-      "operator": "MTN",
-      "generatedPassword": "CS-AKBKZY",
-      "validUntil": "2026-12-04T13:59:43.343Z"
-    }
-  ],
+  "paymentHistory": [],
   "adminTelegramChatId": "",
   "adminTelegramBotToken": ""
 }

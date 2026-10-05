@@ -380,11 +380,15 @@ const SEED_DATA: TicketOrder[] = [
 ];
 
 function ensureDataFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(SEED_DATA, null, 2), 'utf-8');
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify(SEED_DATA, null, 2), 'utf-8');
+    }
+  } catch (err) {
+    // Environnement read-only (ex: Vercel serverless)
   }
 }
 
@@ -401,8 +405,12 @@ export function getAllTickets(): TicketOrder[] {
 }
 
 export function saveTickets(tickets: TicketOrder[]): void {
-  ensureDataFile();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(tickets, null, 2), 'utf-8');
+  try {
+    ensureDataFile();
+    fs.writeFileSync(DATA_FILE, JSON.stringify(tickets, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Erreur écriture tickets.json (environnement read-only):', err);
+  }
 }
 
 export function getTicketById(id: string): TicketOrder | null {

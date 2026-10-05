@@ -225,11 +225,15 @@ const INITIAL_GROUP_BUYS: GroupBuyItem[] = [
 ];
 
 function ensureGroupBuysFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(INITIAL_GROUP_BUYS, null, 2), 'utf-8');
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify(INITIAL_GROUP_BUYS, null, 2), 'utf-8');
+    }
+  } catch (err) {
+    // Environnement read-only (ex: Vercel serverless)
   }
 }
 
@@ -246,8 +250,12 @@ export function getAllGroupBuys(): GroupBuyItem[] {
 }
 
 export function saveGroupBuys(items: GroupBuyItem[]): void {
-  ensureGroupBuysFile();
-  fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2), 'utf-8');
+  try {
+    ensureGroupBuysFile();
+    fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Erreur écriture group_buys.json (environnement read-only):', err);
+  }
 }
 
 export function getGroupBuyById(id: string): GroupBuyItem | null {

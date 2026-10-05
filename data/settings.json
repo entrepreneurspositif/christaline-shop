@@ -16,12 +16,12 @@
   },
   "marketing": {
     "facebookPixel": {
-      "enabled": true,
-      "pixelId": "112233445566"
+      "enabled": false,
+      "pixelId": ""
     },
     "tiktokPixel": {
-      "enabled": true,
-      "pixelId": "C89TIKTOK123"
+      "enabled": false,
+      "pixelId": ""
     },
     "googleAnalytics": {
       "enabled": false,
