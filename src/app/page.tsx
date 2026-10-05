@@ -135,36 +135,36 @@ export default function Home() {
               <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
                 
                 {/* Badge d'en-tête */}
-                <div className="inline-flex items-center gap-2 bg-white/90 border border-rose-200 shadow-xs px-4 py-1.5 rounded-full text-xs font-bold text-rose-700">
-                  <Crown className="w-4 h-4 text-amber-500 fill-amber-400" />
-                  <span>CHRISTALINE SHOP • SERVICE OFFICIEL DE PRÉCOMMANDE</span>
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-white/90 border border-rose-200 shadow-xs px-3 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-rose-700 max-w-full">
+                  <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-400 shrink-0" />
+                  <span className="truncate">CHRISTALINE SHOP • PRÉCOMMANDES BÉNIN</span>
                 </div>
 
-                <h1 className="text-4xl sm:text-6xl font-black text-stone-900 font-serif tracking-tight leading-tight">
+                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-stone-900 font-serif tracking-tight leading-tight">
                   Précommandez sur <br />
-                  <span className="text-stone-900 bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-200 text-3xl sm:text-5xl">SHEIN</span>{' '}
+                  <span className="text-stone-900 bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-200 text-2xl sm:text-4xl lg:text-5xl inline-block mt-1">SHEIN</span>{' '}
                   <span className="font-sans font-light">&</span>{' '}
-                  <span className="text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 text-3xl sm:text-5xl">TEMU</span>
-                  <span className="block text-2xl sm:text-3xl font-sans font-normal text-stone-500 mt-2">en toute sérénité au Bénin</span>
+                  <span className="text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200 text-2xl sm:text-4xl lg:text-5xl inline-block mt-1">TEMU</span>
+                  <span className="block text-base sm:text-2xl font-sans font-normal text-stone-500 mt-2">en toute sérénité au Bénin</span>
                 </h1>
 
-                <p className="text-base sm:text-lg text-stone-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+                <p className="text-sm sm:text-lg text-stone-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
                   Plus besoin de carte bancaire internationale ! Collez simplement les liens de vos articles, obtenez votre <strong>ticket avec devis en FCFA</strong> et suivez votre colis étape par étape.
                 </p>
 
-                {/* Badges Flyer Clés */}
-                <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-2 text-xs font-bold">
-                  <div className="flex items-center gap-2 bg-rose-100/80 text-rose-800 px-3.5 py-2 rounded-xl border border-rose-200">
-                    <ShoppingBag className="w-4 h-4 text-rose-600" />
-                    <span>Commandes sur RÉSERVATION</span>
+                {/* Badges Flyer Clés (condensés mobile-first) */}
+                <div className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-3 pt-2 text-[11px] sm:text-xs font-bold">
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-rose-100/80 text-rose-800 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border border-rose-200">
+                    <ShoppingBag className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                    <span>Sur Réservation</span>
                   </div>
-                  <div className="flex items-center gap-2 bg-amber-100/80 text-amber-900 px-3.5 py-2 rounded-xl border border-amber-200">
-                    <Truck className="w-4 h-4 text-amber-600" />
-                    <span>Aérien : ≤ 1 mois • Maritime : 2 à 3 mois</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-amber-100/80 text-amber-900 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border border-amber-200">
+                    <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>Aérien ≤ 1 mois • Mer 2-3 mois</span>
                   </div>
-                  <div className="flex items-center gap-2 bg-emerald-100/80 text-emerald-800 px-3.5 py-2 rounded-xl border border-emerald-200">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Acompte Mobile Money Bénin</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2 bg-emerald-100/80 text-emerald-800 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border border-emerald-200">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>Mobile Money Bénin</span>
                   </div>
                 </div>
 

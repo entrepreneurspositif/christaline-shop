@@ -607,11 +607,11 @@ export default function AdminPage() {
             </h1>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Boutons d'onglets */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
+            {/* Boutons d'onglets (titres courts & scroll mobile) */}
             <button
               onClick={() => setActiveAdminTab('tickets')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeAdminTab === 'tickets'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
@@ -623,44 +623,44 @@ export default function AdminPage() {
 
             <button
               onClick={() => setActiveAdminTab('group_buys')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeAdminTab === 'group_buys'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>Ventes en Groupe ({groupBuys.length})</span>
+              <span>Ventes Groupe ({groupBuys.length})</span>
             </button>
 
             <button
               onClick={() => setActiveAdminTab('platforms')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeAdminTab === 'platforms'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Plateformes de Vente</span>
+              <span>Plateformes</span>
             </button>
 
             <button
               onClick={() => setActiveAdminTab('settings')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeAdminTab === 'settings'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
               }`}
             >
               <CreditCard className="w-3.5 h-3.5" />
-              <span>Mobile Money Bénin</span>
+              <span>Mobile Money</span>
             </button>
 
             <button
               onClick={() => { fetchTickets(); fetchSettings(); fetchGroupBuys(); }}
               disabled={loading || loadingGb}
-              className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors shrink-0 cursor-pointer"
               title="Actualiser"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading || loadingGb ? 'animate-spin' : ''}`} />

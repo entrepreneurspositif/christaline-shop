@@ -260,11 +260,11 @@ export default function VentesGroupeesPage() {
               />
             </div>
 
-            {/* Filtres par statut */}
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            {/* Filtres par statut (défilement horizontal fluide sur mobile) */}
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 w-full md:w-auto max-w-full">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   filter === 'all'
                     ? 'bg-rose-600 text-white shadow-xs'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -275,7 +275,7 @@ export default function VentesGroupeesPage() {
 
               <button
                 onClick={() => setFilter('open')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   filter === 'open'
                     ? 'bg-rose-600 text-white shadow-xs'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -286,7 +286,7 @@ export default function VentesGroupeesPage() {
 
               <button
                 onClick={() => setFilter('goal_reached')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   filter === 'goal_reached'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -297,13 +297,24 @@ export default function VentesGroupeesPage() {
 
               <button
                 onClick={() => setFilter('air')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                   filter === 'air'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                 }`}
               >
                 ✈️ Aérien (≤ 1 mois)
+              </button>
+
+              <button
+                onClick={() => setFilter('sea')}
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  filter === 'sea'
+                    ? 'bg-cyan-600 text-white shadow-xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                🚢 Maritime (2-3 mois)
               </button>
             </div>
           </div>
@@ -685,7 +696,7 @@ export default function VentesGroupeesPage() {
                         placeholder="Ex: Sophie Dossou"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-stone-200 text-xs sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
+                        className="w-full px-4 py-3 rounded-xl border border-stone-200 text-base sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
                       />
                     </div>
 
@@ -700,7 +711,7 @@ export default function VentesGroupeesPage() {
                         placeholder="Ex: 0154072488"
                         value={whatsapp}
                         onChange={(e) => setWhatsapp(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-stone-200 text-xs sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
+                        className="w-full px-4 py-3 rounded-xl border border-stone-200 text-base sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
                       />
                     </div>
 
@@ -712,7 +723,7 @@ export default function VentesGroupeesPage() {
                       <select
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-stone-200 text-xs sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
+                        className="w-full px-4 py-3 rounded-xl border border-stone-200 text-base sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
                       >
                         <option value="Cotonou">Cotonou</option>
                         <option value="Abomey-Calavi">Abomey-Calavi</option>
@@ -733,7 +744,7 @@ export default function VentesGroupeesPage() {
                         <select
                           value={selectedVariant}
                           onChange={(e) => setSelectedVariant(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-stone-200 text-xs sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
+                          className="w-full px-4 py-3 rounded-xl border border-stone-200 text-base sm:text-sm focus:border-rose-500 outline-hidden bg-stone-50"
                         >
                           {selectedItem.variants.map((v, i) => (
                             <option key={i} value={v}>{v}</option>

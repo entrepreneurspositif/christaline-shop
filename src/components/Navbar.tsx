@@ -2,207 +2,288 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Crown, Heart, Truck, Phone, Search, PlusCircle, ShieldCheck, Menu, X, MessageCircle, Users, Sparkles } from 'lucide-react';
+import { 
+  ShoppingBag, 
+  Crown, 
+  Heart, 
+  Truck, 
+  Phone, 
+  Search, 
+  PlusCircle, 
+  ShieldCheck, 
+  Menu, 
+  X, 
+  MessageCircle, 
+  Users, 
+  Sparkles,
+  ChevronRight,
+  Clock
+} from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-rose-100 shadow-xs">
-      {/* Barre supérieure d'informations */}
-      <div className="bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 text-white text-xs py-1.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2 font-medium">
-            <Truck className="w-3.5 h-3.5 animate-pulse" />
-            <span>Livraison Bénin : <strong>Aérien (≤ 1 mois) • Maritime (2 à 3 mois)</strong></span>
-            <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">SHEIN • TEMU • MULTI-PLATEFORMES</span>
+      
+      {/* Barre supérieure d'informations - Mobile first & responsive */}
+      <div className="bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 text-white text-[11px] sm:text-xs py-1 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          
+          {/* Délais Bénin condensés pour mobile */}
+          <div className="flex items-center gap-1.5 font-medium truncate">
+            <Truck className="w-3.5 h-3.5 shrink-0 animate-pulse" />
+            <span className="truncate">
+              Bénin : <strong className="font-bold">Aérien ≤ 1 mois</strong> • <strong className="font-bold">Mer 2-3 mois</strong>
+            </span>
+            <span className="hidden md:inline text-rose-200">• SHEIN & TEMU</span>
           </div>
-          <div className="flex items-center gap-4 text-xs font-semibold">
+
+          {/* Contact rapide WhatsApp */}
+          <div className="flex items-center shrink-0">
             <a 
               href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20des%20renseignements%20pour%20une%20commande" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:underline bg-white/15 px-2 py-0.5 rounded-full"
+              className="flex items-center gap-1 hover:underline bg-white/15 px-2 py-0.5 rounded-full font-semibold"
             >
-              <MessageCircle className="w-3 h-3 fill-current" />
-              <span>WhatsApp : 0154072488</span>
+              <MessageCircle className="w-3 h-3 fill-current shrink-0" />
+              <span className="hidden xs:inline">WhatsApp :</span>
+              <span>0154072488</span>
             </a>
           </div>
+
         </div>
       </div>
 
       {/* Navigation principale */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           
-          {/* Logo Brand */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-200 group-hover:scale-105 transition-transform">
-              <Crown className="w-5 h-5 absolute -top-2.5 text-amber-300 drop-shadow-xs" />
-              <ShoppingBag className="w-6 h-6" />
-              <Heart className="w-2.5 h-2.5 absolute bottom-2 right-2 text-rose-200 fill-rose-200" />
+          {/* Logo Brand (optimisé mobile-first) */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
+            <div className="relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-200 group-hover:scale-105 transition-transform">
+              <Crown className="w-4 h-4 sm:w-5 sm:h-5 absolute -top-2 text-amber-300 drop-shadow-xs" />
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Heart className="w-2 h-2 sm:w-2.5 sm:h-2.5 absolute bottom-1.5 right-1.5 text-rose-200 fill-rose-200" />
             </div>
+
             <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight text-rose-600 font-serif leading-none flex items-center gap-1">
+              <span className="text-xl sm:text-2xl font-black tracking-tight text-rose-600 font-serif leading-none flex items-center gap-1">
                 Christaline
-                <span className="text-amber-500 text-xs uppercase tracking-widest font-sans font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">SHOP</span>
+                <span className="text-amber-500 text-[10px] sm:text-xs uppercase tracking-widest font-sans font-bold bg-amber-50 px-1 py-0.5 rounded border border-amber-200">
+                  SHOP
+                </span>
               </span>
-              <span className="text-[11px] font-semibold text-stone-500 tracking-wider uppercase mt-1">
-                Précommandes Shein • Temu & Plus
+              <span className="text-[10px] sm:text-[11px] font-semibold text-stone-500 tracking-wider uppercase mt-0.5 truncate max-w-[170px] sm:max-w-none">
+                Précommandes Shein & Temu
               </span>
             </div>
           </Link>
 
-          {/* Liens Desktop */}
-          <nav className="hidden md:flex items-center gap-7">
+          {/* Liens Desktop (titres courts & percutants) */}
+          <nav className="hidden lg:flex items-center gap-6">
             <Link 
               href="/#commander" 
-              className="text-stone-700 hover:text-rose-600 font-semibold text-sm transition-colors flex items-center gap-1.5"
+              className="text-stone-700 hover:text-rose-600 font-bold text-sm transition-colors flex items-center gap-1.5"
             >
               <PlusCircle className="w-4 h-4 text-rose-500" />
-              Nouvelle Demande
+              <span>Commander</span>
             </Link>
+
             <Link 
               href="/ventes-groupees" 
-              className="text-stone-800 hover:text-rose-600 font-bold text-sm transition-colors flex items-center gap-1.5"
+              className="text-stone-800 hover:text-rose-600 font-bold text-sm transition-colors flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-950 px-2.5 py-1 rounded-lg border border-amber-200"
             >
-              <Users className="w-4 h-4 text-amber-500" />
+              <Users className="w-4 h-4 text-amber-600" />
               <span>Ventes en Groupe</span>
-              <span className="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase">🔥 Offres</span>
+              <span className="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full uppercase">🔥</span>
             </Link>
+
             <Link 
               href="/suivi" 
-              className="text-stone-700 hover:text-rose-600 font-semibold text-sm transition-colors flex items-center gap-1.5"
+              className="text-stone-700 hover:text-rose-600 font-bold text-sm transition-colors flex items-center gap-1.5"
             >
               <Search className="w-4 h-4 text-pink-500" />
-              Suivre mon Ticket
+              <span>Suivi Colis</span>
             </Link>
+
             <Link 
               href="/#fonctionnement" 
-              className="text-stone-700 hover:text-rose-600 font-semibold text-sm transition-colors"
+              className="text-stone-700 hover:text-rose-600 font-medium text-sm transition-colors"
             >
-              Comment ça marche
+              Fonctionnement
             </Link>
+
             <Link 
               href="/admin" 
               className="text-stone-500 hover:text-rose-700 font-medium text-xs bg-stone-100 hover:bg-stone-200 px-2.5 py-1.5 rounded-lg border border-stone-200 transition-colors flex items-center gap-1"
               title="Espace réservé à l'équipe Christaline"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
-              Espace Admin
+              <span>Admin</span>
             </Link>
           </nav>
 
           {/* Boutons d'action Desktop */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2.5">
             <a
               href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm shadow-emerald-200 transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all hover:-translate-y-0.5"
             >
-              <MessageCircle className="w-4 h-4 fill-white" />
-              <span>WhatsApp Direct</span>
+              <MessageCircle className="w-3.5 h-3.5 fill-white" />
+              <span>WhatsApp</span>
             </a>
+
             <Link
               href="/#commander"
-              className="flex items-center gap-2 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md shadow-rose-200 transition-all hover:-translate-y-0.5"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md shadow-rose-200 transition-all hover:-translate-y-0.5"
             >
-              <span>Précommander</span>
-              <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full font-mono">Gratuit</span>
+              <span>Commander</span>
             </Link>
           </div>
 
-          {/* Bouton Hamburger Mobile */}
-          <div className="md:hidden flex items-center gap-2">
+          {/* Contrôles Header Mobile (Suivi rapide + Bouton Menu) */}
+          <div className="lg:hidden flex items-center gap-1.5">
             <Link 
               href="/suivi"
-              className="p-2 text-stone-700 hover:text-rose-600 rounded-lg bg-rose-50 border border-rose-100"
-              title="Suivre"
+              className="p-2 text-stone-700 hover:text-rose-600 rounded-xl bg-rose-50/80 border border-rose-200 flex items-center gap-1 text-xs font-bold"
+              title="Suivre mon ticket"
             >
-              <Search className="w-5 h-5 text-rose-600" />
+              <Search className="w-4 h-4 text-rose-600" />
+              <span className="hidden xs:inline">Suivi</span>
             </Link>
+
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-stone-700 hover:text-rose-600 rounded-lg hover:bg-stone-100"
-              aria-label="Menu"
+              className="p-2 text-stone-700 hover:text-rose-600 rounded-xl hover:bg-stone-100 border border-stone-200 cursor-pointer"
+              aria-label="Menu de navigation"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-stone-800" /> : <Menu className="w-5 h-5 text-stone-800" />}
             </button>
           </div>
 
         </div>
       </div>
 
-      {/* Menu Mobile Déroulant */}
+      {/* Menu Mobile Déroulant - Mobile First, Ergonomique et Titres Courts */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-rose-100 px-4 pt-3 pb-6 space-y-3 shadow-xl">
+        <div className="lg:hidden bg-white border-b border-rose-100 px-4 pt-3 pb-6 space-y-2.5 shadow-2xl animate-fade-in">
+          
+          {/* 1. Commander */}
           <Link
             href="/#commander"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-xl bg-rose-50 text-rose-700 font-bold"
+            className="flex items-center justify-between p-3 rounded-2xl bg-rose-50 text-rose-900 border border-rose-200 font-bold transition-colors active:scale-98"
           >
-            <PlusCircle className="w-5 h-5" />
-            <span>Passer une précommande (Nouveau ticket)</span>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <PlusCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-rose-950">Commander</div>
+                <div className="text-[11px] font-normal text-rose-700">Demander un devis en FCFA</div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-rose-400" />
           </Link>
+
+          {/* 2. Ventes en Groupe */}
           <Link
             href="/ventes-groupees"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 text-rose-800 font-bold"
+            className="flex items-center justify-between p-3 rounded-2xl bg-amber-50/80 text-amber-950 border border-amber-200 font-bold transition-colors active:scale-98"
           >
             <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-amber-600" />
-              <span>Ventes en Groupe (Achats Groupés)</span>
+              <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-amber-950 flex items-center gap-1.5">
+                  <span>Ventes en Groupe</span>
+                  <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">🔥 Promo</span>
+                </div>
+                <div className="text-[11px] font-normal text-amber-800">Commandes groupées à date fixe</div>
+              </div>
             </div>
-            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
-              🔥 Offres
-            </span>
+            <ChevronRight className="w-4 h-4 text-amber-500" />
           </Link>
+
+          {/* 3. Suivi Colis */}
           <Link
             href="/suivi"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 text-stone-700 font-medium"
+            className="flex items-center justify-between p-3 rounded-2xl hover:bg-stone-50 border border-stone-200 font-bold text-stone-800 transition-colors active:scale-98"
           >
-            <Search className="w-5 h-5 text-pink-500" />
-            <span>Suivre un ticket / Consulter mon devis</span>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center shrink-0">
+                <Search className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-stone-900">Suivi Colis</div>
+                <div className="text-[11px] font-normal text-stone-500">Consulter mon devis & ticket</div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-stone-400" />
           </Link>
+
+          {/* 4. Fonctionnement & Délais */}
           <Link
             href="/#fonctionnement"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 text-stone-700 font-medium"
+            className="flex items-center justify-between p-3 rounded-2xl hover:bg-stone-50 border border-stone-200 font-bold text-stone-800 transition-colors active:scale-98"
           >
-            <Truck className="w-5 h-5 text-amber-500" />
-            <span>Comment ça marche & Délais (Aérien ≤ 1 mois / Mer 2-3 mois)</span>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0">
+                <Truck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-stone-900">Fonctionnement</div>
+                <div className="text-[11px] font-normal text-stone-500">Délais Aérien (≤ 1 mois) & Mer (2-3 mois)</div>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-stone-400" />
           </Link>
+
+          {/* 5. Espace Admin */}
           <Link
             href="/admin"
             onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 text-stone-600 font-medium border border-stone-200"
+            className="flex items-center justify-between p-2.5 rounded-2xl bg-stone-50 border border-stone-200 text-stone-600 text-xs font-bold transition-colors"
           >
-            <ShieldCheck className="w-5 h-5 text-rose-600" />
-            <span>Espace Administrateur Christaline</span>
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-rose-600" />
+              <span>Espace Administrateur</span>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
           </Link>
-          <div className="pt-2 border-t border-stone-100 flex flex-col gap-2">
+
+          {/* Contact Rapide (Bénin) */}
+          <div className="pt-2 border-t border-stone-100 grid grid-cols-2 gap-2">
             <a
               href="tel:0154072488"
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-stone-100 text-stone-800 font-bold text-sm"
+              className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-stone-100 text-stone-800 font-bold text-xs active:bg-stone-200"
             >
-              <Phone className="w-4 h-4" />
-              <span>Appeler : 0154072488</span>
+              <Phone className="w-3.5 h-3.5" />
+              <span>Appeler</span>
             </a>
+
             <a
               href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 p-3 rounded-xl bg-emerald-600 text-white font-bold text-sm"
+              className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs active:bg-emerald-700"
             >
-              <MessageCircle className="w-4 h-4 fill-white" />
-              <span>Échanger sur WhatsApp</span>
+              <MessageCircle className="w-3.5 h-3.5 fill-white" />
+              <span>WhatsApp</span>
             </a>
           </div>
+
         </div>
       )}
+
     </header>
   );
 }

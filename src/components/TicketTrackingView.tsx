@@ -221,42 +221,42 @@ export default function TicketTrackingView({ ticket }: Props) {
 
       </div>
 
-      {/* NAVIGATION PAR ONGLETS */}
-      <div className="flex border-b border-stone-200 no-print gap-2">
+      {/* NAVIGATION PAR ONGLETS (Mobile First) */}
+      <div className="flex items-center border-b border-stone-200 no-print gap-1 sm:gap-2 overflow-x-auto no-scrollbar max-w-full">
         <button
           onClick={() => setActiveTab('quote')}
-          className={`pb-3 px-4 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 px-3 sm:px-4 font-bold text-xs sm:text-sm border-b-2 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'quote'
               ? 'border-rose-600 text-rose-700'
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
           <ShoppingBag className="w-4 h-4" />
-          <span>Mes Articles & Devis ({ticket.items.length})</span>
+          <span>Articles & Devis ({ticket.items.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('tracking')}
-          className={`pb-3 px-4 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 px-3 sm:px-4 font-bold text-xs sm:text-sm border-b-2 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'tracking'
               ? 'border-rose-600 text-rose-700'
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
           <Truck className="w-4 h-4" />
-          <span>Suivi Colis en direct</span>
+          <span>Suivi Colis</span>
         </button>
 
         <button
           onClick={() => setActiveTab('client')}
-          className={`pb-3 px-4 font-bold text-sm border-b-2 transition-all flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 px-3 sm:px-4 font-bold text-xs sm:text-sm border-b-2 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
             activeTab === 'client'
               ? 'border-rose-600 text-rose-700'
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
           <User className="w-4 h-4" />
-          <span>Infos Client & Livraison</span>
+          <span>Infos Client</span>
         </button>
       </div>
 
