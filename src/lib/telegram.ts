@@ -1,4 +1,5 @@
 import { getSettings } from './settingsServer';
+import { readSubscriptionData } from './subscriptionServer';
 import { TicketOrder, STATUS_MAP } from './types';
 import { GroupBuyItem, GroupBuyParticipant } from './types';
 import { cleanWhatsAppDigits } from './settings';
@@ -19,6 +20,7 @@ interface SendTelegramOptions {
   replyMarkup?: any;
   tokenOverride?: string;
   chatIdOverride?: string;
+  forceSend?: boolean;
 }
 
 /**
@@ -29,7 +31,9 @@ export async function sendTelegramMessage(text: string, options: SendTelegramOpt
     const settings = getSettings();
     const token = options.tokenOverride || settings.telegram?.botToken;
     const chatId = options.chatIdOverride || settings.telegram?.chatId;
-    const isEnabled = options.tokenOverride ? true : (settings.telegram?.enabled ?? false);
+    const isEnabled = (options.forceSend || options.tokenOverride || options.chatIdOverride) 
+      ? true 
+      : (settings.telegram?.enabled ?? false);
 
     if (!isEnabled) {
       return { success: false, skipped: true, error: 'Notifications Telegram désactivées' };
@@ -308,3 +312,69 @@ export async function notifyTicketStatusUpdateTelegram(
     console.error('Erreur notifyTicketStatusUpdateTelegram:', err);
   }
 }
+
+/**
+ * Notifie l'administrateur sur son Telegram avec son nouveau mot de passe mensuel généré
+ */
+export async function notifyNewAdminPasswordTelegram(params: {
+  newPassword: string;
+  expiresAt: string;
+  amountCFA?: number;
+  reference?: string;
+  operator?: string;
+  source?: 'feexpay' | 'super_admin' | 'manual';
+  baseUrl?: string;
+}) {
+  try {
+    const settings = getSettings();
+    const subscription = readSubscriptionData();
+
+    // Priorité aux identifiants Telegram spécifiés dans l'abonnement, sinon settings généraux
+    const token = (subscription.adminTelegramBotToken || settings.telegram?.botToken || '').trim();
+    const chatId = (subscription.adminTelegramChatId || settings.telegram?.chatId || '').trim();
+
+    if (!token || !chatId) {
+      console.log('⚠️ Notification Telegram ignorée : Bot Token ou Chat ID manquant pour l\'administrateur.');
+      return { success: false, skipped: true, error: 'Token ou Chat ID manquant' };
+    }
+
+    const expiryDate = new Date(params.expiresAt);
+    const expiryFormatted = expiryDate.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+
+    const isSuperAdminGen = params.source === 'super_admin' || !params.amountCFA;
+    const adminUrl = params.baseUrl ? `${params.baseUrl}/admin` : 'https://christalineshop.com/admin';
+
+    const message = 
+      `🔐 <b>NOUVEAU MOT DE PASSE ADMIN — CHRISTALINE SHOP</b>\n\n` +
+      `Votre accès administrateur mensuel a été activé avec succès !\n\n` +
+      `🔑 <b>Mot de passe :</b> <code>${escapeHtml(params.newPassword)}</code>\n` +
+      `⏳ <b>Valide jusqu'au :</b> <b>${escapeHtml(expiryFormatted)}</b> (30 jours)\n\n` +
+      `💰 <b>Tarif :</b> ${isSuperAdminGen ? 'Attribution Super Admin (Offert)' : formatCFA(params.amountCFA || 15000)}\n` +
+      (params.operator ? `💳 <b>Moyen :</b> ${escapeHtml(params.operator)}\n` : '') +
+      (params.reference ? `🔖 <b>Réf :</b> <code>${escapeHtml(params.reference)}</code>\n\n` : '\n') +
+      `🛡️ <b>Sécurité renforcée :</b> <i>Pour protéger la boutique, les liens de connexion directe à l'administration ne sont pas affichés publiquement sur le site. Cliquez sur le bouton ci-dessous pour accéder directement à votre espace :</i>`;
+
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          { text: "🔐 Accéder à l'Espace Admin", url: adminUrl }
+        ]
+      ]
+    };
+
+    return await sendTelegramMessage(message, {
+      tokenOverride: token,
+      chatIdOverride: chatId,
+      replyMarkup,
+      forceSend: true
+    });
+  } catch (err: any) {
+    console.error('Erreur notifyNewAdminPasswordTelegram:', err);
+    return { success: false, error: err.message || 'Erreur Telegram' };
+  }
+}
+

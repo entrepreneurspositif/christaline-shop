@@ -10,7 +10,6 @@ import {
   Phone, 
   Search, 
   PlusCircle, 
-  ShieldCheck, 
   Menu, 
   X, 
   MessageCircle, 
@@ -131,15 +130,6 @@ export default function Navbar() {
               className="text-stone-700 hover:text-rose-600 font-medium text-sm transition-colors"
             >
               Fonctionnement
-            </Link>
-
-            <Link 
-              href="/admin" 
-              className="text-stone-500 hover:text-rose-700 font-medium text-xs bg-stone-100 hover:bg-stone-200 px-2.5 py-1.5 rounded-lg border border-stone-200 transition-colors flex items-center gap-1"
-              title="Espace réservé à l'équipe Christaline"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
-              <span>Admin</span>
             </Link>
           </nav>
 
@@ -265,19 +255,6 @@ export default function Navbar() {
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-stone-400" />
-          </Link>
-
-          {/* 5. Espace Admin */}
-          <Link
-            href="/admin"
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center justify-between p-2.5 rounded-2xl bg-stone-50 border border-stone-200 text-stone-600 text-xs font-bold transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <ShieldCheck className="w-4 h-4 text-rose-600" />
-              <span>Espace Administrateur</span>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
           </Link>
 
           {/* Contact Rapide (Bénin) */}

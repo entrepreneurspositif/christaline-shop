@@ -26,7 +26,9 @@ import {
   XCircle,
   Eye,
   EyeOff,
-  UserCheck
+  UserCheck,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 import { AdminSubscriptionData } from '@/lib/subscription';
 
@@ -47,6 +49,9 @@ export default function SuperAdminPage() {
   const [apiTokenInput, setApiTokenInput] = useState('');
   const [modeInput, setModeInput] = useState<'LIVE' | 'SANDBOX'>('SANDBOX');
   const [newMasterPasswordInput, setNewMasterPasswordInput] = useState('');
+  const [telegramChatIdInput, setTelegramChatIdInput] = useState('');
+  const [telegramBotTokenInput, setTelegramBotTokenInput] = useState('');
+  const [sendingTelegram, setSendingTelegram] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
 
   // UI state
@@ -106,6 +111,8 @@ export default function SuperAdminPage() {
         setShopIdInput(data.subscription.feexpayConfig?.shopId || '');
         setApiTokenInput(data.subscription.feexpayConfig?.apiToken || '');
         setModeInput(data.subscription.feexpayConfig?.mode || 'SANDBOX');
+        setTelegramChatIdInput(data.subscription.adminTelegramChatId || '');
+        setTelegramBotTokenInput(data.subscription.adminTelegramBotToken || '');
       } else {
         sessionStorage.removeItem('cs_super_admin_pass');
         setIsAuthenticated(false);
@@ -168,6 +175,33 @@ export default function SuperAdminPage() {
     }
   };
 
+  const sendCurrentPasswordTelegram = async () => {
+    setSendingTelegram(true);
+    setActionSuccess(null);
+    setActionError(null);
+    try {
+      const res = await fetch('/api/super-admin/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          masterPassword,
+          action: 'send_telegram_password'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Erreur lors de l’envoi');
+      }
+      setActionSuccess(data.message || 'Mot de passe envoyé avec succès sur Telegram !');
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setActionError(err.message || 'Erreur lors de l’envoi');
+      setTimeout(() => setActionError(null), 4000);
+    } finally {
+      setSendingTelegram(false);
+    }
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
@@ -187,7 +221,9 @@ export default function SuperAdminPage() {
             apiToken: apiTokenInput.trim(),
             mode: modeInput
           },
-          newMasterPassword: newMasterPasswordInput.trim() || undefined
+          newMasterPassword: newMasterPasswordInput.trim() || undefined,
+          adminTelegramChatId: telegramChatIdInput.trim(),
+          adminTelegramBotToken: telegramBotTokenInput.trim()
         })
       });
 
@@ -257,9 +293,6 @@ export default function SuperAdminPage() {
                 />
                 <Lock className="w-4 h-4 text-stone-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
               </div>
-              <p className="text-[10px] text-stone-500 mt-1.5">
-                Indice par défaut : <code>superadmin2026</code>
-              </p>
             </div>
 
             <button
@@ -273,8 +306,8 @@ export default function SuperAdminPage() {
           </form>
 
           <div className="pt-4 border-t border-stone-800 text-center">
-            <Link href="/admin" className="text-xs text-stone-500 hover:text-stone-300 transition-colors">
-              ← Retour à l'espace Admin normal
+            <Link href="/" className="text-xs text-stone-500 hover:text-stone-300 transition-colors">
+              ← Retour à la boutique
             </Link>
           </div>
 
@@ -462,7 +495,7 @@ export default function SuperAdminPage() {
             En tant que Super Admin, vous pouvez forcer la génération d'un nouveau mot de passe, accorder un mois gratuit, ou révoquer immédiatement l'accès d'un clic :
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
             <button
               type="button"
               onClick={() => triggerAction('generate_password')}
@@ -473,7 +506,22 @@ export default function SuperAdminPage() {
                 <span>Générer Nouveau Mot de Passe (+30j)</span>
               </span>
               <span className="text-[11px] text-stone-400 font-normal">
-                Crée une nouvelle clé aléatoire et prolonge l'accès de 30 jours
+                Crée une nouvelle clé, prolonge de 30j et l'envoie sur Telegram
+              </span>
+            </button>
+
+            <button
+              type="button"
+              disabled={sendingTelegram}
+              onClick={sendCurrentPasswordTelegram}
+              className="p-4 rounded-2xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/40 text-sky-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5 font-black text-sky-200">
+                {sendingTelegram ? <RefreshCw className="w-4 h-4 animate-spin text-sky-400" /> : <Send className="w-4 h-4 text-sky-400" />}
+                <span>Envoyer Mot de Passe sur Telegram 📲</span>
+              </span>
+              <span className="text-[11px] text-stone-400 font-normal">
+                Transmet le mot de passe actif directement au compte Telegram configuré
               </span>
             </button>
 
@@ -595,6 +643,41 @@ export default function SuperAdminPage() {
                 onChange={(e) => setApiTokenInput(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-stone-200 font-mono text-xs focus:border-amber-500 outline-hidden"
               />
+            </div>
+            {/* Chat ID Telegram de l'Admin pour la transmission du mot de passe */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Chat ID Telegram de l'Administrateur</span>
+                <span className="text-[10px] text-sky-400 font-normal">Reçoit le mot de passe mensuel</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: 123456789 ou @pseudo"
+                value={telegramChatIdInput}
+                onChange={(e) => setTelegramChatIdInput(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-sky-300 font-mono text-xs focus:border-sky-500 outline-hidden"
+              />
+              <p className="text-[11px] text-stone-500">
+                Le nouveau mot de passe généré (après paiement ou régénération) sera envoyé sur ce compte Telegram. (Si vide, utilise le Chat ID configuré sur la boutique).
+              </p>
+            </div>
+
+            {/* Token Bot Telegram spécifique (Optionnel) */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Token Bot Telegram (Optionnel)</span>
+                <span className="text-[10px] text-stone-500 font-normal">Par défaut : Bot de la boutique</span>
+              </label>
+              <input
+                type="password"
+                placeholder="Laisser vide pour utiliser le bot principal de la boutique..."
+                value={telegramBotTokenInput}
+                onChange={(e) => setTelegramBotTokenInput(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-stone-200 font-mono text-xs focus:border-amber-500 outline-hidden"
+              />
+              <p className="text-[11px] text-stone-500">
+                Laissez vide si vous utilisez déjà le Bot Telegram configuré dans la boutique.
+              </p>
             </div>
 
             {/* Changer le mot de passe Super Admin */}

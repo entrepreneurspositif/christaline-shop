@@ -24,7 +24,9 @@ const DEFAULT_SUBSCRIPTION: AdminSubscriptionData = {
     mode: 'SANDBOX',
     callbackUrl: ''
   },
-  paymentHistory: []
+  paymentHistory: [],
+  adminTelegramChatId: '',
+  adminTelegramBotToken: ''
 };
 
 export function readSubscriptionData(): AdminSubscriptionData {
@@ -39,7 +41,9 @@ export function readSubscriptionData(): AdminSubscriptionData {
           ...DEFAULT_SUBSCRIPTION.feexpayConfig,
           ...(parsed.feexpayConfig || {})
         },
-        paymentHistory: Array.isArray(parsed.paymentHistory) ? parsed.paymentHistory : []
+        paymentHistory: Array.isArray(parsed.paymentHistory) ? parsed.paymentHistory : [],
+        adminTelegramChatId: parsed.adminTelegramChatId || '',
+        adminTelegramBotToken: parsed.adminTelegramBotToken || ''
       };
     }
   } catch (error) {

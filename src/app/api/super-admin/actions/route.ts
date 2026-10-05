@@ -5,6 +5,7 @@ import {
   superAdminExtendDays, 
   superAdminRevokeAccess 
 } from '@/lib/subscriptionServer';
+import { notifyNewAdminPasswordTelegram } from '@/lib/telegram';
 
 export async function POST(request: Request) {
   try {
@@ -17,13 +18,62 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
     }
 
+    const host = request.headers.get('host') || '';
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = host ? `${protocol}://${host}` : '';
+
     if (action === 'generate_password') {
       const res = superAdminManualGeneratePassword();
+
+      // Transmission sur Telegram
+      notifyNewAdminPasswordTelegram({
+        newPassword: res.newPassword,
+        expiresAt: res.expiresAt,
+        amountCFA: 0,
+        reference: 'GENERATION_SUPER_ADMIN',
+        operator: 'Super Admin Manuel',
+        source: 'super_admin',
+        baseUrl
+      }).catch(err => {
+        console.error('Erreur alerte Telegram mot de passe manuel:', err);
+      });
+
       return NextResponse.json({
         success: true,
-        message: 'Nouveau mot de passe généré pour 1 mois (30 jours)',
+        message: 'Nouveau mot de passe généré pour 1 mois (30 jours) et envoyé sur Telegram',
         newPassword: res.newPassword,
         expiresAt: res.expiresAt
+      });
+    }
+
+    if (action === 'send_telegram_password') {
+      const tgRes = await notifyNewAdminPasswordTelegram({
+        newPassword: data.activeAdminPassword,
+        expiresAt: data.passwordExpiresAt,
+        amountCFA: data.monthlyFeeCFA,
+        reference: 'NOTIFICATION_MANUELLE_SUPER_ADMIN',
+        operator: 'Super Admin',
+        source: 'super_admin',
+        baseUrl
+      });
+
+      if (!tgRes || tgRes.skipped) {
+        return NextResponse.json({
+          success: false,
+          error: tgRes?.error || 'Token ou Chat ID Telegram manquant dans la configuration'
+        });
+      }
+
+      if (!tgRes.success) {
+        return NextResponse.json({
+          success: false,
+          error: tgRes?.error || 'Échec de transmission vers les serveurs Telegram'
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Mot de passe administrateur actif transmis avec succès sur Telegram !'
       });
     }
 

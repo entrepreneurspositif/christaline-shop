@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { processSuccessfulPayment, readSubscriptionData } from '@/lib/subscriptionServer';
+import { notifyNewAdminPasswordTelegram } from '@/lib/telegram';
 
 export async function POST(request: Request) {
   try {
@@ -21,9 +22,25 @@ export async function POST(request: Request) {
         operator
       });
 
+      const host = request.headers.get('host') || '';
+      const protocol = request.headers.get('x-forwarded-proto') || 'http';
+      const baseUrl = host ? `${protocol}://${host}` : '';
+
+      notifyNewAdminPasswordTelegram({
+        newPassword: result.newPassword,
+        expiresAt: result.expiresAt,
+        amountCFA: amount || data.monthlyFeeCFA,
+        reference: String(reference),
+        operator,
+        source: 'feexpay',
+        baseUrl
+      }).catch(err => {
+        console.error('Erreur webhook notification Telegram:', err);
+      });
+
       return NextResponse.json({
         success: true,
-        message: 'Abonnement prolongé et nouveau mot de passe généré',
+        message: 'Abonnement prolongé et nouveau mot de passe envoyé sur Telegram',
         expiresAt: result.expiresAt
       });
     }

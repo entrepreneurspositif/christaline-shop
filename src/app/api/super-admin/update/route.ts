@@ -27,6 +27,14 @@ export async function POST(request: Request) {
       data.superAdminPassword = newMasterPassword.trim();
     }
 
+    if (body.adminTelegramChatId !== undefined) {
+      data.adminTelegramChatId = String(body.adminTelegramChatId).trim();
+    }
+
+    if (body.adminTelegramBotToken !== undefined) {
+      data.adminTelegramBotToken = String(body.adminTelegramBotToken).trim();
+    }
+
     writeSubscriptionData(data);
 
     return NextResponse.json({

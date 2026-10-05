@@ -29,6 +29,8 @@ export interface AdminSubscriptionData {
   passwordExpiresAt: string; // ISO date
   feexpayConfig: FeexPayConfig;
   paymentHistory: SubscriptionPaymentRecord[];
+  adminTelegramChatId?: string;
+  adminTelegramBotToken?: string;
 }
 
 export interface PublicSubscriptionStatus {

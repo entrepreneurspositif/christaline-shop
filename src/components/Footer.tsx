@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Crown, Heart, Phone, Clock, ShieldCheck, MapPin, MessageCircle, ExternalLink, Users } from 'lucide-react';
+import { ShoppingBag, Crown, Heart, Phone, Clock, MapPin, MessageCircle, ExternalLink, Users } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { formatPhoneNumber, getWhatsAppDirectUrl } from '@/lib/settings';
 import { trackContactClick } from '@/lib/trackingClient';
@@ -68,11 +68,6 @@ export default function Footer() {
               <li>
                 <Link href="/#faq" className="hover:text-rose-400 transition-colors flex items-center gap-2">
                   <span className="text-rose-500">›</span> Questions fréquentes & Tarifs
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-amber-400 transition-colors flex items-center gap-2 text-stone-400">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-500" /> Espace Administrateur
                 </Link>
               </li>
             </ul>

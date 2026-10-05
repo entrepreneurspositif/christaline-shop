@@ -9,7 +9,8 @@ import {
   X, 
   RefreshCw, 
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  Send
 } from 'lucide-react';
 
 interface FeexPayRenewalModalProps {
@@ -70,14 +71,18 @@ export default function FeexPayRenewalModal({
             </div>
 
             {/* Boîte Mot de Passe */}
-            <div className="bg-gradient-to-br from-amber-50 via-rose-50 to-purple-50 p-6 rounded-2xl border-2 border-dashed border-amber-300 relative space-y-2">
+            <div className="bg-gradient-to-br from-amber-50 via-rose-50 to-purple-50 p-6 rounded-2xl border-2 border-dashed border-amber-300 relative space-y-2.5">
               <div className="text-[11px] font-bold uppercase text-stone-500">
                 Votre mot de passe actif (Valable 30 jours) :
               </div>
               <div className="text-3xl font-mono font-black text-rose-700 tracking-wider select-all">
                 {paymentSuccessData.newPassword}
               </div>
-              <p className="text-[11px] text-stone-500">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 text-sky-800 border border-sky-200 rounded-full text-xs font-semibold">
+                <Send className="w-3.5 h-3.5 text-sky-600" />
+                <span>Envoyé automatiquement sur votre Telegram privé !</span>
+              </div>
+              <p className="text-[11px] text-stone-500 pt-0.5">
                 Conservez précieusement ce mot de passe.
               </p>
             </div>
