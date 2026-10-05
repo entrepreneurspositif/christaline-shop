@@ -31,6 +31,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { AdminSubscriptionData } from '@/lib/subscription';
+import { setClientAuth } from '@/lib/authClient';
 
 export default function SuperAdminPage() {
   const [masterPassword, setMasterPassword] = useState('');
@@ -86,6 +87,7 @@ export default function SuperAdminPage() {
 
       setIsAuthenticated(true);
       sessionStorage.setItem('cs_super_admin_pass', masterPassword);
+      setClientAuth('super-admin', true);
       await loadSuperAdminData(masterPassword);
     } catch (err: any) {
       setAuthError(err.message || 'Erreur authentification');
@@ -114,7 +116,7 @@ export default function SuperAdminPage() {
         setTelegramChatIdInput(data.subscription.adminTelegramChatId || '');
         setTelegramBotTokenInput(data.subscription.adminTelegramBotToken || '');
       } else {
-        sessionStorage.removeItem('cs_super_admin_pass');
+        setClientAuth('none');
         setIsAuthenticated(false);
       }
     } catch (err) {
@@ -125,7 +127,7 @@ export default function SuperAdminPage() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('cs_super_admin_pass');
+    setClientAuth('none');
     setIsAuthenticated(false);
     setMasterPassword('');
     setSubscription(null);

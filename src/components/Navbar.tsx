@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ShoppingBag, 
@@ -10,6 +10,7 @@ import {
   Phone, 
   Search, 
   PlusCircle, 
+  ShieldCheck, 
   Menu, 
   X, 
   MessageCircle, 
@@ -21,10 +22,25 @@ import {
 import { useSettings } from '@/context/SettingsContext';
 import { getWhatsAppActionUrl, getWhatsAppDirectUrl, formatPhoneNumber } from '@/lib/settings';
 import { trackContactClick } from '@/lib/trackingClient';
+import { getClientAuthRole, AuthRole } from '@/lib/authClient';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authRole, setAuthRole] = useState<AuthRole>('none');
   const { settings } = useSettings();
+
+  useEffect(() => {
+    const updateRole = () => {
+      setAuthRole(getClientAuthRole());
+    };
+    updateRole();
+    window.addEventListener('storage', updateRole);
+    window.addEventListener('cs-auth-change', updateRole);
+    return () => {
+      window.removeEventListener('storage', updateRole);
+      window.removeEventListener('cs-auth-change', updateRole);
+    };
+  }, []);
 
   const hasGroup = !!(settings.whatsappGroupLink && settings.whatsappGroupLink.trim());
   const isGroupTarget = settings.whatsappButtonTarget === 'group' && hasGroup;
@@ -131,6 +147,42 @@ export default function Navbar() {
             >
               Fonctionnement
             </Link>
+
+            {/* Bouton d'accès conditionnel lorsque l'Admin est connecté */}
+            {authRole === 'admin' && (
+              <Link 
+                href="/admin" 
+                className="text-rose-700 hover:text-rose-800 font-bold text-xs bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-2xs"
+                title="Espace Administrateur (Session connectée)"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+                <span>Admin</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Session active" />
+              </Link>
+            )}
+
+            {/* Boutons d'accès conditionnels lorsque le Super Admin est connecté */}
+            {authRole === 'super-admin' && (
+              <div className="flex items-center gap-1.5">
+                <Link 
+                  href="/admin" 
+                  className="text-stone-700 hover:text-stone-900 font-bold text-xs bg-stone-100 hover:bg-stone-200 border border-stone-200 px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1"
+                  title="Tableau de bord Admin"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Admin</span>
+                </Link>
+                <Link 
+                  href="/super-admin" 
+                  className="text-amber-950 font-black text-xs bg-gradient-to-r from-amber-100 to-amber-200 hover:from-amber-200 hover:to-amber-300 border border-amber-300 px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-2xs"
+                  title="Espace Super Admin"
+                >
+                  <Crown className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Super Admin</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Session active" />
+                </Link>
+              </div>
+            )}
           </nav>
 
           {/* Boutons d'action Desktop */}
@@ -256,6 +308,66 @@ export default function Navbar() {
             </div>
             <ChevronRight className="w-4 h-4 text-stone-400" />
           </Link>
+
+          {/* Si Admin connecté */}
+          {authRole === 'admin' && (
+            <Link
+              href="/admin"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-950 font-bold transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-black text-rose-950 flex items-center gap-1.5">
+                    <span>Espace Administrateur</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <div className="text-[11px] font-normal text-rose-700">Session connectée • Gérer la boutique</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-rose-400" />
+            </Link>
+          )}
+
+          {/* Si Super Admin connecté */}
+          {authRole === 'super-admin' && (
+            <div className="space-y-2">
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2.5 rounded-2xl bg-stone-100 border border-stone-200 text-stone-800 font-bold transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-rose-600" />
+                  <span className="text-xs">Accéder au Dashboard Admin</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
+              </Link>
+
+              <Link
+                href="/super-admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-300 text-amber-950 font-bold transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Crown className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-amber-950 flex items-center gap-1.5">
+                      <span>Espace Super Admin</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    </div>
+                    <div className="text-[11px] font-normal text-amber-800">Contrôle des abonnements & FeexPay</div>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-amber-600" />
+              </Link>
+            </div>
+          )}
 
           {/* Contact Rapide (Bénin) */}
           <div className="pt-2 border-t border-stone-100 space-y-2">

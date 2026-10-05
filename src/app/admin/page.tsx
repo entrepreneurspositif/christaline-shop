@@ -66,6 +66,7 @@ import {
 import { AnalyticsSummary, AnalyticsEvent } from '@/lib/analytics';
 import { useSettings } from '@/context/SettingsContext';
 import FeexPayRenewalModal from '@/components/FeexPayRenewalModal';
+import { setClientAuth } from '@/lib/authClient';
 
 export default function AdminPage() {
   const { refreshSettings } = useSettings();
@@ -173,9 +174,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchSubscriptionStatus();
-    const isAuth = sessionStorage.getItem('cs_admin_auth');
+    const isAuth = sessionStorage.getItem('cs_admin_auth') || localStorage.getItem('cs_admin_auth');
     if (isAuth === 'true') {
       setIsAuthenticated(true);
+      const isSuperAdminFlag = sessionStorage.getItem('cs_is_super_admin') === 'true' || localStorage.getItem('cs_is_super_admin') === 'true';
+      if (isSuperAdminFlag) {
+        setSubscriptionInfo(prev => prev ? { ...prev, isSuperAdmin: true } : null);
+      }
       fetchTickets();
       fetchSettings();
       fetchGroupBuys();
@@ -355,7 +360,7 @@ export default function AdminPage() {
       }
 
       setIsAuthenticated(true);
-      sessionStorage.setItem('cs_admin_auth', 'true');
+      setClientAuth(data.isSuperAdmin ? 'super-admin' : 'admin', !!data.isSuperAdmin);
       setSubscriptionInfo({
         isExpired: false,
         expiresAt: data.expiresAt,
@@ -430,7 +435,7 @@ export default function AdminPage() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem('cs_admin_auth');
+    setClientAuth('none');
   };
 
   const fetchAnalytics = async () => {

@@ -1,14 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Crown, Heart, Phone, Clock, MapPin, MessageCircle, ExternalLink, Users } from 'lucide-react';
+import { ShoppingBag, Crown, Heart, Phone, Clock, ShieldCheck, MapPin, MessageCircle, ExternalLink, Users } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { formatPhoneNumber, getWhatsAppDirectUrl } from '@/lib/settings';
 import { trackContactClick } from '@/lib/trackingClient';
+import { getClientAuthRole, AuthRole } from '@/lib/authClient';
 
 export default function Footer() {
   const { settings } = useSettings();
+  const [authRole, setAuthRole] = useState<AuthRole>('none');
+
+  useEffect(() => {
+    const updateRole = () => setAuthRole(getClientAuthRole());
+    updateRole();
+    window.addEventListener('storage', updateRole);
+    window.addEventListener('cs-auth-change', updateRole);
+    return () => {
+      window.removeEventListener('storage', updateRole);
+      window.removeEventListener('cs-auth-change', updateRole);
+    };
+  }, []);
+
   const phone = settings?.phone || '0154072488';
   const waNumber = settings?.whatsappNumber || '0154072488';
   const groupLink = settings?.whatsappGroupLink;
@@ -70,6 +84,18 @@ export default function Footer() {
                   <span className="text-rose-500">›</span> Questions fréquentes & Tarifs
                 </Link>
               </li>
+              {authRole !== 'none' && (
+                <li>
+                  <Link 
+                    href={authRole === 'super-admin' ? '/super-admin' : '/admin'} 
+                    className="hover:text-amber-400 transition-colors flex items-center gap-2 text-amber-300 font-semibold"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{authRole === 'super-admin' ? 'Espace Super Admin (Connecté)' : 'Espace Admin (Connecté)'}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 
