@@ -29,6 +29,16 @@
       },
       "id": "ev_1791206566134_swe55",
       "timestamp": "2026-10-05T13:22:46.134Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/suivi",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_3mb1wm5_muvao4v3",
+      "id": "ev_1791207453962_jo7tj",
+      "timestamp": "2026-10-05T13:37:33.962Z"
     }
   ]
 }

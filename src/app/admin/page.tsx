@@ -58,10 +58,14 @@ import {
   Copy,
   Check,
   MousePointerClick,
-  Globe
+  Globe,
+  Crown,
+  Key,
+  XCircle
 } from 'lucide-react';
 import { AnalyticsSummary, AnalyticsEvent } from '@/lib/analytics';
 import { useSettings } from '@/context/SettingsContext';
+import FeexPayRenewalModal from '@/components/FeexPayRenewalModal';
 
 export default function AdminPage() {
   const { refreshSettings } = useSettings();
@@ -88,6 +92,24 @@ export default function AdminPage() {
   const [utmMedium, setUtmMedium] = useState('ads');
   const [utmCampaign, setUtmCampaign] = useState('promo-shein-benin');
   const [copiedUtm, setCopiedUtm] = useState(false);
+
+  // État Abonnement Mensuel & FeexPay
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    isExpired: boolean;
+    expiresAt: string;
+    daysRemaining: number;
+    monthlyFeeCFA: number;
+    isSuperAdmin?: boolean;
+  } | null>(null);
+  const [showRenewalModal, setShowRenewalModal] = useState(false);
+  const [renewalPhone, setRenewalPhone] = useState('0154072488');
+  const [renewalOperator, setRenewalOperator] = useState('MTN');
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentSuccessData, setPaymentSuccessData] = useState<{
+    newPassword: string;
+    expiresAt: string;
+  } | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   // État Test Telegram
   const [testingTelegram, setTestingTelegram] = useState(false);
@@ -150,6 +172,7 @@ export default function AdminPage() {
   const [newTimelineStepDesc, setNewTimelineStepDesc] = useState('');
 
   useEffect(() => {
+    fetchSubscriptionStatus();
     const isAuth = sessionStorage.getItem('cs_admin_auth');
     if (isAuth === 'true') {
       setIsAuthenticated(true);
@@ -289,18 +312,119 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const res = await fetch('/api/subscription/status');
+      const data = await res.json();
+      if (data.success && data.status) {
+        setSubscriptionInfo(data.status);
+      }
+    } catch (err) {
+      console.error('Erreur statut souscription:', err);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'admin123' || password === '0154072488' || password === 'admin') {
+    setAuthError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/subscription/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password.trim() })
+      });
+
+      const data = await res.json();
+
+      if (res.status === 403 || data.expired) {
+        setSubscriptionInfo({
+          isExpired: true,
+          expiresAt: data.expiresAt || new Date().toISOString(),
+          daysRemaining: 0,
+          monthlyFeeCFA: data.monthlyFeeCFA || 15000
+        });
+        setShowRenewalModal(true);
+        setAuthError(data.error || 'Votre abonnement a expiré. Veuillez le renouveler avec FeexPay.');
+        return;
+      }
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Mot de passe incorrect.');
+      }
+
       setIsAuthenticated(true);
       sessionStorage.setItem('cs_admin_auth', 'true');
-      setAuthError('');
+      setSubscriptionInfo({
+        isExpired: false,
+        expiresAt: data.expiresAt,
+        daysRemaining: data.daysRemaining || 30,
+        monthlyFeeCFA: data.monthlyFeeCFA || 15000,
+        isSuperAdmin: data.isSuperAdmin
+      });
       fetchTickets();
       fetchSettings();
       fetchGroupBuys();
       fetchAnalytics();
-    } else {
-      setAuthError('Mot de passe incorrect. (Indice : admin123)');
+    } catch (err: any) {
+      setAuthError(err.message || 'Mot de passe incorrect.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFeexPayRenewal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProcessingPayment(true);
+    setPaymentError(null);
+    setPaymentSuccessData(null);
+
+    try {
+      const initRes = await fetch('/api/subscription/feexpay/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: renewalPhone.trim(),
+          operator: renewalOperator,
+          fullName: 'Administrateur Christaline'
+        })
+      });
+
+      const initData = await initRes.json();
+      if (!initRes.ok || !initData.success) {
+        throw new Error(initData.error || 'Erreur initialisation FeexPay');
+      }
+
+      const confirmRes = await fetch('/api/subscription/feexpay/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reference: initData.reference,
+          phoneNumber: renewalPhone.trim(),
+          operator: renewalOperator,
+          amountCFA: initData.amountCFA
+        })
+      });
+
+      const confirmData = await confirmRes.json();
+      if (!confirmRes.ok || !confirmData.success) {
+        throw new Error(confirmData.error || 'Erreur confirmation paiement');
+      }
+
+      setPaymentSuccessData({
+        newPassword: confirmData.newPassword,
+        expiresAt: confirmData.expiresAt
+      });
+
+      setPassword(confirmData.newPassword);
+      setAuthError('');
+      fetchSubscriptionStatus();
+
+    } catch (err: any) {
+      setPaymentError(err.message || 'Erreur lors du paiement FeexPay');
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -684,14 +808,63 @@ export default function AdminPage() {
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-rose-950 cursor-pointer"
+                disabled={loading}
+                className="w-full py-3.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-rose-950 cursor-pointer flex items-center justify-center gap-2"
               >
-                Accéder au Tableau de Bord
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                <span>Accéder au Tableau de Bord</span>
               </button>
             </form>
+
+            {/* Renouvellement FeexPay & Accès Super Admin */}
+            <div className="pt-3 border-t border-stone-700/60 space-y-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentSuccessData(null);
+                  setPaymentError(null);
+                  setShowRenewalModal(true);
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                <span>Renouveler mon abonnement ({subscriptionInfo?.monthlyFeeCFA || 15000} FCFA via FeexPay)</span>
+              </button>
+
+              <div className="flex items-center justify-between text-[11px] text-stone-500 pt-1">
+                <span>Paiement sécurisé FeexPay Bénin</span>
+                <Link href="/super-admin" className="text-amber-400/80 hover:text-amber-300 flex items-center gap-1 font-semibold">
+                  <Crown className="w-3 h-3 text-amber-400" />
+                  <span>Espace Super Admin ↗</span>
+                </Link>
+              </div>
+            </div>
+
           </div>
         </main>
         <Footer />
+
+        {/* Modal de renouvellement FeexPay (sur l'écran de login) */}
+        <FeexPayRenewalModal
+          isOpen={showRenewalModal}
+          onClose={() => setShowRenewalModal(false)}
+          monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
+          renewalPhone={renewalPhone}
+          setRenewalPhone={setRenewalPhone}
+          renewalOperator={renewalOperator}
+          setRenewalOperator={setRenewalOperator}
+          processingPayment={processingPayment}
+          onSubmitRenewal={handleFeexPayRenewal}
+          paymentSuccessData={paymentSuccessData}
+          paymentError={paymentError}
+          onSuccessProceed={() => {
+            if (paymentSuccessData) {
+              setShowRenewalModal(false);
+              setPassword(paymentSuccessData.newPassword);
+            }
+          }}
+        />
+
       </div>
     );
   }
@@ -714,6 +887,36 @@ export default function AdminPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-stone-900 font-serif mt-1">
               Tableau de Bord & Paramètres
             </h1>
+
+            {/* BADGE ABONNEMENT MENSUEL & BOUTON RENOUVELER FEEXPAY */}
+            {subscriptionInfo && (
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaymentSuccessData(null);
+                    setPaymentError(null);
+                    setShowRenewalModal(true);
+                  }}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                    subscriptionInfo.isExpired
+                      ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 ring-2 ring-rose-400/20'
+                      : subscriptionInfo.daysRemaining <= 5
+                      ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 ring-2 ring-amber-400/20'
+                      : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                  title="Gérer ou prolonger l'abonnement FeexPay"
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-stone-700" />
+                  <span>
+                    Abonnement : {subscriptionInfo.daysRemaining} jour{subscriptionInfo.daysRemaining > 1 ? 's' : ''} restant{subscriptionInfo.daysRemaining > 1 ? 's' : ''}
+                  </span>
+                  <span className="text-[10px] bg-white text-stone-800 px-2 py-0.5 rounded-md shadow-2xs font-black">
+                    Renouveler ({subscriptionInfo.monthlyFeeCFA.toLocaleString('fr-FR')} F)
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1">
@@ -815,6 +1018,15 @@ export default function AdminPage() {
             >
               Déconnexion
             </button>
+
+            <Link
+              href="/super-admin"
+              className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
+              title="Accès Super Administrateur"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden sm:inline">Super Admin</span>
+            </Link>
           </div>
         </div>
 
@@ -3795,6 +4007,24 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de renouvellement FeexPay (dans le Dashboard) */}
+      <FeexPayRenewalModal
+        isOpen={showRenewalModal}
+        onClose={() => setShowRenewalModal(false)}
+        monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
+        renewalPhone={renewalPhone}
+        setRenewalPhone={setRenewalPhone}
+        renewalOperator={renewalOperator}
+        setRenewalOperator={setRenewalOperator}
+        processingPayment={processingPayment}
+        onSubmitRenewal={handleFeexPayRenewal}
+        paymentSuccessData={paymentSuccessData}
+        paymentError={paymentError}
+        onSuccessProceed={() => {
+          setShowRenewalModal(false);
+        }}
+      />
 
     </div>
   );
