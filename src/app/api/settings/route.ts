@@ -26,6 +26,20 @@ export async function POST(request: Request) {
       telegram: {
         ...current.telegram,
         ...(body.telegram || {})
+      },
+      marketing: {
+        facebookPixel: {
+          ...current.marketing?.facebookPixel,
+          ...(body.marketing?.facebookPixel || {})
+        },
+        tiktokPixel: {
+          ...current.marketing?.tiktokPixel,
+          ...(body.marketing?.tiktokPixel || {})
+        },
+        googleAnalytics: {
+          ...current.marketing?.googleAnalytics,
+          ...(body.marketing?.googleAnalytics || {})
+        }
       }
     };
     saveSettings(updated);

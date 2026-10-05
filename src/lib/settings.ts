@@ -32,6 +32,20 @@ export interface TelegramConfig {
   notifyPayments: boolean;
 }
 
+export interface PixelSetting {
+  enabled: boolean;
+  pixelId: string;
+}
+
+export interface MarketingConfig {
+  facebookPixel: PixelSetting;
+  tiktokPixel: PixelSetting;
+  googleAnalytics: {
+    enabled: boolean;
+    measurementId: string;
+  };
+}
+
 export interface AppSettings {
   storeName: string;
   phone: string;
@@ -43,6 +57,7 @@ export interface AppSettings {
   platforms: StorePlatform[];
   shippingModes: ShippingModeOption[];
   telegram: TelegramConfig;
+  marketing: MarketingConfig;
   paymentInstructions: {
     title: string;
     instructionsText: string;
@@ -66,6 +81,20 @@ export const DEFAULT_SETTINGS: AppSettings = {
     notifyNewOrders: true,
     notifyGroupBuys: true,
     notifyPayments: true
+  },
+  marketing: {
+    facebookPixel: {
+      enabled: false,
+      pixelId: ''
+    },
+    tiktokPixel: {
+      enabled: false,
+      pixelId: ''
+    },
+    googleAnalytics: {
+      enabled: false,
+      measurementId: ''
+    }
   },
   platforms: [
     {

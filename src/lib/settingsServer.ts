@@ -20,6 +20,20 @@ export function getSettings(): AppSettings {
           ...DEFAULT_SETTINGS.telegram,
           ...(parsed.telegram || {})
         },
+        marketing: {
+          facebookPixel: {
+            ...DEFAULT_SETTINGS.marketing.facebookPixel,
+            ...(parsed.marketing?.facebookPixel || {})
+          },
+          tiktokPixel: {
+            ...DEFAULT_SETTINGS.marketing.tiktokPixel,
+            ...(parsed.marketing?.tiktokPixel || {})
+          },
+          googleAnalytics: {
+            ...DEFAULT_SETTINGS.marketing.googleAnalytics,
+            ...(parsed.marketing?.googleAnalytics || {})
+          }
+        },
         paymentInstructions: {
           ...DEFAULT_SETTINGS.paymentInstructions,
           ...(parsed.paymentInstructions || {})

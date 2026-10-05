@@ -20,6 +20,20 @@ const FALLBACK_SETTINGS: AppSettings = {
     notifyGroupBuys: true,
     notifyPayments: true
   },
+  marketing: {
+    facebookPixel: {
+      enabled: false,
+      pixelId: ''
+    },
+    tiktokPixel: {
+      enabled: false,
+      pixelId: ''
+    },
+    googleAnalytics: {
+      enabled: false,
+      measurementId: ''
+    }
+  },
   platforms: [
     {
       id: 'shein',

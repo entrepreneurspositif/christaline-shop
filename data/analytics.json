@@ -1,0 +1,34 @@
+{
+  "events": [
+    {
+      "type": "page_view",
+      "path": "/",
+      "utmSource": "facebook",
+      "utmMedium": "ads",
+      "utmCampaign": "promo-shein-benin",
+      "id": "ev_1791206547416_ym1yr",
+      "timestamp": "2026-10-05T13:22:27.416Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ventes-groupees",
+      "utmSource": "tiktok",
+      "utmMedium": "ads",
+      "utmCampaign": "tendance-tiktok",
+      "id": "ev_1791206566076_ueudm",
+      "timestamp": "2026-10-05T13:22:46.076Z"
+    },
+    {
+      "type": "lead_quote",
+      "path": "/",
+      "utmSource": "facebook",
+      "utmCampaign": "promo-shein-benin",
+      "metadata": {
+        "ticketId": "CS-991204",
+        "itemsCount": 3
+      },
+      "id": "ev_1791206566134_swe55",
+      "timestamp": "2026-10-05T13:22:46.134Z"
+    }
+  ]
+}

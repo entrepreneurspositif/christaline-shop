@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { StorePlatform, ShippingModeOption, getWhatsAppDirectUrl } from '@/lib/settings';
 import { useSettings } from '@/context/SettingsContext';
+import { trackInitiateCheckout, trackLead, trackContactClick } from '@/lib/trackingClient';
 
 interface ItemInput {
   platform: string;
@@ -144,6 +145,7 @@ export default function OrderForm() {
     }
 
     setIsSubmitting(true);
+    trackInitiateCheckout('Précommande Devis', items.length);
 
     try {
       const payload = {
@@ -179,6 +181,9 @@ export default function OrderForm() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Erreur lors de la création de la commande');
       }
+
+      // Tracking Lead pour Meta Pixel, TikTok Pixel & Stats internes
+      trackLead(data.ticket.id, items.length, items[0]?.platform);
 
       try {
         const saved = JSON.parse(localStorage.getItem('cs_recent_tickets') || '[]');
@@ -266,6 +271,7 @@ export default function OrderForm() {
             href={generateWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackContactClick('whatsapp', 'order_ticket_whatsapp')}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3.5 rounded-xl text-sm shadow-md shadow-emerald-200 transition-all hover:scale-102"
           >
             <MessageCircle className="w-5 h-5 fill-white" />

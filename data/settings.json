@@ -14,6 +14,20 @@
     "notifyGroupBuys": true,
     "notifyPayments": true
   },
+  "marketing": {
+    "facebookPixel": {
+      "enabled": true,
+      "pixelId": "112233445566"
+    },
+    "tiktokPixel": {
+      "enabled": true,
+      "pixelId": "C89TIKTOK123"
+    },
+    "googleAnalytics": {
+      "enabled": false,
+      "measurementId": ""
+    }
+  },
   "platforms": [
     {
       "id": "shein",

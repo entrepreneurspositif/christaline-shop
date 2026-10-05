@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { getWhatsAppDirectUrl } from '@/lib/settings';
+import { trackViewContent, trackInitiateCheckout, trackGroupBuyReservation, trackContactClick } from '@/lib/trackingClient';
 
 export default function VentesGroupeesPage() {
   const { settings } = useSettings();
@@ -87,6 +88,10 @@ export default function VentesGroupeesPage() {
     setSelectedVariant(item.variants && item.variants.length > 0 ? item.variants[0] : '');
     setSubmitError(null);
     setSuccessData(null);
+
+    // Tracking ViewContent & InitiateCheckout
+    trackViewContent(item.title, 'Vente en Groupe', item.priceCFA);
+    trackInitiateCheckout(`Vente Groupe: ${item.title}`, item.priceCFA);
   };
 
   const handleJoinSubmit = async (e: React.FormEvent) => {
@@ -117,6 +122,9 @@ export default function VentesGroupeesPage() {
 
       const total = selectedItem.priceCFA * quantity;
       const deposit = Math.round(total * 0.6);
+
+      // Tracking Purchase / Réservation pour Meta Pixel, TikTok Pixel & Stats
+      trackGroupBuyReservation(selectedItem.title, total, quantity, clientName.trim());
 
       setSuccessData({
         ticketId: data.ticketId,
@@ -654,6 +662,7 @@ export default function VentesGroupeesPage() {
                         )}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => trackContactClick('whatsapp', 'group_buy_success')}
                         className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                       >
                         <MessageCircle className="w-4 h-4 fill-white" />

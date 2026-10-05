@@ -51,8 +51,16 @@ import {
   Send,
   Bot,
   Radio,
-  Terminal
+  Terminal,
+  BarChart3,
+  Target,
+  Share2,
+  Copy,
+  Check,
+  MousePointerClick,
+  Globe
 } from 'lucide-react';
+import { AnalyticsSummary, AnalyticsEvent } from '@/lib/analytics';
 import { useSettings } from '@/context/SettingsContext';
 
 export default function AdminPage() {
@@ -66,7 +74,20 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'group_buys' | 'platforms' | 'settings' | 'telegram'>('tickets');
+  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'group_buys' | 'platforms' | 'settings' | 'telegram' | 'marketing'>('tickets');
+
+  // Données Marketing & Statistiques
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  const [marketingSubTab, setMarketingSubTab] = useState<'overview' | 'pixels' | 'utm'>('overview');
+  const [marketingSuccess, setMarketingSuccess] = useState(false);
+
+  // Générateur UTM
+  const [utmTargetPage, setUtmTargetPage] = useState('/');
+  const [utmSource, setUtmSource] = useState('facebook');
+  const [utmMedium, setUtmMedium] = useState('ads');
+  const [utmCampaign, setUtmCampaign] = useState('promo-shein-benin');
+  const [copiedUtm, setCopiedUtm] = useState(false);
 
   // État Test Telegram
   const [testingTelegram, setTestingTelegram] = useState(false);
@@ -135,6 +156,7 @@ export default function AdminPage() {
       fetchTickets();
       fetchSettings();
       fetchGroupBuys();
+      fetchAnalytics();
     }
   }, []);
 
@@ -276,6 +298,7 @@ export default function AdminPage() {
       fetchTickets();
       fetchSettings();
       fetchGroupBuys();
+      fetchAnalytics();
     } else {
       setAuthError('Mot de passe incorrect. (Indice : admin123)');
     }
@@ -284,6 +307,34 @@ export default function AdminPage() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('cs_admin_auth');
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+      const res = await fetch('/api/analytics');
+      const data = await res.json();
+      if (data.success && data.summary) {
+        setAnalyticsSummary(data.summary);
+      }
+    } catch (err) {
+      console.error('Erreur chargement analytics:', err);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  const handleResetAnalytics = async () => {
+    if (!confirm('Voulez-vous vraiment réinitialiser toutes les statistiques de visites et conversions ?')) return;
+    try {
+      const res = await fetch('/api/analytics', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        fetchAnalytics();
+      }
+    } catch (err) {
+      console.error('Erreur reset analytics:', err);
+    }
   };
 
   const fetchTickets = async () => {
@@ -732,12 +783,30 @@ export default function AdminPage() {
             </button>
 
             <button
-              onClick={() => { fetchTickets(); fetchSettings(); fetchGroupBuys(); }}
-              disabled={loading || loadingGb}
+              onClick={() => {
+                setActiveAdminTab('marketing');
+                fetchAnalytics();
+              }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeAdminTab === 'marketing'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Marketing & Stats</span>
+              {(settings?.marketing?.facebookPixel?.enabled || settings?.marketing?.tiktokPixel?.enabled) && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" title="Pixels actifs" />
+              )}
+            </button>
+
+            <button
+              onClick={() => { fetchTickets(); fetchSettings(); fetchGroupBuys(); fetchAnalytics(); }}
+              disabled={loading || loadingGb || loadingAnalytics}
               className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors shrink-0 cursor-pointer"
               title="Actualiser"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading || loadingGb ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading || loadingGb || loadingAnalytics ? 'animate-spin' : ''}`} />
             </button>
 
             <button
@@ -1780,6 +1849,993 @@ export default function AdminPage() {
                 <span>Enregistrer la Configuration Telegram</span>
               </button>
             </div>
+
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* ONGLET 6 : MARKETING, PIXELS (FB & TIKTOK) & STATISTIQUES */}
+        {/* ============================================================ */}
+        {activeAdminTab === 'marketing' && settings && (
+          <div className="space-y-8 animate-fade-in">
+            
+            {/* EN-TÊTE PRINCIPAL */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-600 via-pink-600 to-rose-500 text-white flex items-center justify-center shadow-lg shadow-purple-200 shrink-0">
+                  <TrendingUp className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl sm:text-2xl font-black text-stone-900 font-serif">
+                      Marketing, Pixels & Statistiques de Tracking
+                    </h2>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                      Bénin Tracking
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-stone-500 mt-1">
+                    Mesurez vos publicités Facebook Ads & TikTok Ads, analysez votre trafic et maximisez vos conversions de commandes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={fetchAnalytics}
+                  disabled={loadingAnalytics}
+                  className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                  title="Rafraîchir les données"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingAnalytics ? 'animate-spin' : ''}`} />
+                  <span>Actualiser stats</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResetAnalytics}
+                  className="px-3.5 py-2.5 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                  title="Remettre les statistiques à zéro"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Réinitialiser</span>
+                </button>
+              </div>
+            </div>
+
+            {/* SOUS-NAVIGATION MARKETING */}
+            <div className="flex items-center gap-2 border-b border-stone-200 pb-2 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setMarketingSubTab('overview')}
+                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                  marketingSubTab === 'overview'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Tableau de Bord & Tunnel</span>
+              </button>
+
+              <button
+                onClick={() => setMarketingSubTab('pixels')}
+                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                  marketingSubTab === 'pixels'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                <Target className="w-4 h-4" />
+                <span>Pixels Publicitaires (Facebook & TikTok)</span>
+                {(settings.marketing?.facebookPixel?.enabled || settings.marketing?.tiktokPixel?.enabled) && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                )}
+              </button>
+
+              <button
+                onClick={() => setMarketingSubTab('utm')}
+                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+                  marketingSubTab === 'utm'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                <Link2 className="w-4 h-4" />
+                <span>Générateur de Liens de Campagne (UTM)</span>
+              </button>
+            </div>
+
+            {/* SOUS-ONGLET 1 : VUE D'ENSEMBLE & TUNNEL */}
+            {marketingSubTab === 'overview' && (
+              <div className="space-y-8 animate-fade-in">
+                
+                {/* 5 KPIs CLÉS */}
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                  {/* KPI 1 : Visites Totales */}
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-2xs">
+                    <div className="flex items-center justify-between text-stone-400 text-xs font-bold uppercase">
+                      <span>Total Visites</span>
+                      <Globe className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-black text-stone-900 mt-2 font-mono">
+                      {analyticsSummary?.totalVisits || 0}
+                    </div>
+                    <div className="text-[11px] text-stone-500 mt-1 flex items-center gap-1">
+                      <span className="font-bold text-emerald-600">+{analyticsSummary?.todayVisits || 0}</span>
+                      <span>aujourd'hui</span>
+                    </div>
+                  </div>
+
+                  {/* KPI 2 : Devis Demandés (Leads) */}
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-rose-200 shadow-2xs bg-rose-50/20">
+                    <div className="flex items-center justify-between text-rose-700 text-xs font-bold uppercase">
+                      <span>Devis / Précommandes</span>
+                      <ShoppingBag className="w-4 h-4 text-rose-500" />
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-black text-rose-700 mt-2 font-mono">
+                      {analyticsSummary?.totalLeads || 0}
+                    </div>
+                    <div className="text-[11px] text-rose-600 font-medium mt-1">
+                      Leads Shein & Temu
+                    </div>
+                  </div>
+
+                  {/* KPI 3 : Réservations Ventes Groupées */}
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-amber-200 shadow-2xs bg-amber-50/20">
+                    <div className="flex items-center justify-between text-amber-700 text-xs font-bold uppercase">
+                      <span>Ventes Groupées</span>
+                      <Users className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-black text-amber-800 mt-2 font-mono">
+                      {analyticsSummary?.totalGroupBuyReservations || 0}
+                    </div>
+                    <div className="text-[11px] text-amber-700 font-medium mt-1">
+                      Réservations validées
+                    </div>
+                  </div>
+
+                  {/* KPI 4 : Taux de Conversion */}
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-emerald-200 shadow-2xs bg-emerald-50/20">
+                    <div className="flex items-center justify-between text-emerald-700 text-xs font-bold uppercase">
+                      <span>Taux de Conversion</span>
+                      <Percent className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-black text-emerald-700 mt-2 font-mono">
+                      {analyticsSummary?.conversionRate || 0}%
+                    </div>
+                    <div className="text-[11px] text-emerald-600 font-medium mt-1">
+                      (Commandes / Visites)
+                    </div>
+                  </div>
+
+                  {/* KPI 5 : Clics WhatsApp / Contact */}
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-blue-200 shadow-2xs bg-blue-50/20 col-span-2 lg:col-span-1">
+                    <div className="flex items-center justify-between text-blue-700 text-xs font-bold uppercase">
+                      <span>Prises de Contact</span>
+                      <MessageCircle className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-black text-blue-700 mt-2 font-mono">
+                      {(analyticsSummary?.totalWhatsappClicks || 0) + (analyticsSummary?.totalPhoneClicks || 0)}
+                    </div>
+                    <div className="text-[11px] text-blue-600 font-medium mt-1 flex items-center justify-between">
+                      <span>WhatsApp : {analyticsSummary?.totalWhatsappClicks || 0}</span>
+                      <span>Appels : {analyticsSummary?.totalPhoneClicks || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TUNNEL DE CONVERSION MARKETING (FUNNEL) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-black text-stone-900 font-serif flex items-center gap-2">
+                        <Target className="w-5 h-5 text-rose-600" />
+                        <span>Tunnel de Conversion Publicitaire (Bénin)</span>
+                      </h3>
+                      <p className="text-xs text-stone-500 mt-0.5">
+                        Progression de vos visiteurs depuis l'arrivée sur le site jusqu'à la commande finale.
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-stone-400">
+                      Total événements : {((analyticsSummary?.totalVisits || 0) + (analyticsSummary?.totalLeads || 0) + (analyticsSummary?.totalGroupBuyReservations || 0))}
+                    </span>
+                  </div>
+
+                  {/* Étapes du tunnel */}
+                  <div className="space-y-4">
+                    {analyticsSummary?.funnel?.map((step, idx) => {
+                      const totalVisits = analyticsSummary.totalVisits || 1;
+                      const percentage = Math.min(100, Math.round((step.count / totalVisits) * 100));
+                      const colors = [
+                        'from-purple-600 to-indigo-600',
+                        'from-blue-600 to-cyan-600',
+                        'from-rose-600 to-pink-600',
+                        'from-amber-500 to-orange-500',
+                        'from-emerald-600 to-teal-600'
+                      ];
+
+                      return (
+                        <div key={step.step} className="space-y-1.5">
+                          <div className="flex items-center justify-between text-xs sm:text-sm">
+                            <span className="font-bold text-stone-800">{step.label}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-black text-stone-900">{step.count} action{step.count > 1 ? 's' : ''}</span>
+                              <span className="text-xs text-stone-400 font-mono">({percentage}%)</span>
+                            </div>
+                          </div>
+                          <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden p-0.5 border border-stone-200">
+                            <div
+                              className={`h-full rounded-full bg-gradient-to-r ${colors[idx % colors.length]} transition-all duration-700`}
+                              style={{ width: `${Math.max(4, percentage)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2 COLONNES : SOURCES D'ACQUISITION & TOP CAMPAGNES */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* COLONNE 1 : RÉPARTITION DES SOURCES (UTM SOURCE) */}
+                  <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+                    <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                      <div>
+                        <h3 className="text-base font-black text-stone-900 flex items-center gap-2">
+                          <Share2 className="w-4 h-4 text-purple-600" />
+                          <span>Sources d'Acquisition de Trafic</span>
+                        </h3>
+                        <p className="text-xs text-stone-500 mt-0.5">D'où viennent vos clients au Bénin ?</p>
+                      </div>
+                    </div>
+
+                    {(!analyticsSummary?.sourcesBreakdown || analyticsSummary.sourcesBreakdown.length === 0) ? (
+                      <div className="p-8 text-center text-stone-400 text-xs">
+                        Aucune source enregistrée pour le moment.
+                      </div>
+                    ) : (
+                      <div className="space-y-3.5">
+                        {analyticsSummary.sourcesBreakdown.map((src) => {
+                          let badgeBg = 'bg-stone-100 text-stone-800';
+                          let label = src.source.toUpperCase();
+                          if (src.source === 'facebook') {
+                            badgeBg = 'bg-blue-600 text-white';
+                            label = 'Facebook Ads';
+                          } else if (src.source === 'tiktok') {
+                            badgeBg = 'bg-stone-900 text-white';
+                            label = 'TikTok Ads';
+                          } else if (src.source === 'whatsapp') {
+                            badgeBg = 'bg-emerald-600 text-white';
+                            label = 'WhatsApp (Groupes / Statuts)';
+                          } else if (src.source === 'instagram') {
+                            badgeBg = 'bg-gradient-to-r from-pink-500 to-rose-600 text-white';
+                            label = 'Instagram';
+                          } else if (src.source === 'google') {
+                            badgeBg = 'bg-amber-500 text-white';
+                            label = 'Google Recherche';
+                          } else if (src.source === 'direct') {
+                            badgeBg = 'bg-stone-200 text-stone-700';
+                            label = 'Direct / Bouche à oreille';
+                          }
+
+                          return (
+                            <div key={src.source} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${badgeBg}`}>
+                                  {label}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-bold text-stone-900">{src.count} visite{src.count > 1 ? 's' : ''}</span>
+                                  <span className="text-stone-400 font-mono text-[11px]">({src.percentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-purple-600 rounded-full"
+                                  style={{ width: `${Math.max(5, src.percentage)}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* COLONNE 2 : TOP CAMPAGNES PUBLICITAIRES */}
+                  <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+                    <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                      <div>
+                        <h3 className="text-base font-black text-stone-900 flex items-center gap-2">
+                          <Target className="w-4 h-4 text-rose-600" />
+                          <span>Campagnes Publicitaires Détectées</span>
+                        </h3>
+                        <p className="text-xs text-stone-500 mt-0.5">Performances par tag `utm_campaign`</p>
+                      </div>
+                    </div>
+
+                    {(!analyticsSummary?.campaignsBreakdown || analyticsSummary.campaignsBreakdown.length === 0) ? (
+                      <div className="p-8 text-center text-stone-400 text-xs space-y-2">
+                        <p>Aucune campagne UTM spécifique détectée pour l'instant.</p>
+                        <p className="text-[11px] text-stone-500">
+                          Utilisez l'onglet <strong>« Générateur UTM »</strong> pour créer vos premiers liens publicitaires Facebook Ads & TikTok Ads.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-stone-100">
+                        {analyticsSummary.campaignsBreakdown.map((camp) => (
+                          <div key={camp.campaign} className="py-2.5 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 font-bold text-stone-800">
+                              <span className="text-purple-600">🎯</span>
+                              <span className="font-mono">{camp.campaign}</span>
+                            </div>
+                            <span className="font-mono font-bold text-stone-900 bg-stone-100 px-2 py-0.5 rounded-md">
+                              {camp.count} clics
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* JOURNAL DES ÉVÉNEMENTS RÉCENTS (LIVE STREAM) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                    <div>
+                      <h3 className="text-base font-black text-stone-900">
+                        Flux en Direct des Dernières Actions (30 plus récentes)
+                      </h3>
+                      <p className="text-xs text-stone-500 mt-0.5">Historique chronologique des événements clients</p>
+                    </div>
+                  </div>
+
+                  {(!analyticsSummary?.recentEvents || analyticsSummary.recentEvents.length === 0) ? (
+                    <div className="p-8 text-center text-stone-400 text-xs">
+                      Aucune activité enregistrée pour le moment.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-stone-100 text-stone-700 uppercase text-[10px] tracking-wider font-bold">
+                          <tr>
+                            <th className="p-3 rounded-l-xl">Heure / Date</th>
+                            <th className="p-3">Événement</th>
+                            <th className="p-3">Page</th>
+                            <th className="p-3">Source UTM</th>
+                            <th className="p-3">Appareil</th>
+                            <th className="p-3 rounded-r-xl">Détails</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-stone-100 font-medium text-stone-700">
+                          {analyticsSummary.recentEvents.map((ev) => {
+                            const dateStr = new Date(ev.timestamp).toLocaleString('fr-FR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            });
+
+                            let badge = <span className="bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full text-[10px] font-bold">Visite</span>;
+                            if (ev.type === 'lead_quote') {
+                              badge = <span className="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-[10px] font-bold">🎫 Devis Demandé</span>;
+                            } else if (ev.type === 'group_buy_joined') {
+                              badge = <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full text-[10px] font-bold">🛒 Réservation Groupe</span>;
+                            } else if (ev.type === 'whatsapp_click') {
+                              badge = <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold">💬 Clic WhatsApp</span>;
+                            } else if (ev.type === 'phone_click') {
+                              badge = <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[10px] font-bold">📞 Appel</span>;
+                            } else if (ev.type === 'initiate_checkout') {
+                              badge = <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-[10px] font-bold">⚡ Début Commande</span>;
+                            }
+
+                            return (
+                              <tr key={ev.id} className="hover:bg-stone-50/80">
+                                <td className="p-3 font-mono text-[11px] text-stone-500 whitespace-nowrap">
+                                  {dateStr}
+                                </td>
+                                <td className="p-3">
+                                  {badge}
+                                </td>
+                                <td className="p-3 font-mono text-[11px] text-stone-600">
+                                  {ev.path}
+                                </td>
+                                <td className="p-3">
+                                  <span className="font-bold text-stone-800 uppercase text-[10px] bg-stone-100 px-1.5 py-0.5 rounded">
+                                    {ev.utmSource || 'direct'}
+                                  </span>
+                                  {ev.utmCampaign && (
+                                    <span className="text-[10px] text-purple-600 block font-mono">
+                                      {ev.utmCampaign}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-3 text-[11px] text-stone-500">
+                                  {ev.deviceType === 'mobile' ? '📱 Mobile' : '💻 Ordinateur'}
+                                </td>
+                                <td className="p-3 text-[11px] text-stone-600">
+                                  {ev.metadata?.ticketId && (
+                                    <span className="font-mono text-rose-600 font-bold">Ticket: {ev.metadata.ticketId}</span>
+                                  )}
+                                  {ev.metadata?.itemTitle && (
+                                    <span className="line-clamp-1">{ev.metadata.itemTitle} ({ev.metadata.amountCFA} FCFA)</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {/* SOUS-ONGLET 2 : CONFIGURATION DES PIXELS (FACEBOOK, TIKTOK, GOOGLE) */}
+            {marketingSubTab === 'pixels' && (
+              <div className="space-y-8 animate-fade-in">
+                
+                {marketingSuccess && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fade-in shadow-xs">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                    <span>Configuration des Pixels enregistrée avec succès ! Les scripts sont immédiatement opérationnels sur le site.</span>
+                  </div>
+                )}
+
+                {/* 1. PIXEL META / FACEBOOK ADS */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-blue-200 shrink-0">
+                        f
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-black text-stone-900">
+                            Pixel Meta (Facebook Ads & Instagram Ads)
+                          </h3>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            settings.marketing?.facebookPixel?.enabled && settings.marketing?.facebookPixel?.pixelId
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : 'bg-stone-100 text-stone-600 border border-stone-200'
+                          }`}>
+                            {settings.marketing?.facebookPixel?.enabled && settings.marketing?.facebookPixel?.pixelId ? '🟢 Connecté' : '⚪ Désactivé'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          Injecte automatiquement la balise officielle Meta Pixel (`fbq`) et transmet tous les événements de conversion.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle ON/OFF */}
+                    <button
+                      type="button"
+                      onClick={() => setSettings({
+                        ...settings,
+                        marketing: {
+                          ...settings.marketing,
+                          facebookPixel: {
+                            ...settings.marketing?.facebookPixel,
+                            enabled: !settings.marketing?.facebookPixel?.enabled
+                          }
+                        }
+                      })}
+                      className="cursor-pointer"
+                    >
+                      {settings.marketing?.facebookPixel?.enabled ? (
+                        <ToggleRight className="w-10 h-10 text-emerald-600 transition-colors" />
+                      ) : (
+                        <ToggleLeft className="w-10 h-10 text-stone-400 transition-colors" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                        <span>Identifiant du Pixel Meta (Pixel ID) *</span>
+                        <span className="text-[10px] text-stone-500 font-normal">Disponible dans le Gestionnaire d'Événements Meta</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: 849201938201928"
+                        value={settings.marketing?.facebookPixel?.pixelId || ''}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          marketing: {
+                            ...settings.marketing,
+                            facebookPixel: {
+                              ...settings.marketing?.facebookPixel,
+                              pixelId: e.target.value.trim()
+                            }
+                          }
+                        })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-stone-300 font-mono text-sm bg-stone-50 focus:bg-white"
+                      />
+                    </div>
+
+                    {/* Grille des événements Meta trackés */}
+                    <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-2 text-xs">
+                      <span className="font-bold text-stone-800 block">Événements Meta automatiquement pris en charge :</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-stone-600">
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-blue-600 font-bold">PageView</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Navigation sur le site</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-blue-600 font-bold">ViewContent</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Consultation vente groupée</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-blue-600 font-bold">InitiateCheckout</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Ouverture du formulaire</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-blue-600 font-bold">Lead</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Ticket précommande généré</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-blue-600 font-bold">Purchase</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Vente groupe réservée (CFA)</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-blue-600 font-bold">Contact</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Clic WhatsApp ou Appel</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. PIXEL TIKTOK ADS */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center font-black text-xl shadow-md shadow-stone-300 shrink-0">
+                        🎵
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-black text-stone-900">
+                            Pixel TikTok Ads
+                          </h3>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            settings.marketing?.tiktokPixel?.enabled && settings.marketing?.tiktokPixel?.pixelId
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : 'bg-stone-100 text-stone-600 border border-stone-200'
+                          }`}>
+                            {settings.marketing?.tiktokPixel?.enabled && settings.marketing?.tiktokPixel?.pixelId ? '🟢 Connecté' : '⚪ Désactivé'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          Injecte la balise officielle TikTok Analytics (`ttq`) pour le suivi des vidéos sponsorisées.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle ON/OFF */}
+                    <button
+                      type="button"
+                      onClick={() => setSettings({
+                        ...settings,
+                        marketing: {
+                          ...settings.marketing,
+                          tiktokPixel: {
+                            ...settings.marketing?.tiktokPixel,
+                            enabled: !settings.marketing?.tiktokPixel?.enabled
+                          }
+                        }
+                      })}
+                      className="cursor-pointer"
+                    >
+                      {settings.marketing?.tiktokPixel?.enabled ? (
+                        <ToggleRight className="w-10 h-10 text-emerald-600 transition-colors" />
+                      ) : (
+                        <ToggleLeft className="w-10 h-10 text-stone-400 transition-colors" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                        <span>Identifiant du Pixel TikTok (Pixel ID) *</span>
+                        <span className="text-[10px] text-stone-500 font-normal">Disponible dans TikTok Ads Manager</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: C8V49KBC77U872XXXXXX"
+                        value={settings.marketing?.tiktokPixel?.pixelId || ''}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          marketing: {
+                            ...settings.marketing,
+                            tiktokPixel: {
+                              ...settings.marketing?.tiktokPixel,
+                              pixelId: e.target.value.trim()
+                            }
+                          }
+                        })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-stone-300 font-mono text-sm bg-stone-50 focus:bg-white"
+                      />
+                    </div>
+
+                    {/* Grille des événements TikTok trackés */}
+                    <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-2 text-xs">
+                      <span className="font-bold text-stone-800 block">Événements TikTok automatiquement pris en charge :</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-stone-600">
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-black font-bold">PageView</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Visites de pages</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-black font-bold">InitiateCheckout</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Ouverture formulaire</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-black font-bold">SubmitForm</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Demande de devis soumise</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-black font-bold">CompletePayment</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Réservation vente groupe</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-black font-bold">Contact</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">WhatsApp / Appel</p>
+                        </div>
+                        <div className="bg-white p-2 rounded-lg border border-stone-200">
+                          <code className="text-black font-bold">ViewContent</code>
+                          <p className="text-stone-400 text-[10px] mt-0.5">Fiche produit groupé</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. GOOGLE ANALYTICS (OPTIONNEL) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-xl shadow-md shadow-amber-200 shrink-0">
+                        G
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-black text-stone-900">
+                            Google Analytics 4 (Optionnel)
+                          </h3>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            settings.marketing?.googleAnalytics?.enabled && settings.marketing?.googleAnalytics?.measurementId
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : 'bg-stone-100 text-stone-600 border border-stone-200'
+                          }`}>
+                            {settings.marketing?.googleAnalytics?.enabled && settings.marketing?.googleAnalytics?.measurementId ? '🟢 Connecté' : '⚪ Désactivé'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          Injecte `gtag.js` pour analyser les statistiques avancées dans Google Analytics.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle ON/OFF */}
+                    <button
+                      type="button"
+                      onClick={() => setSettings({
+                        ...settings,
+                        marketing: {
+                          ...settings.marketing,
+                          googleAnalytics: {
+                            ...settings.marketing?.googleAnalytics,
+                            enabled: !settings.marketing?.googleAnalytics?.enabled
+                          }
+                        }
+                      })}
+                      className="cursor-pointer"
+                    >
+                      {settings.marketing?.googleAnalytics?.enabled ? (
+                        <ToggleRight className="w-10 h-10 text-emerald-600 transition-colors" />
+                      ) : (
+                        <ToggleLeft className="w-10 h-10 text-stone-400 transition-colors" />
+                      )}
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                      <span>ID de mesure Google Analytics (Measurement ID)</span>
+                      <span className="text-[10px] text-stone-500 font-normal">Ex: G-XXXXXXXXXX</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="G-XXXXXXXXXX"
+                      value={settings.marketing?.googleAnalytics?.measurementId || ''}
+                      onChange={(e) => setSettings({
+                        ...settings,
+                        marketing: {
+                          ...settings.marketing,
+                          googleAnalytics: {
+                            ...settings.marketing?.googleAnalytics,
+                            measurementId: e.target.value.trim()
+                          }
+                        }
+                      })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-stone-300 font-mono text-sm bg-stone-50 focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* BOUTON D'ENREGISTREMENT PIXELS */}
+                <div className="pt-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-xs text-stone-500">
+                    Les modifications des pixels sont appliquées instantanément à tous les visiteurs sans redémarrage.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await saveSettingsToServer(settings);
+                      setMarketingSuccess(true);
+                      setTimeout(() => setMarketingSuccess(false), 3500);
+                    }}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-700 hover:to-rose-700 text-white font-black text-sm shadow-md cursor-pointer transition-transform hover:scale-102"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Enregistrer la Configuration des Pixels</span>
+                  </button>
+                </div>
+
+              </div>
+            )}
+
+            {/* SOUS-ONGLET 3 : GÉNÉRATEUR D'URL DE CAMPAGNE (UTM BUILDER) */}
+            {marketingSubTab === 'utm' && (
+              <div className="space-y-8 animate-fade-in">
+                
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-6">
+                  <div>
+                    <h3 className="text-lg font-black text-stone-900 font-serif flex items-center gap-2">
+                      <Link2 className="w-5 h-5 text-purple-600" />
+                      <span>Générateur d'URLs de Campagne (UTM Builder Bénin)</span>
+                    </h3>
+                    <p className="text-xs text-stone-500 mt-1">
+                      Générez des liens personnalisés pour vos publicités Facebook Ads, TikTok Ads, statuts WhatsApp ou partenariats influenceurs.
+                      Chaque clic sera tracé avec précision dans vos statistiques !
+                    </p>
+                  </div>
+
+                  {/* FORMULAIRE UTM */}
+                  <div className="space-y-5">
+                    
+                    {/* 1. Page Cible */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                        1. Page de destination sur Christaline Shop :
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setUtmTargetPage('/')}
+                          className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                            utmTargetPage === '/'
+                              ? 'border-purple-600 bg-purple-50 text-purple-900 ring-2 ring-purple-600/20'
+                              : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                          }`}
+                        >
+                          <span className="block text-sm">🏠 Page d'Accueil</span>
+                          <span className="text-[11px] font-normal text-stone-500 mt-0.5 block">Formulaire de devis Shein / Temu</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setUtmTargetPage('/ventes-groupees')}
+                          className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                            utmTargetPage === '/ventes-groupees'
+                              ? 'border-purple-600 bg-purple-50 text-purple-900 ring-2 ring-purple-600/20'
+                              : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                          }`}
+                        >
+                          <span className="block text-sm">🔥 Ventes en Groupe</span>
+                          <span className="text-[11px] font-normal text-stone-500 mt-0.5 block">Articles groupés à prix réduits</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setUtmTargetPage('/suivi')}
+                          className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                            utmTargetPage === '/suivi'
+                              ? 'border-purple-600 bg-purple-50 text-purple-900 ring-2 ring-purple-600/20'
+                              : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                          }`}
+                        >
+                          <span className="block text-sm">📦 Suivi de Colis</span>
+                          <span className="text-[11px] font-normal text-stone-500 mt-0.5 block">Recherche par N° de ticket</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 2. Préréglages rapides de source */}
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
+                        2. Sélection rapide du canal publicitaire :
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setUtmSource('facebook'); setUtmMedium('ads'); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                            utmSource === 'facebook' && utmMedium === 'ads'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                          }`}
+                        >
+                          <span>📘 Facebook Ads</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { setUtmSource('tiktok'); setUtmMedium('ads'); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                            utmSource === 'tiktok' && utmMedium === 'ads'
+                              ? 'bg-black text-white'
+                              : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                          }`}
+                        >
+                          <span>🎵 TikTok Ads</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { setUtmSource('whatsapp'); setUtmMedium('statut'); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                            utmSource === 'whatsapp' && utmMedium === 'statut'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                          }`}
+                        >
+                          <span>💬 Statut WhatsApp</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { setUtmSource('whatsapp'); setUtmMedium('groupe_vip'); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                            utmSource === 'whatsapp' && utmMedium === 'groupe_vip'
+                              ? 'bg-emerald-700 text-white'
+                              : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                          }`}
+                        >
+                          <span>👥 Groupe VIP WhatsApp</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { setUtmSource('instagram'); setUtmMedium('bio'); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                            utmSource === 'instagram' && utmMedium === 'bio'
+                              ? 'bg-rose-600 text-white'
+                              : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                          }`}
+                        >
+                          <span>📸 Instagram Bio</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => { setUtmSource('influenceur'); setUtmMedium('partenariat'); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                            utmSource === 'influenceur'
+                              ? 'bg-amber-600 text-white'
+                              : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                          }`}
+                        >
+                          <span>⭐ Influenceur Bénin</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 3. Paramètres détaillés */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-stone-50 p-4 rounded-2xl border border-stone-200">
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                          Source (utm_source)
+                        </label>
+                        <input
+                          type="text"
+                          value={utmSource}
+                          onChange={(e) => setUtmSource(e.target.value.toLowerCase().trim())}
+                          className="w-full px-3 py-2 rounded-xl border border-stone-300 font-mono text-xs bg-white"
+                          placeholder="facebook, tiktok, whatsapp..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                          Support (utm_medium)
+                        </label>
+                        <input
+                          type="text"
+                          value={utmMedium}
+                          onChange={(e) => setUtmMedium(e.target.value.toLowerCase().trim())}
+                          className="w-full px-3 py-2 rounded-xl border border-stone-300 font-mono text-xs bg-white"
+                          placeholder="ads, statut, story, cpc..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                          Nom de Campagne (utm_campaign)
+                        </label>
+                        <input
+                          type="text"
+                          value={utmCampaign}
+                          onChange={(e) => setUtmCampaign(e.target.value.toLowerCase().trim())}
+                          className="w-full px-3 py-2 rounded-xl border border-stone-300 font-mono text-xs bg-white"
+                          placeholder="promo-shein-benin, soldes..."
+                        />
+                      </div>
+                    </div>
+
+                    {/* 4. Lien Généré avec bouton Copier */}
+                    {(() => {
+                      const domain = typeof window !== 'undefined' ? window.location.origin : 'https://christaline.shop';
+                      const finalUrl = `${domain}${utmTargetPage}?utm_source=${encodeURIComponent(utmSource || 'direct')}&utm_medium=${encodeURIComponent(utmMedium || 'cpc')}&utm_campaign=${encodeURIComponent(utmCampaign || 'campagne')}`;
+
+                      return (
+                        <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                              Votre lien de campagne publicitaire généré :
+                            </span>
+                            <span className="text-[11px] text-purple-700 font-mono">
+                              Prêt pour vos annonces
+                            </span>
+                          </div>
+
+                          <div className="p-3 bg-white rounded-xl border border-purple-200 font-mono text-xs text-purple-950 break-all select-all">
+                            {finalUrl}
+                          </div>
+
+                          <div className="flex items-center justify-end gap-3 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(finalUrl);
+                                setCopiedUtm(true);
+                                setTimeout(() => setCopiedUtm(false), 2500);
+                              }}
+                              className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs flex items-center gap-2 shadow-md shadow-purple-200 transition-all cursor-pointer"
+                            >
+                              {copiedUtm ? (
+                                <>
+                                  <Check className="w-4 h-4" />
+                                  <span>Lien copié dans le presse-papier !</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-4 h-4" />
+                                  <span>Copier le lien publicitaire</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                  </div>
+                </div>
+
+              </div>
+            )}
 
           </div>
         )}

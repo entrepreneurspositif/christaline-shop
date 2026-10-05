@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShoppingBag, Crown, Heart, Phone, Clock, ShieldCheck, MapPin, MessageCircle, ExternalLink, Users } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { formatPhoneNumber, getWhatsAppDirectUrl } from '@/lib/settings';
+import { trackContactClick } from '@/lib/trackingClient';
 
 export default function Footer() {
   const { settings } = useSettings();
@@ -111,6 +112,7 @@ export default function Footer() {
                   href={groupLink} 
                   target="_blank" 
                   rel="noopener noreferrer"
+                  onClick={() => trackContactClick('whatsapp', 'footer_whatsapp_group')}
                   className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-900/80 to-teal-900/80 border border-emerald-500/50 text-emerald-200 hover:from-emerald-800 hover:to-teal-800 transition-colors font-medium shadow-xs"
                 >
                   <Users className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -125,6 +127,7 @@ export default function Footer() {
                 href={getWhatsAppDirectUrl(waNumber)} 
                 target="_blank" 
                 rel="noopener noreferrer"
+                onClick={() => trackContactClick('whatsapp', 'footer_whatsapp_direct')}
                 className="flex items-center gap-3 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 hover:bg-emerald-900/60 transition-colors font-medium"
               >
                 <MessageCircle className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -136,6 +139,7 @@ export default function Footer() {
 
               <a 
                 href={`tel:${phone}`} 
+                onClick={() => trackContactClick('phone', 'footer_phone_call')}
                 className="flex items-center gap-3 p-2.5 rounded-xl bg-stone-800/60 hover:bg-stone-800 border border-stone-700 text-stone-300 transition-colors"
               >
                 <Phone className="w-4 h-4 text-rose-400 shrink-0" />

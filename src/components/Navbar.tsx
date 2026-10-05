@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { getWhatsAppActionUrl, getWhatsAppDirectUrl, formatPhoneNumber } from '@/lib/settings';
+import { trackContactClick } from '@/lib/trackingClient';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,6 +56,7 @@ export default function Navbar() {
               href={whatsAppActionUrl} 
               target="_blank" 
               rel="noopener noreferrer"
+              onClick={() => trackContactClick('whatsapp', isGroupTarget ? 'navbar_top_group' : 'navbar_top_direct')}
               className="flex items-center gap-1 hover:underline bg-white/15 px-2 py-0.5 rounded-full font-semibold transition-colors"
               title={isGroupTarget ? "Rejoindre le Groupe WhatsApp" : "Discuter sur WhatsApp"}
             >
@@ -147,6 +149,7 @@ export default function Navbar() {
               href={whatsAppActionUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackContactClick('whatsapp', isGroupTarget ? 'navbar_desktop_group' : 'navbar_desktop_direct')}
               className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all hover:-translate-y-0.5"
               title={isGroupTarget ? "Rejoindre le Groupe WhatsApp" : "Discuter sur WhatsApp"}
             >
@@ -282,6 +285,7 @@ export default function Navbar() {
             <div className="grid grid-cols-2 gap-2">
               <a
                 href={`tel:${settings.phone || '0154072488'}`}
+                onClick={() => trackContactClick('phone', 'navbar_mobile_call')}
                 className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-stone-100 text-stone-800 font-bold text-xs active:bg-stone-200"
               >
                 <Phone className="w-3.5 h-3.5" />
@@ -292,6 +296,7 @@ export default function Navbar() {
                 href={whatsAppActionUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackContactClick('whatsapp', isGroupTarget ? 'navbar_mobile_group' : 'navbar_mobile_direct')}
                 className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs active:bg-emerald-700"
                 title={isGroupTarget ? "Rejoindre le Groupe WhatsApp" : "Discuter sur WhatsApp"}
               >
