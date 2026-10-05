@@ -42,6 +42,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/ventes-groupees" className="hover:text-amber-400 transition-colors flex items-center gap-2 text-amber-300 font-bold">
+                  <span className="text-amber-400">🔥</span> Ventes en Groupe (Achats Groupés)
+                </Link>
+              </li>
+              <li>
                 <Link href="/suivi" className="hover:text-rose-400 transition-colors flex items-center gap-2">
                   <span className="text-rose-500">›</span> Suivre mon colis avec mon Ticket
                 </Link>

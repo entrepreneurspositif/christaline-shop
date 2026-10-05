@@ -185,3 +185,39 @@ export const STATUS_MAP: Record<QuoteStatus, { label: string; badgeClass: string
     icon: 'XCircle'
   }
 };
+
+// ==========================================
+// VENTES EN GROUPE (ACHATS GROUPÉS)
+// ==========================================
+export type GroupBuyStatus = 'open' | 'goal_reached' | 'ordered' | 'closed';
+
+export interface GroupBuyParticipant {
+  id: string;
+  clientName: string;
+  whatsapp: string;
+  city: string;
+  quantity: number;
+  variant?: string;
+  notes?: string;
+  reservedAt: string;
+  ticketId?: string;
+  depositPaid?: boolean;
+}
+
+export interface GroupBuyItem {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  priceCFA: number;
+  originalPriceCFA?: number;
+  minQuantity: number;
+  currentQuantity: number;
+  orderDate: string; // Date où la commande sera passée chez le fournisseur
+  shippingMode: ShippingModeType; // 'air' (au plus 1 mois) ou 'sea' (2 à 3 mois)
+  platform?: string;
+  variants?: string[];
+  status: GroupBuyStatus;
+  createdAt: string;
+  participants: GroupBuyParticipant[];
+}

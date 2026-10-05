@@ -10,7 +10,10 @@ import {
   QuoteStatus, 
   STATUS_MAP, 
   PLATFORM_CONFIG,
-  ShippingModeType
+  ShippingModeType,
+  GroupBuyItem,
+  GroupBuyParticipant,
+  GroupBuyStatus
 } from '@/lib/types';
 import { AppSettings, PaymentAccount, StorePlatform } from '@/lib/settings';
 import { 
@@ -37,7 +40,12 @@ import {
   Settings,
   Layers,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Users,
+  Calendar,
+  TrendingUp,
+  Percent,
+  Sparkles
 } from 'lucide-react';
 
 export default function AdminPage() {
@@ -50,7 +58,29 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'platforms' | 'settings'>('tickets');
+  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'group_buys' | 'platforms' | 'settings'>('tickets');
+
+  // Ventes en Groupe
+  const [groupBuys, setGroupBuys] = useState<GroupBuyItem[]>([]);
+  const [loadingGb, setLoadingGb] = useState(false);
+  const [showGbModal, setShowGbModal] = useState(false);
+  const [editingGb, setEditingGb] = useState<GroupBuyItem | null>(null);
+  const [viewingParticipantsGb, setViewingParticipantsGb] = useState<GroupBuyItem | null>(null);
+
+  // Formulaire Vente en Groupe
+  const [gbTitle, setGbTitle] = useState('');
+  const [gbDescription, setGbDescription] = useState('');
+  const [gbImageUrl, setGbImageUrl] = useState('');
+  const [gbPriceCFA, setGbPriceCFA] = useState<number | ''>('');
+  const [gbOriginalPriceCFA, setGbOriginalPriceCFA] = useState<number | ''>('');
+  const [gbMinQty, setGbMinQty] = useState<number>(10);
+  const [gbOrderDate, setGbOrderDate] = useState('');
+  const [gbShippingMode, setGbShippingMode] = useState<ShippingModeType>('air');
+  const [gbPlatform, setGbPlatform] = useState('shein');
+  const [gbVariants, setGbVariants] = useState('');
+  const [gbStatus, setGbStatus] = useState<GroupBuyStatus>('open');
+  const [gbError, setGbError] = useState<string | null>(null);
+  const [gbSuccess, setGbSuccess] = useState(false);
 
   // Paramètres & Plateformes
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -87,8 +117,138 @@ export default function AdminPage() {
       setIsAuthenticated(true);
       fetchTickets();
       fetchSettings();
+      fetchGroupBuys();
     }
   }, []);
+
+  const fetchGroupBuys = async () => {
+    try {
+      setLoadingGb(true);
+      const res = await fetch('/api/group-buys');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.groupBuys)) {
+        setGroupBuys(data.groupBuys);
+      }
+    } catch (err) {
+      console.error('Erreur chargement ventes groupées:', err);
+    } finally {
+      setLoadingGb(false);
+    }
+  };
+
+  const handleOpenCreateGb = () => {
+    setEditingGb(null);
+    setGbTitle('');
+    setGbDescription('');
+    setGbImageUrl('https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80');
+    setGbPriceCFA('');
+    setGbOriginalPriceCFA('');
+    setGbMinQty(10);
+    setGbOrderDate(new Date(Date.now() + 7 * 86400 * 1000).toISOString().split('T')[0]);
+    setGbShippingMode('air');
+    setGbPlatform('shein');
+    setGbVariants('Taille S, Taille M, Taille L');
+    setGbStatus('open');
+    setGbError(null);
+    setShowGbModal(true);
+  };
+
+  const handleOpenEditGb = (item: GroupBuyItem) => {
+    setEditingGb(item);
+    setGbTitle(item.title);
+    setGbDescription(item.description);
+    setGbImageUrl(item.imageUrl);
+    setGbPriceCFA(item.priceCFA);
+    setGbOriginalPriceCFA(item.originalPriceCFA || '');
+    setGbMinQty(item.minQuantity);
+    setGbOrderDate(item.orderDate);
+    setGbShippingMode(item.shippingMode);
+    setGbPlatform(item.platform || 'shein');
+    setGbVariants(item.variants ? item.variants.join(', ') : '');
+    setGbStatus(item.status);
+    setGbError(null);
+    setShowGbModal(true);
+  };
+
+  const handleSaveGroupBuy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGbError(null);
+
+    if (!gbTitle.trim() || !gbPriceCFA || !gbMinQty || !gbOrderDate.trim()) {
+      setGbError('Veuillez remplir le titre, le prix, la quantité minimum et la date de commande.');
+      return;
+    }
+
+    try {
+      const payload = {
+        title: gbTitle.trim(),
+        description: gbDescription.trim(),
+        imageUrl: gbImageUrl.trim(),
+        priceCFA: Number(gbPriceCFA),
+        originalPriceCFA: gbOriginalPriceCFA ? Number(gbOriginalPriceCFA) : undefined,
+        minQuantity: Number(gbMinQty),
+        orderDate: gbOrderDate.trim(),
+        shippingMode: gbShippingMode,
+        platform: gbPlatform,
+        variants: gbVariants.split(',').map(v => v.trim()).filter(Boolean),
+        status: gbStatus
+      };
+
+      if (editingGb) {
+        const res = await fetch(`/api/group-buys/${editingGb.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Erreur mise à jour');
+        setGroupBuys(prev => prev.map(g => g.id === editingGb.id ? data.groupBuy : g));
+      } else {
+        const res = await fetch('/api/group-buys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Erreur création');
+        setGroupBuys(prev => [data.groupBuy, ...prev]);
+      }
+
+      setShowGbModal(false);
+      setGbSuccess(true);
+      setTimeout(() => setGbSuccess(false), 3000);
+    } catch (err: any) {
+      setGbError(err.message || 'Une erreur est survenue');
+    }
+  };
+
+  const handleDeleteGroupBuy = async (id: string) => {
+    if (!confirm('Voulez-vous vraiment supprimer cet article de vente en groupe ?')) return;
+    try {
+      const res = await fetch(`/api/group-buys/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setGroupBuys(prev => prev.filter(g => g.id !== id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleStatusChangeGb = async (id: string, newStatus: GroupBuyStatus) => {
+    try {
+      const res = await fetch(`/api/group-buys/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setGroupBuys(prev => prev.map(g => g.id === id ? data.groupBuy : g));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +258,7 @@ export default function AdminPage() {
       setAuthError('');
       fetchTickets();
       fetchSettings();
+      fetchGroupBuys();
     } else {
       setAuthError('Mot de passe incorrect. (Indice : admin123)');
     }
@@ -461,6 +622,18 @@ export default function AdminPage() {
             </button>
 
             <button
+              onClick={() => setActiveAdminTab('group_buys')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeAdminTab === 'group_buys'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Ventes en Groupe ({groupBuys.length})</span>
+            </button>
+
+            <button
               onClick={() => setActiveAdminTab('platforms')}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeAdminTab === 'platforms'
@@ -485,12 +658,12 @@ export default function AdminPage() {
             </button>
 
             <button
-              onClick={fetchTickets}
-              disabled={loading}
+              onClick={() => { fetchTickets(); fetchSettings(); fetchGroupBuys(); }}
+              disabled={loading || loadingGb}
               className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors cursor-pointer"
               title="Actualiser"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading || loadingGb ? 'animate-spin' : ''}`} />
             </button>
 
             <button
@@ -1018,6 +1191,237 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ============================================================ */}
+        {/* ONGLET : VENTES EN GROUPE (ACHATS GROUPÉS) */}
+        {/* ============================================================ */}
+        {activeAdminTab === 'group_buys' && (
+          <div className="space-y-8">
+            
+            {/* EN-TÊTE DE SECTION & STATS */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-xs">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-md border border-rose-200">
+                  Commandes Groupées
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-stone-900 font-serif mt-1">
+                  Gestion des Ventes en Groupe
+                </h2>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Articles vedettes proposés aux clients pour commander ensemble à tarif réduit avec date de commande et quantité minimum.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/ventes-groupees"
+                  target="_blank"
+                  className="px-4 py-2.5 rounded-xl border border-stone-200 hover:border-rose-300 text-stone-700 font-bold text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Voir la page publique</span>
+                </Link>
+
+                <button
+                  onClick={handleOpenCreateGb}
+                  className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-xs rounded-xl shadow-md shadow-rose-200 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Ajouter un Article</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Notification de succès */}
+            {gbSuccess && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Article de vente en groupe enregistré avec succès !</span>
+              </div>
+            )}
+
+            {/* STATS RAPIDES VENTES GROUPÉES */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs">
+                <div className="text-stone-400 text-xs font-bold uppercase">Total Articles</div>
+                <div className="text-2xl font-black text-stone-900 mt-1">{groupBuys.length}</div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs">
+                <div className="text-rose-600 text-xs font-bold uppercase">En cours de réservation</div>
+                <div className="text-2xl font-black text-rose-600 mt-1">
+                  {groupBuys.filter(g => g.status === 'open').length}
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs">
+                <div className="text-emerald-600 text-xs font-bold uppercase">Objectif Atteint (Confirmées)</div>
+                <div className="text-2xl font-black text-emerald-600 mt-1">
+                  {groupBuys.filter(g => g.status === 'goal_reached').length}
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs">
+                <div className="text-amber-600 text-xs font-bold uppercase">Total Réservations Clients</div>
+                <div className="text-2xl font-black text-amber-600 mt-1">
+                  {groupBuys.reduce((acc, g) => acc + (g.participants?.length || 0), 0)} clients
+                </div>
+              </div>
+            </div>
+
+            {/* LISTE DES VENTES GROUPÉES */}
+            {groupBuys.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-stone-200 space-y-3">
+                <Users className="w-12 h-12 text-stone-300 mx-auto" />
+                <h3 className="text-lg font-bold text-stone-800">Aucune vente groupée enregistrée</h3>
+                <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                  Cliquez sur "Ajouter un Article" pour créer votre première offre de vente en groupe.
+                </p>
+                <button
+                  onClick={handleOpenCreateGb}
+                  className="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold"
+                >
+                  Créer un article
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {groupBuys.map((item) => {
+                  const progressPct = Math.min(100, Math.round((item.currentQuantity / item.minQuantity) * 100));
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-xs hover:border-rose-300 transition-all p-5 flex flex-col justify-between space-y-4"
+                    >
+                      <div className="flex gap-4">
+                        {/* Image */}
+                        <div className="w-28 h-28 rounded-2xl overflow-hidden bg-stone-100 shrink-0 relative">
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-1 left-1 text-[9px] bg-stone-900/80 text-white font-bold px-1.5 py-0.5 rounded uppercase">
+                            {item.platform || 'SHEIN'}
+                          </span>
+                        </div>
+
+                        {/* Infos clés */}
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                              {item.shippingMode === 'sea' ? '🚢 Voie Maritime (2-3 mois)' : '✈️ Voie Aérienne (≤ 1 mois)'}
+                            </span>
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                              item.status === 'goal_reached'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : item.status === 'ordered'
+                                ? 'bg-purple-100 text-purple-800'
+                                : item.status === 'closed'
+                                ? 'bg-stone-100 text-stone-700'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {item.status === 'goal_reached' ? 'Objectif Atteint' : item.status === 'ordered' ? 'Commande Passée' : item.status === 'closed' ? 'Clôturée' : 'En cours'}
+                            </span>
+                          </div>
+
+                          <h3 className="font-bold text-stone-900 text-sm sm:text-base truncate">
+                            {item.title}
+                          </h3>
+
+                          {/* Prix */}
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-mono font-black text-base text-rose-600">
+                              {item.priceCFA.toLocaleString('fr-FR')} FCFA
+                            </span>
+                            {item.originalPriceCFA && (
+                              <span className="text-xs text-stone-400 line-through font-mono">
+                                {item.originalPriceCFA.toLocaleString('fr-FR')} FCFA
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Date de commande */}
+                          <div className="text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200 inline-flex items-center gap-1.5 font-semibold">
+                            <Calendar className="w-3 h-3 text-amber-600 shrink-0" />
+                            <span>Commande passée le : <strong>{item.orderDate}</strong></span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Barre de progression & quantité min */}
+                      <div className="space-y-1.5 bg-stone-50 p-3 rounded-2xl border border-stone-200">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-stone-600">
+                            Quantité réservée : <strong className="text-stone-900 font-mono">{item.currentQuantity}</strong> / {item.minQuantity} pièces
+                          </span>
+                          <span className="font-mono font-bold text-xs text-stone-700">
+                            {progressPct}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2.5 bg-stone-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              item.currentQuantity >= item.minQuantity ? 'bg-emerald-500' : 'bg-rose-600'
+                            }`}
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100">
+                        {/* Sélecteur de statut rapide */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-stone-400 font-medium">Statut :</span>
+                          <select
+                            value={item.status}
+                            onChange={(e) => handleStatusChangeGb(item.id, e.target.value as GroupBuyStatus)}
+                            className="text-xs font-bold px-2 py-1 rounded-lg border border-stone-200 bg-white"
+                          >
+                            <option value="open">En cours</option>
+                            <option value="goal_reached">Objectif Atteint</option>
+                            <option value="ordered">Commande Passée</option>
+                            <option value="closed">Clôturée</option>
+                          </select>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setViewingParticipantsGb(item)}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Users className="w-3.5 h-3.5" />
+                            <span>Participants ({item.participants?.length || 0})</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleOpenEditGb(item)}
+                            className="p-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors cursor-pointer"
+                            title="Modifier"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteGroupBuy(item.id)}
+                            className="p-1.5 bg-stone-100 hover:bg-red-50 text-stone-400 hover:text-red-600 rounded-lg transition-colors cursor-pointer"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+          </div>
+        )}
+
       </main>
 
       {/* ============================================================ */}
@@ -1328,6 +1732,415 @@ export default function AdminPage() {
                   <span>Enregistrer les modifications</span>
                 </button>
               </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL CRÉATION / ÉDITION D'UNE VENTE EN GROUPE */}
+      {/* ============================================================ */}
+      {showGbModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-stone-200 p-6 sm:p-8 space-y-6 my-auto">
+            
+            <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-stone-900 font-serif">
+                    {editingGb ? 'Modifier la Vente en Groupe' : 'Nouvelle Vente en Groupe'}
+                  </h2>
+                  <p className="text-xs text-stone-500">
+                    Définissez l'article, la date de commande, la quantité minimum et le prix
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowGbModal(false)}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {gbError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{gbError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveGroupBuy} className="space-y-4">
+              
+              {/* Titre */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Titre de l'article *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Escarpins Luxe Strass & Finition Soie"
+                  value={gbTitle}
+                  onChange={(e) => setGbTitle(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm font-semibold"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Description détaillée
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Détails du produit, qualité, occasions idéales..."
+                  value={gbDescription}
+                  onChange={(e) => setGbDescription(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs"
+                />
+              </div>
+
+              {/* Image URL & Suggestions rapides */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Photo / Image du produit (URL) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="https://..."
+                  value={gbImageUrl}
+                  onChange={(e) => setGbImageUrl(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs font-mono"
+                />
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[11px] text-stone-400 font-medium">Exemples rapides :</span>
+                  <button
+                    type="button"
+                    onClick={() => setGbImageUrl('https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80')}
+                    className="text-[10px] bg-stone-100 hover:bg-rose-50 hover:text-rose-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
+                  >
+                    👠 Escarpins
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGbImageUrl('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80')}
+                    className="text-[10px] bg-stone-100 hover:bg-rose-50 hover:text-rose-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
+                  >
+                    💄 Pinceaux
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGbImageUrl('https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&auto=format&fit=crop&q=80')}
+                    className="text-[10px] bg-stone-100 hover:bg-rose-50 hover:text-rose-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
+                  >
+                    👗 Robe
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGbImageUrl('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80')}
+                    className="text-[10px] bg-stone-100 hover:bg-rose-50 hover:text-rose-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
+                  >
+                    👖 Jogging
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGbImageUrl('https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80')}
+                    className="text-[10px] bg-stone-100 hover:bg-rose-50 hover:text-rose-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
+                  >
+                    👜 Sac Chic
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGbImageUrl('https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80')}
+                    className="text-[10px] bg-stone-100 hover:bg-rose-50 hover:text-rose-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
+                  >
+                    💍 Bijoux
+                  </button>
+                </div>
+              </div>
+
+              {/* PRIX FCFA & PRIX BARRÉ */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Prix Vente Groupée (FCFA) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={100}
+                    placeholder="Ex: 18500"
+                    value={gbPriceCFA}
+                    onChange={(e) => setGbPriceCFA(e.target.value ? Number(e.target.value) : '')}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 font-mono font-bold text-sm text-rose-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Prix Public indicatif (FCFA, optionnel)
+                  </label>
+                  <input
+                    type="number"
+                    min={100}
+                    placeholder="Ex: 28000 (affiché barré)"
+                    value={gbOriginalPriceCFA}
+                    onChange={(e) => setGbOriginalPriceCFA(e.target.value ? Number(e.target.value) : '')}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 font-mono text-sm text-stone-600"
+                  />
+                </div>
+              </div>
+
+              {/* QUANTITÉ MINIMUM & DATE DE PASSAGE COMMANDE */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-amber-50/70 p-4 rounded-2xl border border-amber-200">
+                <div>
+                  <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">
+                    Quantité minimum requise *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    placeholder="Ex: 10"
+                    value={gbMinQty}
+                    onChange={(e) => setGbMinQty(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 rounded-xl border border-amber-300 bg-white font-mono font-bold text-sm text-amber-950"
+                  />
+                  <p className="text-[10px] text-amber-700 mt-1">
+                    Objectif à atteindre pour valider l'achat groupé
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">
+                    Date où la commande sera passée *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={gbOrderDate}
+                    onChange={(e) => setGbOrderDate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-amber-300 bg-white font-mono font-bold text-sm text-amber-950"
+                  />
+                  <p className="text-[10px] text-amber-700 mt-1">
+                    Date limite à laquelle l'admin commande chez le fournisseur
+                  </p>
+                </div>
+              </div>
+
+              {/* Mode de transport & Plateforme */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Mode d'expédition Bénin *
+                  </label>
+                  <select
+                    value={gbShippingMode}
+                    onChange={(e) => setGbShippingMode(e.target.value as ShippingModeType)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-bold"
+                  >
+                    <option value="air">✈️ Voie Aérienne (au plus 1 mois)</option>
+                    <option value="sea">🚢 Voie Maritime (2 à 3 mois)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Plateforme Fournisseur *
+                  </label>
+                  <select
+                    value={gbPlatform}
+                    onChange={(e) => setGbPlatform(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-bold"
+                  >
+                    <option value="shein">SHEIN</option>
+                    <option value="temu">TEMU</option>
+                    <option value="autre">Autre Fournisseur</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Tailles / Variantes */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Options & Tailles (séparées par des virgules)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Taille 38 Noir, Taille 39 Doré, Taille 40 Champagne"
+                  value={gbVariants}
+                  onChange={(e) => setGbVariants(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs"
+                />
+              </div>
+
+              {/* Statut */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Statut de la vente
+                </label>
+                <select
+                  value={gbStatus}
+                  onChange={(e) => setGbStatus(e.target.value as GroupBuyStatus)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs font-bold"
+                >
+                  <option value="open">En cours (Réservations ouvertes)</option>
+                  <option value="goal_reached">Objectif Atteint (Confirmée)</option>
+                  <option value="ordered">Commande Passée chez le fournisseur</option>
+                  <option value="closed">Clôturée</option>
+                </select>
+              </div>
+
+              {/* Boutons formulaire */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100">
+                <button
+                  type="button"
+                  onClick={() => setShowGbModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-600 font-bold text-xs hover:bg-stone-100 cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-xs shadow-md shadow-rose-200 cursor-pointer"
+                >
+                  {editingGb ? 'Enregistrer les modifications' : 'Créer la Vente en Groupe'}
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL LISTE DES PARTICIPANTS D'UNE VENTE EN GROUPE */}
+      {/* ============================================================ */}
+      {viewingParticipantsGb && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-stone-200 p-6 sm:p-8 space-y-6 my-auto">
+            
+            <div className="flex items-start justify-between border-b border-stone-100 pb-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                  {viewingParticipantsGb.platform?.toUpperCase() || 'SHEIN'} • Achat Groupé
+                </span>
+                <h2 className="text-xl font-black text-stone-900 font-serif mt-1">
+                  Réservations Clients : {viewingParticipantsGb.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-stone-500 mt-1">
+                  <span>Prix : <strong>{viewingParticipantsGb.priceCFA.toLocaleString('fr-FR')} FCFA</strong></span>
+                  <span>•</span>
+                  <span>Commande passée le : <strong>{viewingParticipantsGb.orderDate}</strong></span>
+                  <span>•</span>
+                  <span className="text-rose-600 font-bold">
+                    {viewingParticipantsGb.currentQuantity} / {viewingParticipantsGb.minQuantity} pièces
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setViewingParticipantsGb(null)}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Tableau des participants */}
+            {(!viewingParticipantsGb.participants || viewingParticipantsGb.participants.length === 0) ? (
+              <div className="p-8 text-center text-stone-400 text-xs">
+                Aucune réservation enregistrée pour le moment pour cet article.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-stone-100 text-stone-700 uppercase text-[10px] tracking-wider font-bold">
+                      <tr>
+                        <th className="p-3 rounded-l-xl">Client</th>
+                        <th className="p-3">WhatsApp / Ville</th>
+                        <th className="p-3">Option</th>
+                        <th className="p-3 text-center">Quantité</th>
+                        <th className="p-3 text-right">Total FCFA</th>
+                        <th className="p-3 text-center">Ticket Lié</th>
+                        <th className="p-3 rounded-r-xl text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100 font-medium text-stone-700">
+                      {viewingParticipantsGb.participants.map((p) => {
+                        const total = p.quantity * viewingParticipantsGb.priceCFA;
+                        const cleanPhone = p.whatsapp.replace(/\D/g, '');
+                        const waNumber = cleanPhone.startsWith('229') ? cleanPhone : `229${cleanPhone}`;
+
+                        return (
+                          <tr key={p.id} className="hover:bg-stone-50/80">
+                            <td className="p-3 font-bold text-stone-900">
+                              {p.clientName}
+                            </td>
+                            <td className="p-3">
+                              <div>{p.whatsapp}</div>
+                              <div className="text-[10px] text-stone-400">{p.city}</div>
+                            </td>
+                            <td className="p-3 text-[11px] text-stone-600">
+                              {p.variant || 'Standard'}
+                            </td>
+                            <td className="p-3 text-center font-mono font-bold text-stone-900">
+                              {p.quantity} pcs
+                            </td>
+                            <td className="p-3 text-right font-mono font-bold text-rose-700">
+                              {total.toLocaleString('fr-FR')} FCFA
+                            </td>
+                            <td className="p-3 text-center">
+                              {p.ticketId ? (
+                                <Link
+                                  href={`/ticket/${p.ticketId}`}
+                                  target="_blank"
+                                  className="font-mono font-bold text-rose-600 hover:underline flex items-center justify-center gap-1"
+                                >
+                                  <span>{p.ticketId}</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </Link>
+                              ) : (
+                                <span className="text-stone-400">-</span>
+                              )}
+                            </td>
+                            <td className="p-3 text-center">
+                              <a
+                                href={`https://wa.me/${waNumber}?text=Bonjour%20${encodeURIComponent(p.clientName)}%2C%20Christaline%20Shop%20au%20sujet%20de%20votre%20r%C3%A9servation%20group%C3%A9e%20${p.ticketId || ''}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors"
+                              >
+                                <MessageCircle className="w-3 h-3 fill-white" />
+                                <span>WhatsApp</span>
+                              </a>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-3 border-t border-stone-100 flex justify-end">
+              <button
+                onClick={() => setViewingParticipantsGb(null)}
+                className="px-5 py-2.5 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800 cursor-pointer"
+              >
+                Fermer
+              </button>
             </div>
 
           </div>

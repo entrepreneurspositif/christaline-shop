@@ -1,0 +1,229 @@
+[
+  {
+    "id": "gb-4",
+    "title": "Ensemble Jogging Molletonné Streetwear Unisexe",
+    "description": "Ensemble hoodie à capuche et bas de jogging molletonné épais grand confort. Coupe moderne oversize, élastiques cheville et poches profondes.",
+    "imageUrl": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80",
+    "priceCFA": 12500,
+    "originalPriceCFA": 19500,
+    "minQuantity": 12,
+    "currentQuantity": 5,
+    "orderDate": "2026-10-22",
+    "shippingMode": "air",
+    "platform": "temu",
+    "variants": [
+      "Taille M - Gris Chiné",
+      "Taille L - Noir Intense",
+      "Taille XL - Beige Sable",
+      "Taille XXL - Vert Kaki"
+    ],
+    "status": "open",
+    "createdAt": "2026-10-02T22:13:19.204Z",
+    "participants": [
+      {
+        "id": "part-10",
+        "clientName": "Boris Houndété",
+        "whatsapp": "0196887766",
+        "city": "Cotonou - Kouhounou",
+        "quantity": 3,
+        "variant": "Taille L - Noir Intense",
+        "reservedAt": "2026-10-03T22:13:19.204Z",
+        "ticketId": "CS-840901",
+        "depositPaid": true
+      },
+      {
+        "id": "part-11",
+        "clientName": "Arnaud Soglo",
+        "whatsapp": "0153443322",
+        "city": "Calavi - Zogbadjè",
+        "quantity": 2,
+        "variant": "Taille M - Gris Chiné",
+        "reservedAt": "2026-10-04T14:13:19.204Z",
+        "ticketId": "CS-840902",
+        "depositPaid": false
+      }
+    ]
+  },
+  {
+    "id": "gb-1",
+    "title": "Escarpins Luxe à Strass & Finition Soie",
+    "description": "Superbes talons hauts de soirée ornés de strass étincelants, semelle confort et bride cheville élégante. Idéal pour mariages, galas et sorties chics.",
+    "imageUrl": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80",
+    "priceCFA": 18500,
+    "originalPriceCFA": 28000,
+    "minQuantity": 10,
+    "currentQuantity": 9,
+    "orderDate": "2026-10-16",
+    "shippingMode": "air",
+    "platform": "shein",
+    "variants": [
+      "Pointure 37 - Doré Champagne",
+      "Pointure 38 - Doré Champagne",
+      "Pointure 38 - Argent Étincelant",
+      "Pointure 39 - Argent Étincelant",
+      "Pointure 40 - Doré Champagne"
+    ],
+    "status": "open",
+    "createdAt": "2026-10-01T22:13:19.204Z",
+    "participants": [
+      {
+        "id": "part-muurd9a9",
+        "clientName": "Amina Bello",
+        "whatsapp": "0154072488",
+        "city": "Cotonou",
+        "quantity": 2,
+        "variant": "Pointure 38",
+        "notes": "",
+        "reservedAt": "2026-10-05T04:37:13.659Z",
+        "ticketId": "CS-453643",
+        "depositPaid": false
+      },
+      {
+        "id": "part-1",
+        "clientName": "Nadège Gnahoui",
+        "whatsapp": "0154072488",
+        "city": "Cotonou - Akpakpa",
+        "quantity": 2,
+        "variant": "Pointure 38 - Doré Champagne",
+        "notes": "Commande urgente pour mariage fin du mois",
+        "reservedAt": "2026-10-02T22:13:19.204Z",
+        "ticketId": "CS-551201",
+        "depositPaid": true
+      },
+      {
+        "id": "part-2",
+        "clientName": "Carine Zinsou",
+        "whatsapp": "0165889900",
+        "city": "Calavi - Arconville",
+        "quantity": 2,
+        "variant": "Pointure 39 - Argent Étincelant",
+        "reservedAt": "2026-10-03T22:13:19.204Z",
+        "ticketId": "CS-551202",
+        "depositPaid": true
+      },
+      {
+        "id": "part-3",
+        "clientName": "Astride Dossou",
+        "whatsapp": "0197441122",
+        "city": "Cotonou - Cadjehoun",
+        "quantity": 3,
+        "variant": "Pointure 38 - Argent Étincelant",
+        "reservedAt": "2026-10-04T12:13:19.204Z",
+        "ticketId": "CS-551203",
+        "depositPaid": false
+      }
+    ]
+  },
+  {
+    "id": "gb-2",
+    "title": "Set 15 Pinceaux de Maquillage Pro + Trousse Velours",
+    "description": "Set complet de pinceaux haute densité ultra-doux pour fond de teint, fards à paupières, contouring et lèvres. Livré avec sa trousse de rangement de luxe.",
+    "imageUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80",
+    "priceCFA": 7500,
+    "originalPriceCFA": 13500,
+    "minQuantity": 15,
+    "currentQuantity": 12,
+    "orderDate": "2026-10-18",
+    "shippingMode": "air",
+    "platform": "temu",
+    "variants": [
+      "Manche Rose Gold & Poils Noirs",
+      "Manche Or Impérial & Poils Blancs",
+      "Manche Noir Mat & Poils Dégradés"
+    ],
+    "status": "open",
+    "createdAt": "2026-09-30T22:13:19.204Z",
+    "participants": [
+      {
+        "id": "part-4",
+        "clientName": "Rachelle Houngbo",
+        "whatsapp": "0161223344",
+        "city": "Cotonou - Haie Vive",
+        "quantity": 4,
+        "variant": "Manche Rose Gold & Poils Noirs",
+        "reservedAt": "2026-10-01T22:13:19.204Z",
+        "ticketId": "CS-610111",
+        "depositPaid": true
+      },
+      {
+        "id": "part-5",
+        "clientName": "Sonia Agbossou",
+        "whatsapp": "0195332211",
+        "city": "Porto-Novo",
+        "quantity": 5,
+        "variant": "Manche Or Impérial & Poils Blancs",
+        "reservedAt": "2026-10-02T22:13:19.204Z",
+        "ticketId": "CS-610112",
+        "depositPaid": true
+      },
+      {
+        "id": "part-6",
+        "clientName": "Prisca Bio",
+        "whatsapp": "0151998877",
+        "city": "Calavi - Tankpè",
+        "quantity": 3,
+        "variant": "Manche Noir Mat & Poils Dégradés",
+        "reservedAt": "2026-10-04T08:13:19.204Z",
+        "ticketId": "CS-610113",
+        "depositPaid": false
+      }
+    ]
+  },
+  {
+    "id": "gb-3",
+    "title": "Robe Longue de Soirée Satinée Plissée",
+    "description": "Robe longue élégante à col en V plongeant et jupe fluide plissée. Matière satinée tombé lourd de haute qualité pour toutes vos cérémonies au Bénin.",
+    "imageUrl": "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&auto=format&fit=crop&q=80",
+    "priceCFA": 21000,
+    "originalPriceCFA": 32000,
+    "minQuantity": 8,
+    "currentQuantity": 8,
+    "orderDate": "2026-10-14",
+    "shippingMode": "air",
+    "platform": "shein",
+    "variants": [
+      "Taille S - Vert Émeraude",
+      "Taille M - Vert Émeraude",
+      "Taille M - Rouge Bordeaux",
+      "Taille L - Bleu Roi",
+      "Taille XL - Noir Chic"
+    ],
+    "status": "goal_reached",
+    "createdAt": "2026-09-29T22:13:19.204Z",
+    "participants": [
+      {
+        "id": "part-7",
+        "clientName": "Félicité Kiki",
+        "whatsapp": "0154072488",
+        "city": "Cotonou - Sainte Rita",
+        "quantity": 2,
+        "variant": "Taille M - Vert Émeraude",
+        "reservedAt": "2026-09-30T22:13:19.204Z",
+        "ticketId": "CS-720301",
+        "depositPaid": true
+      },
+      {
+        "id": "part-8",
+        "clientName": "Berthe Mensah",
+        "whatsapp": "0167221100",
+        "city": "Cotonou - Fidjrossè",
+        "quantity": 3,
+        "variant": "Taille L - Bleu Roi",
+        "reservedAt": "2026-10-01T22:13:19.204Z",
+        "ticketId": "CS-720302",
+        "depositPaid": true
+      },
+      {
+        "id": "part-9",
+        "clientName": "Mireille Lawson",
+        "whatsapp": "0190554433",
+        "city": "Ouidah",
+        "quantity": 3,
+        "variant": "Taille M - Rouge Bordeaux",
+        "reservedAt": "2026-10-03T22:13:19.204Z",
+        "ticketId": "CS-720303",
+        "depositPaid": true
+      }
+    ]
+  }
+]

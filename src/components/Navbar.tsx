@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Crown, Heart, Truck, Phone, Search, PlusCircle, ShieldCheck, Menu, X, MessageCircle } from 'lucide-react';
+import { ShoppingBag, Crown, Heart, Truck, Phone, Search, PlusCircle, ShieldCheck, Menu, X, MessageCircle, Users, Sparkles } from 'lucide-react';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -62,6 +62,14 @@ export default function Navbar() {
             >
               <PlusCircle className="w-4 h-4 text-rose-500" />
               Nouvelle Demande
+            </Link>
+            <Link 
+              href="/ventes-groupees" 
+              className="text-stone-800 hover:text-rose-600 font-bold text-sm transition-colors flex items-center gap-1.5"
+            >
+              <Users className="w-4 h-4 text-amber-500" />
+              <span>Ventes en Groupe</span>
+              <span className="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase">🔥 Offres</span>
             </Link>
             <Link 
               href="/suivi" 
@@ -137,6 +145,19 @@ export default function Navbar() {
           >
             <PlusCircle className="w-5 h-5" />
             <span>Passer une précommande (Nouveau ticket)</span>
+          </Link>
+          <Link
+            href="/ventes-groupees"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 text-rose-800 font-bold"
+          >
+            <div className="flex items-center gap-3">
+              <Users className="w-5 h-5 text-amber-600" />
+              <span>Ventes en Groupe (Achats Groupés)</span>
+            </div>
+            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+              🔥 Offres
+            </span>
           </Link>
           <Link
             href="/suivi"

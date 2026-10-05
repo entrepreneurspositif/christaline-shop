@@ -21,7 +21,9 @@ import {
   Phone,
   HelpCircle,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Users,
+  Calendar
 } from 'lucide-react';
 
 export default function Home() {
@@ -167,18 +169,26 @@ export default function Home() {
                 </div>
 
                 {/* Boutons d'action Hero */}
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-4">
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-4">
                   <a
                     href="#commander"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-black px-7 py-4 rounded-2xl text-base shadow-lg shadow-rose-200 transition-all hover:-translate-y-0.5"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-black px-6 py-4 rounded-2xl text-sm sm:text-base shadow-lg shadow-rose-200 transition-all hover:-translate-y-0.5"
                   >
                     <Sparkles className="w-5 h-5" />
                     <span>Passer une commande (Gratuit)</span>
                   </a>
 
                   <Link
+                    href="/ventes-groupees"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-950 font-black px-5 py-4 rounded-2xl text-sm sm:text-base border-2 border-amber-300 transition-all hover:-translate-y-0.5 shadow-sm"
+                  >
+                    <Users className="w-5 h-5 text-amber-600" />
+                    <span>🔥 Ventes en Groupe</span>
+                  </Link>
+
+                  <Link
                     href="/suivi"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-stone-50 text-stone-800 font-bold px-6 py-4 rounded-2xl text-base border-2 border-stone-200 hover:border-rose-300 transition-all"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-stone-50 text-stone-800 font-bold px-5 py-4 rounded-2xl text-sm sm:text-base border-2 border-stone-200 hover:border-rose-300 transition-all"
                   >
                     <Search className="w-5 h-5 text-rose-600" />
                     <span>Suivre mon ticket</span>
@@ -268,6 +278,41 @@ export default function Home() {
 
               </div>
 
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* BANNIÈRE VENTES EN GROUPE / ACHATS GROUPÉS */}
+        {/* ============================================================ */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-white rounded-3xl p-6 sm:p-10 shadow-xl border border-stone-800 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-4 max-w-xl text-center md:text-left">
+              <div className="inline-flex items-center gap-2 bg-rose-500/20 border border-rose-500/40 text-rose-300 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Nouveau • Commandes Groupées</span>
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-black font-serif leading-tight">
+                Ventes en Groupe : Profitez de prix réduits à date fixe
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                Rejoignez nos commandes groupées sélectionnées par Christaline Shop ! Chaque article a une <strong>quantité minimum</strong> et une <strong>date précise de passage de commande</strong>. Économisez jusqu'à 50% sur vos articles préférés.
+              </p>
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-1 text-xs text-stone-400">
+                <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Tarif grossiste dès 1 pièce</span>
+                <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-amber-400" /> Date de commande garantie</span>
+              </div>
+            </div>
+
+            <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+              <Link
+                href="/ventes-groupees"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white font-black px-7 py-4 rounded-2xl text-sm shadow-lg shadow-rose-950 transition-all hover:scale-102"
+              >
+                <Users className="w-4 h-4" />
+                <span>Voir les Ventes en Groupe</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
             </div>
           </div>
         </section>
