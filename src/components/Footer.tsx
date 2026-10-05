@@ -1,8 +1,16 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Crown, Heart, Phone, Clock, ShieldCheck, MapPin, MessageCircle, ExternalLink } from 'lucide-react';
+import { ShoppingBag, Crown, Heart, Phone, Clock, ShieldCheck, MapPin, MessageCircle, ExternalLink, Users } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
+import { formatPhoneNumber, getWhatsAppDirectUrl } from '@/lib/settings';
 
 export default function Footer() {
+  const { settings } = useSettings();
+  const phone = settings?.phone || '0154072488';
+  const waNumber = settings?.whatsappNumber || '0154072488';
+  const groupLink = settings?.whatsappGroupLink;
   return (
     <footer className="bg-stone-900 text-stone-300 pt-16 pb-12 border-t-4 border-rose-600 no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -98,8 +106,23 @@ export default function Footer() {
               Les commandes se font uniquement sur réservation avec acompte validé.
             </p>
             <div className="space-y-2 text-sm">
+              {groupLink && (
+                <a 
+                  href={groupLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-emerald-900/80 to-teal-900/80 border border-emerald-500/50 text-emerald-200 hover:from-emerald-800 hover:to-teal-800 transition-colors font-medium shadow-xs"
+                >
+                  <Users className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <div>
+                    <div className="text-[11px] text-emerald-300 font-bold uppercase tracking-wider">Communauté WhatsApp</div>
+                    <div className="font-bold text-white text-xs">Rejoindre le Groupe VIP ↗</div>
+                  </div>
+                </a>
+              )}
+
               <a 
-                href="https://wa.me/2290154072488" 
+                href={getWhatsAppDirectUrl(waNumber)} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 hover:bg-emerald-900/60 transition-colors font-medium"
@@ -107,15 +130,16 @@ export default function Footer() {
                 <MessageCircle className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div>
                   <div className="text-xs text-stone-400">WhatsApp officiel (Bénin)</div>
-                  <div className="font-bold text-white text-base">0154072488</div>
+                  <div className="font-bold text-white text-base font-mono">{waNumber}</div>
                 </div>
               </a>
+
               <a 
-                href="tel:0154072488" 
+                href={`tel:${phone}`} 
                 className="flex items-center gap-3 p-2.5 rounded-xl bg-stone-800/60 hover:bg-stone-800 border border-stone-700 text-stone-300 transition-colors"
               >
                 <Phone className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>Appel téléphonique : <strong>0154072488</strong></span>
+                <span>Appel téléphonique : <strong className="font-mono">{formatPhoneNumber(phone)}</strong></span>
               </a>
             </div>
           </div>

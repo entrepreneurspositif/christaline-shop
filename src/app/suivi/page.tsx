@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Search, ArrowRight, Clock, HelpCircle, Sparkles, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Search, ArrowRight, Clock, HelpCircle, Sparkles, ShoppingBag, ShieldCheck, MessageCircle } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
+import { getWhatsAppDirectUrl } from '@/lib/settings';
 
 export default function SuiviPage() {
   const router = useRouter();
+  const { settings } = useSettings();
   const [ticketInput, setTicketInput] = useState('');
   const [recentTickets, setRecentTickets] = useState<string[]>([]);
 
@@ -161,7 +164,17 @@ export default function SuiviPage() {
         {/* Aide & FAQ Ticket */}
         <div className="max-w-2xl mx-auto border-t border-stone-200 pt-8 text-center space-y-2">
           <p className="text-xs text-stone-500">
-            Vous avez perdu votre numéro de ticket ? Contactez directement Christaline Shop par WhatsApp au <strong>0154072488</strong> avec votre nom et numéro de téléphone.
+            Vous avez perdu votre numéro de ticket ? Contactez directement Christaline Shop par WhatsApp au{' '}
+            <a 
+              href={getWhatsAppDirectUrl(settings?.whatsappNumber || '0154072488', "Bonjour Christaline Shop, j'ai égaré mon numéro de ticket")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold font-mono text-emerald-700 hover:underline inline-flex items-center gap-1"
+            >
+              <MessageCircle className="w-3.5 h-3.5 inline text-emerald-600" />
+              <span>{settings?.whatsappNumber || '0154072488'}</span>
+            </a>{' '}
+            avec votre nom et numéro de téléphone.
           </p>
         </div>
 

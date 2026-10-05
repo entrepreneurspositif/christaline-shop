@@ -20,7 +20,8 @@ import {
   Plane,
   Ship
 } from 'lucide-react';
-import { StorePlatform, ShippingModeOption } from '@/lib/settings';
+import { StorePlatform, ShippingModeOption, getWhatsAppDirectUrl } from '@/lib/settings';
+import { useSettings } from '@/context/SettingsContext';
 
 interface ItemInput {
   platform: string;
@@ -35,6 +36,7 @@ interface ItemInput {
 
 export default function OrderForm() {
   const router = useRouter();
+  const { settings } = useSettings();
 
   // Plateformes & Modes d'expédition dynamiques
   const [availablePlatforms, setAvailablePlatforms] = useState<StorePlatform[]>([
@@ -217,7 +219,7 @@ export default function OrderForm() {
       + `📦 Mode choisi : *${modeLabel}*\n`
       + `📍 Ville : ${city} (Bénin)\n\n`
       + `Merci de me communiquer le montant total de mes articles !`;
-    return `https://wa.me/2290154072488?text=${encodeURIComponent(message)}`;
+    return getWhatsAppDirectUrl(settings?.whatsappNumber || '0154072488', message);
   };
 
   if (createdTicket) {

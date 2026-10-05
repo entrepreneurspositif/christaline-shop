@@ -1,6 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-
 export interface PaymentAccount {
   id: string;
   operator: string;
@@ -30,6 +27,8 @@ export interface AppSettings {
   storeName: string;
   phone: string;
   whatsappNumber: string;
+  whatsappGroupLink?: string;
+  whatsappButtonTarget?: 'group' | 'direct';
   country: string;
   defaultCity: string;
   platforms: StorePlatform[];
@@ -42,12 +41,12 @@ export interface AppSettings {
   };
 }
 
-const SETTINGS_FILE = path.join(process.cwd(), 'data', 'settings.json');
-
-const DEFAULT_SETTINGS: AppSettings = {
+export const DEFAULT_SETTINGS: AppSettings = {
   storeName: 'Christaline Shop',
   phone: '0154072488',
   whatsappNumber: '2290154072488',
+  whatsappGroupLink: '',
+  whatsappButtonTarget: 'group',
   country: 'Bénin',
   defaultCity: 'Cotonou',
   platforms: [
@@ -132,37 +131,60 @@ const DEFAULT_SETTINGS: AppSettings = {
   }
 };
 
-export function getSettings(): AppSettings {
-  try {
-    if (fs.existsSync(SETTINGS_FILE)) {
-      const data = fs.readFileSync(SETTINGS_FILE, 'utf-8');
-      const parsed = JSON.parse(data);
-      return { 
-        ...DEFAULT_SETTINGS, 
-        ...parsed,
-        platforms: parsed.platforms || DEFAULT_SETTINGS.platforms,
-        shippingModes: parsed.shippingModes || DEFAULT_SETTINGS.shippingModes,
-        paymentInstructions: {
-          ...DEFAULT_SETTINGS.paymentInstructions,
-          ...(parsed.paymentInstructions || {})
-        }
-      };
-    }
-  } catch (err) {
-    console.error('Erreur lecture settings.json:', err);
+/**
+ * Formate un numéro de téléphone béninois (ex: "0154072488" -> "01 54 07 24 88")
+ */
+export function formatPhoneNumber(phone?: string): string {
+  if (!phone) return '01 54 07 24 88';
+  const cleaned = phone.replace(/\s+/g, '');
+  if (cleaned.length === 10 && cleaned.startsWith('01')) {
+    return `${cleaned.slice(0, 2)} ${cleaned.slice(2, 4)} ${cleaned.slice(4, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8, 10)}`;
   }
-  return DEFAULT_SETTINGS;
+  if (cleaned.length === 8) {
+    return `${cleaned.slice(0, 2)} ${cleaned.slice(2, 4)} ${cleaned.slice(4, 6)} ${cleaned.slice(6, 8)}`;
+  }
+  return phone;
 }
 
-export function saveSettings(settings: AppSettings): AppSettings {
-  try {
-    const dir = path.dirname(SETTINGS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Erreur sauvegarde settings.json:', err);
+/**
+ * Nettoie le numéro WhatsApp pour le lien wa.me (ajoute indicatif 229 si absent)
+ */
+export function cleanWhatsAppDigits(num?: string): string {
+  if (!num) return '2290154072488';
+  const digits = num.replace(/\D/g, '');
+  if (!digits) return '2290154072488';
+  if (digits.startsWith('229')) return digits;
+  if (digits.length === 10 && digits.startsWith('01')) return `229${digits}`;
+  if (digits.length === 8) return `229${digits}`;
+  return digits;
+}
+
+/**
+ * Génère le lien direct de discussion WhatsApp
+ */
+export function getWhatsAppDirectUrl(num?: string, message?: string): string {
+  const digits = cleanWhatsAppDigits(num);
+  const text = message ? `?text=${encodeURIComponent(message)}` : '';
+  return `https://wa.me/${digits}${text}`;
+}
+
+/**
+ * Génère le lien d'action pour le bouton WhatsApp selon la configuration :
+ * Si le lien du groupe WhatsApp est renseigné et configuré comme cible, on renvoie le lien du groupe.
+ * Sinon, renvoie le lien de discussion direct wa.me.
+ */
+export function getWhatsAppActionUrl(
+  settings?: Partial<AppSettings> | null, 
+  defaultMessage?: string
+): string {
+  if (!settings) return getWhatsAppDirectUrl('0154072488', defaultMessage);
+  
+  const hasGroup = !!(settings.whatsappGroupLink && settings.whatsappGroupLink.trim());
+  const target = settings.whatsappButtonTarget || (hasGroup ? 'group' : 'direct');
+  
+  if (target === 'group' && hasGroup) {
+    return settings.whatsappGroupLink!.trim();
   }
-  return settings;
+  
+  return getWhatsAppDirectUrl(settings.whatsappNumber || '0154072488', defaultMessage);
 }

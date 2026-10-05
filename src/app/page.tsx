@@ -25,10 +25,13 @@ import {
   Users,
   Calendar
 } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
+import { formatPhoneNumber, getWhatsAppDirectUrl } from '@/lib/settings';
 
 export default function Home() {
   const [quickTicketId, setQuickTicketId] = useState('');
   const [showFlyerModal, setShowFlyerModal] = useState(false);
+  const { settings } = useSettings();
 
   const categories = [
     {
@@ -270,7 +273,7 @@ export default function Home() {
                       </div>
                       <div className="text-xs text-stone-200 mt-1 flex items-center gap-2">
                         <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>WhatsApp / Appel : <strong>0154072488</strong></span>
+                        <span>WhatsApp / Appel : <strong className="font-mono">{formatPhoneNumber(settings?.phone || '0154072488')}</strong></span>
                       </div>
                     </div>
                   </div>
@@ -469,16 +472,28 @@ export default function Home() {
             <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto">
               Notre équipe vous répond sur WhatsApp 7j/7 pour vous assister dans le choix de vos articles et le suivi de vos colis.
             </p>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <a
-                href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20j%27aimerais%20une%20assistance%20pour%20une%20commande"
+                href={getWhatsAppDirectUrl(settings?.whatsappNumber || '0154072488', "Bonjour Christaline Shop, j'aimerais une assistance pour une commande")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3.5 rounded-2xl text-sm shadow-md shadow-emerald-200 transition-all hover:scale-102"
+                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3.5 rounded-2xl text-sm shadow-md shadow-emerald-200 transition-all hover:scale-102 cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4 fill-white" />
-                <span>Discuter sur WhatsApp : 0154072488</span>
+                <span>Discuter sur WhatsApp : <span className="font-mono">{settings?.whatsappNumber || '0154072488'}</span></span>
               </a>
+
+              {settings?.whatsappGroupLink && (
+                <a
+                  href={settings.whatsappGroupLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-700 to-emerald-800 hover:from-teal-800 hover:to-emerald-900 text-white font-black px-6 py-3.5 rounded-2xl text-sm shadow-md shadow-teal-200 transition-all hover:scale-102 cursor-pointer"
+                >
+                  <Users className="w-4 h-4 text-emerald-300" />
+                  <span>Rejoindre la Communauté WhatsApp ↗</span>
+                </a>
+              )}
             </div>
           </div>
         </section>

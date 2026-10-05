@@ -2,6 +2,8 @@
   "storeName": "Christaline Shop",
   "phone": "0154072488",
   "whatsappNumber": "2290154072488",
+  "whatsappGroupLink": "",
+  "whatsappButtonTarget": "group",
   "country": "Bénin",
   "defaultCity": "Cotonou",
   "platforms": [

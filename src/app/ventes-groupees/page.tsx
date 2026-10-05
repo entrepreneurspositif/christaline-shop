@@ -30,8 +30,11 @@ import {
   Plane,
   Ship
 } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
+import { getWhatsAppDirectUrl } from '@/lib/settings';
 
 export default function VentesGroupeesPage() {
+  const { settings } = useSettings();
   const [groupBuys, setGroupBuys] = useState<GroupBuyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'open' | 'goal_reached' | 'air' | 'sea'>('all');
@@ -645,13 +648,16 @@ export default function VentesGroupeesPage() {
                       </Link>
 
                       <a
-                        href={`https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20viens%20de%20r%C3%A9server%20la%20vente%20en%20groupe%20pour%20le%20ticket%20${successData.ticketId}`}
+                        href={getWhatsAppDirectUrl(
+                          settings?.whatsappNumber || '0154072488',
+                          `Bonjour Christaline Shop, je viens de réserver la vente en groupe pour le ticket ${successData.ticketId}`
+                        )}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all"
+                        className="w-full py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                       >
                         <MessageCircle className="w-4 h-4 fill-white" />
-                        <span>Confirmer sur WhatsApp (0154072488)</span>
+                        <span>Confirmer sur WhatsApp ({settings?.whatsappNumber || '0154072488'})</span>
                       </a>
                     </div>
                   </div>

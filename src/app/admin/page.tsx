@@ -45,10 +45,14 @@ import {
   Calendar,
   TrendingUp,
   Percent,
-  Sparkles
+  Sparkles,
+  Phone,
+  Link2
 } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
 
 export default function AdminPage() {
+  const { refreshSettings } = useSettings();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -306,6 +310,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.success) {
         setSettings(data.settings);
+        refreshSettings();
         setSettingsSuccess(true);
         setTimeout(() => setSettingsSuccess(false), 3000);
       }
@@ -653,8 +658,9 @@ export default function AdminPage() {
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
               }`}
             >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>Mobile Money</span>
+              <Settings className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Paramètres & Contacts</span>
+              <span className="sm:hidden">Paramètres</span>
             </button>
 
             <button
@@ -1058,133 +1064,336 @@ export default function AdminPage() {
         {/* ONGLET 3 : PARAMÈTRES & INSTRUCTIONS DE PAIEMENT MOBILE MONEY */}
         {/* ============================================================ */}
         {activeAdminTab === 'settings' && settings && (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-8">
-            <div className="border-b border-stone-100 pb-4 flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-10">
+            {/* EN-TÊTE PARAMÈTRES */}
+            <div className="border-b border-stone-100 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-black text-stone-900 font-serif">
-                  Instructions & Comptes de Paiement Mobile Money (Bénin)
+                <h2 className="text-xl sm:text-2xl font-black text-stone-900 font-serif flex items-center gap-2">
+                  <Settings className="w-6 h-6 text-rose-600" />
+                  <span>Configuration du Site, Contacts & Paiements</span>
                 </h2>
-                <p className="text-xs text-stone-500">
-                  Ces informations s'affichent automatiquement au client lorsqu'il clique sur « Valider mon devis & Régler mon acompte ».
+                <p className="text-xs sm:text-sm text-stone-500 mt-1">
+                  Configurez vos numéros de contact, le lien de votre communauté WhatsApp et vos comptes de paiement Mobile Money.
                 </p>
               </div>
 
               {settingsSuccess && (
-                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 shadow-xs animate-fade-in shrink-0">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                  <span>Paramètres enregistrés !</span>
+                  <span>Paramètres enregistrés avec succès !</span>
                 </div>
               )}
             </div>
 
-            <div className="space-y-4">
+            {/* ============================================================ */}
+            {/* SECTION 1 : COORDONNÉES DE CONTACT & COMMUNAUTÉ WHATSAPP */}
+            {/* ============================================================ */}
+            <div className="space-y-6 bg-gradient-to-br from-emerald-50/60 via-teal-50/40 to-stone-50 p-5 sm:p-7 rounded-3xl border border-emerald-200/90 shadow-xs">
+              <div className="flex items-center justify-between border-b border-emerald-200/70 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-xs">
+                    <MessageCircle className="w-5 h-5 fill-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-stone-900 text-base">
+                      Coordonnées Téléphone, WhatsApp & Communauté
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      Gérez les numéros affichés sur le site et le lien de votre groupe ou communauté WhatsApp.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Numéro Téléphone standard */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Numéro d'appel téléphonique</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.phone}
+                    onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                    placeholder="Ex: 0154072488"
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 bg-white text-sm font-mono font-bold text-stone-900 focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <p className="text-[11px] text-stone-500">
+                    Utilisé pour les boutons « Appeler » sur mobile et le contact téléphonique.
+                  </p>
+                </div>
+
+                {/* Numéro WhatsApp direct */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Numéro WhatsApp direct</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.whatsappNumber}
+                    onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
+                    placeholder="Ex: 0154072488 ou 2290154072488"
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 bg-white text-sm font-mono font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <p className="text-[11px] text-stone-500">
+                    Numéro officiel utilisé pour les discussions directes et la réception des devis.
+                  </p>
+                </div>
+              </div>
+
+              {/* Lien Communauté / Groupe WhatsApp */}
+              <div className="space-y-2 pt-2 border-t border-emerald-100">
+                <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-emerald-600" />
+                  <span>Lien de votre Communauté ou Groupe WhatsApp</span>
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="url"
+                      value={settings.whatsappGroupLink || ''}
+                      onChange={(e) => setSettings({ ...settings, whatsappGroupLink: e.target.value })}
+                      placeholder="https://chat.whatsapp.com/VotreLienDinviatationGroupe"
+                      className="w-full px-4 py-2.5 rounded-xl border border-emerald-300 bg-white text-xs sm:text-sm font-mono text-stone-800 focus:ring-2 focus:ring-emerald-500 placeholder:text-stone-400"
+                    />
+                  </div>
+                  {settings.whatsappGroupLink && (
+                    <a
+                      href={settings.whatsappGroupLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 transition-colors shadow-xs"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Tester le lien ↗</span>
+                    </a>
+                  )}
+                </div>
+                <p className="text-[11px] text-stone-500">
+                  Collez ici le lien d'invitation de votre groupe ou communauté WhatsApp (ex: <code>https://chat.whatsapp.com/...</code>).
+                </p>
+              </div>
+
+              {/* Destination du bouton WhatsApp associé au numéro */}
+              <div className="space-y-2 pt-2 border-t border-emerald-100">
+                <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider">
+                  Action du bouton WhatsApp avec le numéro :
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    (settings.whatsappButtonTarget || 'group') === 'group'
+                      ? 'border-emerald-600 bg-emerald-50/80 shadow-xs'
+                      : 'border-stone-200 bg-white hover:border-stone-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="whatsappButtonTarget"
+                      value="group"
+                      checked={(settings.whatsappButtonTarget || 'group') === 'group'}
+                      onChange={() => setSettings({ ...settings, whatsappButtonTarget: 'group' })}
+                      className="mt-0.5 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div>
+                      <div className="font-bold text-xs sm:text-sm text-stone-900 flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Rejoindre le Groupe / Communauté WhatsApp</span>
+                      </div>
+                      <p className="text-[11px] text-stone-500 mt-0.5">
+                        Le bouton WhatsApp sur le numéro redirige directement vers votre groupe WhatsApp pour faire grandir votre communauté.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    settings.whatsappButtonTarget === 'direct'
+                      ? 'border-emerald-600 bg-emerald-50/80 shadow-xs'
+                      : 'border-stone-200 bg-white hover:border-stone-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="whatsappButtonTarget"
+                      value="direct"
+                      checked={settings.whatsappButtonTarget === 'direct'}
+                      onChange={() => setSettings({ ...settings, whatsappButtonTarget: 'direct' })}
+                      className="mt-0.5 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div>
+                      <div className="font-bold text-xs sm:text-sm text-stone-900 flex items-center gap-1.5">
+                        <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Discussion privée WhatsApp directe</span>
+                      </div>
+                      <p className="text-[11px] text-stone-500 mt-0.5">
+                        Le bouton WhatsApp ouvre une discussion privée avec vous sur WhatsApp.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* LIVE PREVIEW DU BOUTON */}
+              <div className="p-4 bg-white rounded-2xl border border-emerald-200 space-y-2">
+                <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">
+                  Aperçu du bouton WhatsApp dans l'en-tête du site :
+                </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="bg-gradient-to-r from-rose-600 to-amber-600 p-2 px-3 rounded-xl text-white text-xs flex items-center gap-2 shadow-xs">
+                    <span className="text-[11px] text-rose-100 font-medium">Barre supérieure :</span>
+                    <div className="flex items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full font-semibold">
+                      <MessageCircle className="w-3 h-3 fill-white" />
+                      <span>WhatsApp : {settings.whatsappNumber || '0154072488'}</span>
+                      {settings.whatsappGroupLink && (settings.whatsappButtonTarget || 'group') === 'group' && (
+                        <span className="text-[9px] bg-emerald-500 text-white px-1.5 py-0.2 rounded-full font-bold ml-1">
+                          Groupe
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-stone-600">
+                    Destination au clic :{' '}
+                    <strong className="text-stone-900 font-mono bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-200">
+                      {(settings.whatsappButtonTarget || 'group') === 'group' && settings.whatsappGroupLink
+                        ? settings.whatsappGroupLink
+                        : `wa.me/${settings.whatsappNumber || '0154072488'}`}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ============================================================ */}
+            {/* SECTION 2 : INSTRUCTIONS ET COMPTES MOBILE MONEY */}
+            {/* ============================================================ */}
+            <div className="space-y-6 pt-4 border-t border-stone-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-rose-600 text-white shadow-xs">
+                  <CreditCard className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-stone-900">
+                    Instructions & Comptes de Paiement Mobile Money (Bénin)
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    Ces informations s'affichent automatiquement au client lorsqu'il clique sur « Valider mon devis & Régler mon acompte ».
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Titre du Modal d'Instructions
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.paymentInstructions.title}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      paymentInstructions: { ...settings.paymentInstructions, title: e.target.value }
+                    })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Consigne générale de transfert
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={settings.paymentInstructions.instructionsText}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      paymentInstructions: { ...settings.paymentInstructions, instructionsText: e.target.value }
+                    })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 text-xs text-stone-700"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-bold text-stone-900 text-sm border-l-4 border-rose-500 pl-3">
+                  Comptes Mobile Money configurés (MTN, Moov, Celtiis Bénin)
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {settings.paymentInstructions.accounts.map((acc, idx) => (
+                    <div key={acc.id} className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-500 uppercase">Opérateur</label>
+                        <input
+                          type="text"
+                          value={acc.operator}
+                          onChange={(e) => {
+                            const accounts = [...settings.paymentInstructions.accounts];
+                            accounts[idx] = { ...accounts[idx], operator: e.target.value };
+                            setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs font-bold bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-500 uppercase">Numéro de téléphone</label>
+                        <input
+                          type="text"
+                          value={acc.number}
+                          onChange={(e) => {
+                            const accounts = [...settings.paymentInstructions.accounts];
+                            accounts[idx] = { ...accounts[idx], number: e.target.value };
+                            setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm font-mono font-bold bg-white text-rose-700"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-stone-500 uppercase">Nom du titulaire de compte</label>
+                        <input
+                          type="text"
+                          value={acc.holderName}
+                          onChange={(e) => {
+                            const accounts = [...settings.paymentInstructions.accounts];
+                            accounts[idx] = { ...accounts[idx], holderName: e.target.value };
+                            setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
+                          }}
+                          className="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                  Titre du Modal d'Instructions
+                  Instruction après le transfert (ex: envoyer capture d'écran)
                 </label>
                 <input
                   type="text"
-                  value={settings.paymentInstructions.title}
+                  value={settings.paymentInstructions.confirmationNote}
                   onChange={(e) => setSettings({
                     ...settings,
-                    paymentInstructions: { ...settings.paymentInstructions, title: e.target.value }
+                    paymentInstructions: { ...settings.paymentInstructions, confirmationNote: e.target.value }
                   })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-stone-300 text-sm font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                  Consigne générale de transfert
-                </label>
-                <textarea
-                  rows={3}
-                  value={settings.paymentInstructions.instructionsText}
-                  onChange={(e) => setSettings({
-                    ...settings,
-                    paymentInstructions: { ...settings.paymentInstructions, instructionsText: e.target.value }
-                  })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-stone-300 text-xs text-stone-700"
+                  className="w-full px-4 py-2.5 rounded-xl border border-stone-300 text-xs"
                 />
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="font-bold text-stone-900 text-sm border-l-4 border-rose-500 pl-3">
-                Comptes Mobile Money configurés (MTN, Moov, Celtiis Bénin)
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {settings.paymentInstructions.accounts.map((acc, idx) => (
-                  <div key={acc.id} className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-stone-500 uppercase">Opérateur</label>
-                      <input
-                        type="text"
-                        value={acc.operator}
-                        onChange={(e) => {
-                          const accounts = [...settings.paymentInstructions.accounts];
-                          accounts[idx] = { ...accounts[idx], operator: e.target.value };
-                          setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
-                        }}
-                        className="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs font-bold bg-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-stone-500 uppercase">Numéro de téléphone</label>
-                      <input
-                        type="text"
-                        value={acc.number}
-                        onChange={(e) => {
-                          const accounts = [...settings.paymentInstructions.accounts];
-                          accounts[idx] = { ...accounts[idx], number: e.target.value };
-                          setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
-                        }}
-                        className="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm font-mono font-bold bg-white text-rose-700"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-stone-500 uppercase">Nom du titulaire de compte</label>
-                      <input
-                        type="text"
-                        value={acc.holderName}
-                        onChange={(e) => {
-                          const accounts = [...settings.paymentInstructions.accounts];
-                          accounts[idx] = { ...accounts[idx], holderName: e.target.value };
-                          setSettings({ ...settings, paymentInstructions: { ...settings.paymentInstructions, accounts } });
-                        }}
-                        className="w-full px-3 py-2 rounded-lg border border-stone-300 text-xs bg-white"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                Instruction après le transfert (ex: envoyer capture d'écran)
-              </label>
-              <input
-                type="text"
-                value={settings.paymentInstructions.confirmationNote}
-                onChange={(e) => setSettings({
-                  ...settings,
-                  paymentInstructions: { ...settings.paymentInstructions, confirmationNote: e.target.value }
-                })}
-                className="w-full px-4 py-2.5 rounded-xl border border-stone-300 text-xs"
-              />
-            </div>
-
-            <div className="pt-2 flex justify-end">
+            {/* BOUTON D'ENREGISTREMENT GLOBAL */}
+            <div className="pt-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-stone-500">
+                Les coordonnées et instructions de paiement sont sauvegardées en temps réel sur le serveur.
+              </p>
               <button
                 onClick={() => saveSettingsToServer(settings)}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-sm shadow-md cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-sm shadow-md cursor-pointer transition-transform hover:scale-102"
               >
                 <Save className="w-4 h-4" />
-                <span>Enregistrer les Instructions de Paiement</span>
+                <span>Enregistrer la Configuration & Contacts</span>
               </button>
             </div>
 

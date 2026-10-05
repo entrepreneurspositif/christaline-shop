@@ -19,9 +19,19 @@ import {
   ChevronRight,
   Clock
 } from 'lucide-react';
+import { useSettings } from '@/context/SettingsContext';
+import { getWhatsAppActionUrl, getWhatsAppDirectUrl, formatPhoneNumber } from '@/lib/settings';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { settings } = useSettings();
+
+  const hasGroup = !!(settings.whatsappGroupLink && settings.whatsappGroupLink.trim());
+  const isGroupTarget = settings.whatsappButtonTarget === 'group' && hasGroup;
+  const whatsAppActionUrl = getWhatsAppActionUrl(
+    settings, 
+    "Bonjour Christaline Shop, je souhaite des renseignements pour une commande"
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-rose-100 shadow-xs">
@@ -42,14 +52,20 @@ export default function Navbar() {
           {/* Contact rapide WhatsApp */}
           <div className="flex items-center shrink-0">
             <a 
-              href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20des%20renseignements%20pour%20une%20commande" 
+              href={whatsAppActionUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:underline bg-white/15 px-2 py-0.5 rounded-full font-semibold"
+              className="flex items-center gap-1 hover:underline bg-white/15 px-2 py-0.5 rounded-full font-semibold transition-colors"
+              title={isGroupTarget ? "Rejoindre le Groupe WhatsApp" : "Discuter sur WhatsApp"}
             >
               <MessageCircle className="w-3 h-3 fill-current shrink-0" />
               <span className="hidden xs:inline">WhatsApp :</span>
-              <span>0154072488</span>
+              <span>{settings.whatsappNumber || '0154072488'}</span>
+              {hasGroup && isGroupTarget && (
+                <span className="hidden sm:inline text-[9px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold ml-0.5">
+                  Groupe
+                </span>
+              )}
             </a>
           </div>
 
@@ -128,13 +144,14 @@ export default function Navbar() {
           {/* Boutons d'action Desktop */}
           <div className="hidden lg:flex items-center gap-2.5">
             <a
-              href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
+              href={whatsAppActionUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all hover:-translate-y-0.5"
+              title={isGroupTarget ? "Rejoindre le Groupe WhatsApp" : "Discuter sur WhatsApp"}
             >
               <MessageCircle className="w-3.5 h-3.5 fill-white" />
-              <span>WhatsApp</span>
+              <span>{isGroupTarget ? 'Groupe WhatsApp' : 'WhatsApp'}</span>
             </a>
 
             <Link
@@ -261,24 +278,39 @@ export default function Navbar() {
           </Link>
 
           {/* Contact Rapide (Bénin) */}
-          <div className="pt-2 border-t border-stone-100 grid grid-cols-2 gap-2">
-            <a
-              href="tel:0154072488"
-              className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-stone-100 text-stone-800 font-bold text-xs active:bg-stone-200"
-            >
-              <Phone className="w-3.5 h-3.5" />
-              <span>Appeler</span>
-            </a>
+          <div className="pt-2 border-t border-stone-100 space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href={`tel:${settings.phone || '0154072488'}`}
+                className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-stone-100 text-stone-800 font-bold text-xs active:bg-stone-200"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>Appeler</span>
+              </a>
 
-            <a
-              href="https://wa.me/2290154072488?text=Bonjour%20Christaline%20Shop%2C%20je%20souhaite%20passer%20une%20commande"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs active:bg-emerald-700"
-            >
-              <MessageCircle className="w-3.5 h-3.5 fill-white" />
-              <span>WhatsApp</span>
-            </a>
+              <a
+                href={whatsAppActionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 p-3 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs active:bg-emerald-700"
+                title={isGroupTarget ? "Rejoindre le Groupe WhatsApp" : "Discuter sur WhatsApp"}
+              >
+                <MessageCircle className="w-3.5 h-3.5 fill-white" />
+                <span>{isGroupTarget ? 'Groupe' : 'WhatsApp'}</span>
+              </a>
+            </div>
+
+            {hasGroup && (
+              <a
+                href={settings.whatsappGroupLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs active:bg-emerald-100"
+              >
+                <Users className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Communauté / Groupe WhatsApp</span>
+              </a>
+            )}
           </div>
 
         </div>

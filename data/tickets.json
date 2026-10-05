@@ -1,5 +1,137 @@
 [
   {
+    "id": "CS-276668",
+    "createdAt": "2026-10-05T10:55:26.584Z",
+    "updatedAt": "2026-10-05T10:55:26.584Z",
+    "shippingMode": "air",
+    "client": {
+      "name": "grer",
+      "phone": "0143253465",
+      "whatsapp": "0143253465",
+      "city": "Cotonou",
+      "address": "",
+      "notes": "Réservation pour la vente en groupe: \"Escarpins Luxe à Strass & Finition Soie\". "
+    },
+    "items": [
+      {
+        "id": "item-gb-1791197726587",
+        "platform": "shein",
+        "url": "",
+        "name": "[Achat Groupé] Escarpins Luxe à Strass & Finition Soie",
+        "variant": "Pointure 38 - Doré Champagne",
+        "quantity": 2,
+        "originalPrice": null,
+        "originalCurrency": "CFA",
+        "notes": "Date prévue de passage commande chez le fournisseur : 2026-10-16",
+        "unitPriceCFA": 18500,
+        "shippingFeeCFA": 0,
+        "serviceFeeCFA": 0,
+        "customsFeeCFA": 0,
+        "totalItemCFA": 37000,
+        "status": "quoted"
+      }
+    ],
+    "quote": {
+      "status": "ready",
+      "subtotalItemsCFA": 37000,
+      "totalShippingCFA": 0,
+      "totalServiceFeeCFA": 0,
+      "totalCustomsCFA": 0,
+      "discountCFA": 19000,
+      "grandTotalCFA": 37000,
+      "depositRequiredCFA": 22200,
+      "depositPaidCFA": 0,
+      "balanceRemainingCFA": 37000,
+      "adminNote": "Tarif spécial Vente en Groupe : 18 500 FCFA / unité. Commande déclenchée le 2026-10-16. Acompte de 60% requis pour garantir la réservation.",
+      "quotedAt": "2026-10-05T10:55:26.584Z"
+    },
+    "tracking": {
+      "currentStatus": "ready",
+      "statusLabel": "Devis Vente Groupée prêt (En attente d’acompte)",
+      "shippingMode": "air",
+      "estimatedDelivery": "Au plus 1 mois",
+      "estimatedDeliveryDate": null,
+      "supplierOrderNumber": "GB-GB-1",
+      "carrierName": null,
+      "carrierTrackingNumber": null,
+      "carrierTrackingUrl": null,
+      "events": [
+        {
+          "id": "step-0",
+          "title": "Demande enregistrée",
+          "description": "Vos liens et choix d'articles ont été reçus par l'équipe Christaline Shop Bénin.",
+          "date": "05 oct. 2026, 11:55",
+          "location": "Christaline Shop - Réception Cotonou",
+          "completed": true,
+          "current": false
+        },
+        {
+          "id": "step-1",
+          "title": "Devis calculé par Christaline",
+          "description": "L'équipe a vérifié la disponibilité et calculé le prix total de vos articles en FCFA.",
+          "date": "05 oct. 2026, 13:55",
+          "location": "Christaline Shop Bénin - Gestion Devis",
+          "completed": true,
+          "current": true
+        },
+        {
+          "id": "step-2",
+          "title": "Devis validé & Acompte reçu",
+          "description": "Acompte confirmé via Mobile Money (MTN / Moov / Celtiis Bénin).",
+          "date": "En attente validation",
+          "location": "Christaline Shop - Trésorerie",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-3",
+          "title": "Commande validée chez le fournisseur",
+          "description": "Articles commandés avec succès auprès de la plateforme partenaire.",
+          "date": "À venir",
+          "location": "Plateforme Fournisseur",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-4",
+          "title": "Expédition Aérienne (Vol Fret Régulier)",
+          "description": "Colis groupé expédié en vol fret aérien international vers Cotonou. Délai aérien : au plus 1 mois.",
+          "date": "Délai au plus 1 mois",
+          "location": "Fret Aérien International (Avion)",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-5",
+          "title": "Arrivée au Bénin & Dédouanement",
+          "description": "Atterrissage à l'Aéroport International de Cotonou (Cadjehoun), inspection et tri.",
+          "date": "En cours de transit",
+          "location": "Aéroport Cadjehoun Cotonou",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-6",
+          "title": "Prêt pour livraison / retrait",
+          "description": "Colis disponible à l'agence Christaline Shop Cotonou ou confié au livreur.",
+          "date": "À venir",
+          "location": "Agence Christaline Shop Cotonou",
+          "completed": false,
+          "current": false
+        },
+        {
+          "id": "step-7",
+          "title": "Colis remis au client",
+          "description": "Commande remise en main propre. Merci de faire confiance à Christaline Shop !",
+          "date": "En attente de remise",
+          "location": "Client (Bénin)",
+          "completed": false,
+          "current": false
+        }
+      ]
+    }
+  },
+  {
     "id": "CS-453643",
     "createdAt": "2026-10-05T04:37:13.659Z",
     "updatedAt": "2026-10-05T04:37:13.659Z",

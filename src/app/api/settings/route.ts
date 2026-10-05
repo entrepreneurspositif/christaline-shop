@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getSettings, saveSettings, AppSettings } from '@/lib/settings';
+import { AppSettings } from '@/lib/settings';
+import { getSettings, saveSettings } from '@/lib/settingsServer';
 
 export async function GET() {
   try {

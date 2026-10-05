@@ -7,7 +7,7 @@ import {
   STATUS_MAP, 
   PLATFORM_CONFIG 
 } from '@/lib/types';
-import { AppSettings, PaymentAccount } from '@/lib/settings';
+import { AppSettings, PaymentAccount, getWhatsAppDirectUrl } from '@/lib/settings';
 import { 
   ShoppingBag, 
   Truck, 
@@ -97,13 +97,13 @@ export default function TicketTrackingView({ ticket }: Props) {
 
   // WhatsApp de confirmation après avoir effectué le paiement
   const getWhatsAppPaymentProofMessage = () => {
-    const waNumber = settings?.whatsappNumber || '2290154072488';
+    const waNumber = settings?.whatsappNumber || '0154072488';
     const msg = `Bonjour Christaline Shop Bénin ! 🌸\n`
       + `Je viens d'effectuer le règlement de mon acompte pour le *Ticket ${ticket.id}*.\n`
       + `👤 Client : ${ticket.client.name}\n`
       + `💰 Montant acompte : ${formatCFA(ticket.quote.depositRequiredCFA)}\n`
       + `Je vous transmets ma capture / référence de transaction pour validation de ma commande. Merci !`;
-    return `https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`;
+    return getWhatsAppDirectUrl(waNumber, msg);
   };
 
   return (
