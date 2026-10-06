@@ -253,10 +253,11 @@ export default function Home() {
                 <div className="relative group rounded-3xl overflow-hidden border-2 border-rose-200 shadow-xl bg-white p-2">
                   <div className="relative h-72 sm:h-80 w-full rounded-2xl overflow-hidden bg-stone-100">
                     <Image
-                      src="/images/christaline-flyer.jpg"
+                      src={settings?.homepageFlyerUrl || "/images/christaline-flyer.jpg"}
                       alt="Christaline Shop Flyer Officiel"
                       fill
                       className="object-cover object-top group-hover:scale-102 transition-transform duration-500"
+                      unoptimized
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex flex-col justify-end p-5 text-white">
                       <div className="flex items-center justify-between">
@@ -509,10 +510,11 @@ export default function Home() {
           <div className="relative max-w-lg w-full max-h-[90vh] bg-white rounded-3xl overflow-hidden p-2 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="relative h-[80vh] w-full">
               <Image
-                src="/images/christaline-flyer.jpg"
+                src={settings?.homepageFlyerUrl || "/images/christaline-flyer.jpg"}
                 alt="Christaline Shop Flyer Grand Format"
                 fill
                 className="object-contain"
+                unoptimized
               />
             </div>
             <div className="p-3 text-center">

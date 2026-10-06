@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient (Christaline Rose) -->
+    <linearGradient id="roseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF337A"/>
+      <stop offset="45%" stop-color="#E11D48"/>
+      <stop offset="100%" stop-color="#9F1239"/>
+    </linearGradient>
+
+    <!-- Golden Crown Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="35%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+
+    <!-- Gold Shine Gradient -->
+    <linearGradient id="shineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect x="20" y="20" width="472" height="472" rx="116" ry="116" fill="url(#roseGrad)"/>
+  <rect x="24" y="24" width="464" height="464" rx="112" ry="112" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-opacity="0.3"/>
+  <rect x="24" y="24" width="464" height="232" rx="112" ry="112" fill="url(#shineGrad)"/>
+
+  <!-- Golden Crown of Christaline Shop -->
+  <g filter="url(#shadow)" transform="translate(176, 56) scale(0.62)">
+    <!-- Base band -->
+    <rect x="20" y="180" width="220" height="32" rx="8" fill="url(#goldGrad)"/>
+    <!-- Jewels on band -->
+    <circle cx="50" cy="196" r="7" fill="#EF4444"/>
+    <circle cx="95" cy="196" r="6" fill="#FFFFFF"/>
+    <circle cx="130" cy="196" r="8" fill="#10B981"/>
+    <circle cx="165" cy="196" r="6" fill="#FFFFFF"/>
+    <circle cx="210" cy="196" r="7" fill="#EF4444"/>
+    <!-- Crown 5 Peaks -->
+    <path d="M 20 180 L 0 55 L 68 125 L 130 20 L 192 125 L 260 55 L 240 180 Z" fill="url(#goldGrad)"/>
+    <!-- Pearls on Peaks -->
+    <circle cx="0" cy="50" r="14" fill="#FEF08A"/>
+    <circle cx="68" cy="120" r="11" fill="#FEF08A"/>
+    <circle cx="130" cy="16" r="17" fill="#FEF08A"/>
+    <circle cx="192" cy="120" r="11" fill="#FEF08A"/>
+    <circle cx="260" cy="50" r="14" fill="#FEF08A"/>
+  </g>
+
+  <!-- Letter C in Calligraphic Script (Bright White with subtle shadow) -->
+  <g filter="url(#shadow)">
+    <path d="M 330 255 C 320 220 290 190 240 190 C 170 190 120 250 120 330 C 120 410 170 460 250 460 C 295 460 335 435 350 405 C 353 398 348 390 340 390 C 334 390 329 394 324 400 C 306 422 278 436 248 436 C 185 436 148 392 148 330 C 148 262 188 214 242 214 C 278 214 302 235 312 260 C 315 268 325 272 332 268 C 338 264 340 257 330 255 Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Hot Pink Shopping Bag with Heart (Bottom Right) -->
+  <g transform="translate(325, 305) scale(0.55)" filter="url(#shadow)">
+    <!-- Bag Handle -->
+    <path d="M 50 70 C 50 25 150 25 150 70" fill="none" stroke="#FEF08A" stroke-width="16" stroke-linecap="round"/>
+    <!-- Bag Body -->
+    <rect x="20" y="70" width="160" height="150" rx="24" fill="#BE123C" stroke="#FEF08A" stroke-width="8"/>
+    <!-- Heart on Bag -->
+    <path d="M 100 125 C 100 125 72 95 54 113 C 36 131 62 165 100 190 C 138 165 164 131 146 113 C 128 95 100 125 100 125 Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Golden Stars & Sparkles -->
+  <path d="M 85 145 Q 98 145 98 132 Q 98 145 111 145 Q 98 145 98 158 Q 98 145 85 145 Z" fill="#FEF08A"/>
+  <path d="M 405 185 Q 415 185 415 175 Q 415 185 425 185 Q 415 185 415 195 Q 415 185 405 185 Z" fill="#FEF08A"/>
+</svg>

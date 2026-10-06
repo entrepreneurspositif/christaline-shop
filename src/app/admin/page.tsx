@@ -1948,6 +1948,136 @@ export default function AdminPage() {
             </div>
 
             {/* ============================================================ */}
+            {/* SECTION : AFFICHE OFFICIELLE DE LA PAGE D'ACCUEIL (FLYER) */}
+            {/* ============================================================ */}
+            <div className="space-y-6 bg-gradient-to-br from-rose-50/70 via-pink-50/40 to-stone-50 p-5 sm:p-7 rounded-3xl border border-rose-200/90 shadow-xs">
+              <div className="flex items-center justify-between border-b border-rose-200/70 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-rose-600 text-white shadow-xs">
+                    <Camera className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-stone-900 text-base">
+                      Affiche Officielle de la Page d'Accueil (Flyer)
+                    </h3>
+                    <p className="text-xs text-stone-500">
+                      Modifiez le visuel promotionnel ou le flyer officiel affiché en grand sur la page d'accueil de Christaline Shop.
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/"
+                  target="_blank"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-white text-rose-700 text-xs font-bold hover:bg-rose-50 transition-colors shadow-2xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Voir sur l'accueil ↗</span>
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                {/* APERÇU ACTUEL */}
+                <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-2xs space-y-2">
+                  <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Aperçu Actuel</span>
+                    <span className="text-rose-600 font-bold text-[10px]">Page d'Accueil</span>
+                  </div>
+                  <div className="relative h-64 w-full rounded-xl overflow-hidden bg-stone-100 border border-stone-100 group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={settings.homepageFlyerUrl || '/images/christaline-flyer.jpg'}
+                      alt="Affiche Officielle"
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as any).src = '/images/christaline-flyer.jpg';
+                      }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-stone-400 truncate">
+                    {settings.homepageFlyerUrl || '/images/christaline-flyer.jpg'}
+                  </div>
+                </div>
+
+                {/* MODIFICATION & UPLOAD */}
+                <div className="md:col-span-2 space-y-4">
+                  {/* Bouton d'upload direct depuis appareil */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider">
+                      Option 1 : Téléverser une nouvelle affiche depuis votre appareil
+                    </label>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-800 font-bold text-xs cursor-pointer border border-stone-300 shadow-xs hover:border-rose-300 transition-all">
+                        <Upload className="w-4 h-4 text-rose-600" />
+                        <span>Sélectionner une image (Téléphone ou PC)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) {
+                              alert('L\'image est trop lourde (max 5 Mo). Veuillez choisir une image plus légère.');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              if (typeof reader.result === 'string') {
+                                const updated = { ...settings, homepageFlyerUrl: reader.result };
+                                setSettings(updated);
+                                saveSettingsToServer(updated);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = { ...settings, homepageFlyerUrl: '/images/christaline-flyer.jpg' };
+                          setSettings(updated);
+                          saveSettingsToServer(updated);
+                        }}
+                        className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold cursor-pointer transition-colors"
+                      >
+                        🔄 Rétablir l'affiche d'origine
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-stone-500">
+                      Vous pouvez prendre directement une photo ou choisir une image depuis votre galerie de téléphone ou ordinateur.
+                    </p>
+                  </div>
+
+                  {/* Option 2 : Champ URL */}
+                  <div className="space-y-1.5 pt-2 border-t border-rose-100">
+                    <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider">
+                      Option 2 : Ou renseigner le lien web d'une image (URL)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={settings.homepageFlyerUrl || ''}
+                        onChange={(e) => setSettings({ ...settings, homepageFlyerUrl: e.target.value })}
+                        placeholder="Ex: https://monsite.com/mon-flyer.jpg ou /images/christaline-flyer.jpg"
+                        className="flex-1 px-4 py-2.5 rounded-xl border border-stone-300 bg-white text-xs sm:text-sm font-mono text-stone-800 focus:ring-2 focus:ring-rose-500 placeholder:text-stone-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => saveSettingsToServer(settings)}
+                        className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-xs"
+                      >
+                        Enregistrer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ============================================================ */}
             {/* SECTION 2 : INSTRUCTIONS ET COMPTES MOBILE MONEY */}
             {/* ============================================================ */}
             <div className="space-y-6 pt-4 border-t border-stone-100">

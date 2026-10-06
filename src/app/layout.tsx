@@ -19,7 +19,14 @@ export const metadata: Metadata = {
   description: "Passez vos commandes sur Shein et Temu facilement au Bénin. Obtenez votre ticket officiel, consultez votre devis en FCFA et suivez votre colis en temps réel. Voie aérienne (au plus 1 mois) ou maritime (2 à 3 mois). WhatsApp : 0154072488.",
   keywords: ["Christaline Shop", "Shein Bénin", "Temu Bénin", "précommande", "devis", "suivi colis", "Cotonou", "Bénin", "Calavi", "Mobile Money"],
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 

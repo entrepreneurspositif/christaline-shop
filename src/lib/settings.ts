@@ -56,6 +56,7 @@ export interface AppSettings {
   defaultCity: string;
   platforms: StorePlatform[];
   shippingModes: ShippingModeOption[];
+  homepageFlyerUrl?: string;
   telegram: TelegramConfig;
   marketing: MarketingConfig;
   paymentInstructions: {
@@ -68,6 +69,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   storeName: 'Christaline Shop',
+  homepageFlyerUrl: '/images/christaline-flyer.jpg',
   phone: '0154072488',
   whatsappNumber: '2290154072488',
   whatsappGroupLink: '',
