@@ -41,6 +41,7 @@ yarn-error.log*
 
 # root android binaries
 /Christaline-Admin.apk
+/Christaline-Shop.apk
 /Christaline-Shop.aab
 *.jks
 *.keystore
