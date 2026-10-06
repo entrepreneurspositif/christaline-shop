@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Christaline Admin</string>
+    <string name="title_activity_main">Christaline Admin</string>
+    <string name="package_name">com.christalineshop.admin</string>
+    <string name="custom_url_scheme">com.christalineshop.admin</string>
+</resources>

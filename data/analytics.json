@@ -1574,6 +1574,286 @@
       "sessionId": "sess_ig7ji6y_muwhouwp",
       "id": "ev_1791293791443_4qqcp",
       "timestamp": "2026-10-06T13:36:31.443Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/",
+      "referrer": "http://localhost:3000/",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_7wv8mab_muwmj201",
+      "id": "ev_1791304175721_smwz7",
+      "timestamp": "2026-10-06T16:29:35.721Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/super-admin",
+      "referrer": "http://localhost:3000/super-admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_rlkib9p_muwhdy5l",
+      "id": "ev_1791304175752_ypjqi",
+      "timestamp": "2026-10-06T16:29:35.752Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_ig7ji6y_muwhouwp",
+      "id": "ev_1791304176691_8dovs",
+      "timestamp": "2026-10-06T16:29:36.691Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ticket/CS-489190",
+      "referrer": "http://localhost:3000/ticket/CS-489190",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_kgt46qa_muwig3zn",
+      "id": "ev_1791304176978_oa0ou",
+      "timestamp": "2026-10-06T16:29:36.978Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ticket/CS-489190",
+      "referrer": "http://localhost:3000/ticket/CS-489190",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_kgt46qa_muwig3zn",
+      "id": "ev_1791304178230_mp53a",
+      "timestamp": "2026-10-06T16:29:38.230Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_ig7ji6y_muwhouwp",
+      "id": "ev_1791304178326_qjr7e",
+      "timestamp": "2026-10-06T16:29:38.326Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/super-admin",
+      "referrer": "http://localhost:3000/super-admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_rlkib9p_muwhdy5l",
+      "id": "ev_1791304178404_2fsax",
+      "timestamp": "2026-10-06T16:29:38.404Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/",
+      "referrer": "http://localhost:3000/",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_7wv8mab_muwmj201",
+      "id": "ev_1791304178455_j96qv",
+      "timestamp": "2026-10-06T16:29:38.455Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/super-admin",
+      "referrer": "http://localhost:3000/super-admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_rlkib9p_muwhdy5l",
+      "id": "ev_1791304214519_rcqvw",
+      "timestamp": "2026-10-06T16:30:14.519Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_ig7ji6y_muwhouwp",
+      "id": "ev_1791304214579_2hi03",
+      "timestamp": "2026-10-06T16:30:14.579Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/",
+      "referrer": "http://localhost:3000/",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_7wv8mab_muwmj201",
+      "id": "ev_1791304214617_usz5t",
+      "timestamp": "2026-10-06T16:30:14.617Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ticket/CS-489190",
+      "referrer": "http://localhost:3000/ticket/CS-489190",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_kgt46qa_muwig3zn",
+      "id": "ev_1791304216398_d4v5p",
+      "timestamp": "2026-10-06T16:30:16.398Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/",
+      "referrer": "http://localhost:3000/",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_7wv8mab_muwmj201",
+      "id": "ev_1791304224193_oec7q",
+      "timestamp": "2026-10-06T16:30:24.193Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/super-admin",
+      "referrer": "http://localhost:3000/super-admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_rlkib9p_muwhdy5l",
+      "id": "ev_1791304224310_owbnf",
+      "timestamp": "2026-10-06T16:30:24.310Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ticket/CS-489190",
+      "referrer": "http://localhost:3000/ticket/CS-489190",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_kgt46qa_muwig3zn",
+      "id": "ev_1791304224368_ui1ed",
+      "timestamp": "2026-10-06T16:30:24.368Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_ig7ji6y_muwhouwp",
+      "id": "ev_1791304224429_oscvc",
+      "timestamp": "2026-10-06T16:30:24.429Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_ig7ji6y_muwhouwp",
+      "id": "ev_1791304252262_burnv",
+      "timestamp": "2026-10-06T16:30:52.262Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/",
+      "referrer": "http://localhost:3000/",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_7wv8mab_muwmj201",
+      "id": "ev_1791304252321_bn56w",
+      "timestamp": "2026-10-06T16:30:52.321Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/super-admin",
+      "referrer": "http://localhost:3000/super-admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_rlkib9p_muwhdy5l",
+      "id": "ev_1791304252348_hnox8",
+      "timestamp": "2026-10-06T16:30:52.348Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ticket/CS-489190",
+      "referrer": "http://localhost:3000/ticket/CS-489190",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_kgt46qa_muwig3zn",
+      "id": "ev_1791304254200_24lt7",
+      "timestamp": "2026-10-06T16:30:54.200Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/super-admin",
+      "referrer": "http://localhost:3000/super-admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_rlkib9p_muwhdy5l",
+      "id": "ev_1791304470892_camhm",
+      "timestamp": "2026-10-06T16:34:30.892Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_ig7ji6y_muwhouwp",
+      "id": "ev_1791304470929_qms7n",
+      "timestamp": "2026-10-06T16:34:30.929Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/",
+      "referrer": "http://localhost:3000/",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_7wv8mab_muwmj201",
+      "id": "ev_1791304471204_6q14q",
+      "timestamp": "2026-10-06T16:34:31.204Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ticket/CS-489190",
+      "referrer": "http://localhost:3000/ticket/CS-489190",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_kgt46qa_muwig3zn",
+      "id": "ev_1791304472681_njzgy",
+      "timestamp": "2026-10-06T16:34:32.681Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/ticket/CS-489190",
+      "referrer": "http://localhost:3000/ticket/CS-489190",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_kgt46qa_muwig3zn",
+      "id": "ev_1791304494677_suyqj",
+      "timestamp": "2026-10-06T16:34:54.677Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/admin",
+      "referrer": "http://localhost:3000/admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_ig7ji6y_muwhouwp",
+      "id": "ev_1791304494757_3jsbo",
+      "timestamp": "2026-10-06T16:34:54.757Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/super-admin",
+      "referrer": "http://localhost:3000/super-admin",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_rlkib9p_muwhdy5l",
+      "id": "ev_1791304494791_dn4k8",
+      "timestamp": "2026-10-06T16:34:54.791Z"
+    },
+    {
+      "type": "page_view",
+      "path": "/",
+      "referrer": "http://localhost:3000/",
+      "utmSource": "referral",
+      "deviceType": "desktop",
+      "sessionId": "sess_7wv8mab_muwmj201",
+      "id": "ev_1791304494818_7wols",
+      "timestamp": "2026-10-06T16:34:54.818Z"
     }
   ]
 }

@@ -38,6 +38,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# root android apk
+/Christaline-Admin.apk
 next-env.d.ts
 
 .vercel

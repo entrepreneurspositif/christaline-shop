@@ -79,6 +79,7 @@ export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [isMobileMode, setIsMobileMode] = useState(false);
 
   // Données Tickets
   const [tickets, setTickets] = useState<TicketOrder[]>([]);
@@ -210,6 +211,14 @@ export default function AdminPage() {
   const [newTimelineStepDesc, setNewTimelineStepDesc] = useState('');
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const search = new URLSearchParams(window.location.search);
+      const isNative = !!(window as any).Capacitor?.isNativePlatform?.();
+      const isMobileParam = search.get('app') === 'mobile';
+      if (isNative || isMobileParam) {
+        setIsMobileMode(true);
+      }
+    }
     fetchSubscriptionStatus();
     const isAuth = sessionStorage.getItem('cs_admin_auth') || localStorage.getItem('cs_admin_auth');
     if (isAuth === 'true') {
@@ -1092,7 +1101,19 @@ export default function AdminPage() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col bg-stone-900 text-stone-100">
-        <Navbar />
+        {isMobileMode ? (
+          <header className="bg-rose-900/90 border-b border-rose-800 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-amber-400/20 flex items-center justify-center">
+                <Crown className="w-4 h-4 text-amber-400" />
+              </div>
+              <span className="font-bold text-sm text-white">Christaline Admin</span>
+            </div>
+            <span className="text-[10px] bg-rose-800 text-rose-200 px-2 py-0.5 rounded-full font-bold">App Mobile</span>
+          </header>
+        ) : (
+          <Navbar />
+        )}
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-stone-800 rounded-3xl p-8 border border-stone-700 shadow-2xl space-y-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center mx-auto shadow-lg">
@@ -1162,7 +1183,7 @@ export default function AdminPage() {
 
           </div>
         </main>
-        <Footer />
+        {!isMobileMode && <Footer />}
 
         {/* Modal de renouvellement FeexPay (sur l'écran de login) */}
         <FeexPayRenewalModal
@@ -1200,9 +1221,44 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-100">
-      <Navbar />
+      {isMobileMode ? (
+        <header className="bg-gradient-to-r from-rose-700 via-rose-600 to-pink-600 text-white px-4 py-3 sticky top-0 z-40 shadow-md flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 shadow-xs">
+              <Crown className="w-4 h-4 text-amber-300" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-sm font-black tracking-tight leading-tight">Christaline Admin</h1>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              </div>
+              <p className="text-[10px] text-rose-100 font-medium">Boutique & Colis • Bénin</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button 
+              type="button"
+              onClick={() => { fetchTickets(); refreshSettings(); fetchDeliveredOrders(); }}
+              className="p-2 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-xl text-xs flex items-center transition-all cursor-pointer"
+              title="Actualiser les données"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-2 bg-white/15 hover:bg-white/25 active:scale-95 text-rose-100 hover:text-white rounded-xl text-xs transition-all cursor-pointer"
+              title="Déconnexion"
+            >
+              <Lock className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+      ) : (
+        <Navbar />
+      )}
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+      <main className={`flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8 ${isMobileMode ? 'pb-28 pt-4' : ''}`}>
         
         {/* BANDEAU EN-TÊTE ADMIN AVEC ONGLETS */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -1767,6 +1823,58 @@ export default function AdminPage() {
                   <span>Paramètres enregistrés avec succès !</span>
                 </div>
               )}
+            </div>
+
+            {/* ============================================================ */}
+            {/* SECTION SPÉCIALE : APPLICATION MOBILE ANDROID (APK) */}
+            {/* ============================================================ */}
+            <div className="bg-gradient-to-r from-rose-900 via-stone-900 to-pink-950 text-white p-6 sm:p-7 rounded-3xl border border-rose-800/60 shadow-xl space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600 to-pink-500 flex items-center justify-center shadow-lg shrink-0">
+                    <Crown className="w-6 h-6 text-amber-300" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+                        Application Mobile Android • Christaline Admin
+                      </h3>
+                      <span className="text-[10px] font-bold bg-rose-500/30 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full">
+                        APK v1.0
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-300 mt-0.5">
+                      Installez l'application officielle sur votre smartphone Android pour gérer vos commandes, colis et notifications partout où vous êtes.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href="/downloads/Christaline-Admin.apk"
+                    download="Christaline-Admin.apk"
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-black text-xs shadow-lg shadow-rose-900/50 transition-all hover:scale-102 active:scale-98 cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4 rotate-180" />
+                    <span>Télécharger l'APK (4.9 Mo)</span>
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs border-t border-white/10">
+                <div className="flex items-start gap-2 text-stone-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Prise de photos et téléversement direct des preuves de livraison</span>
+                </div>
+                <div className="flex items-start gap-2 text-stone-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Synchronisation instantanée avec le site et la base de données</span>
+                </div>
+                <div className="flex items-start gap-2 text-stone-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Navigation rapide avec barre basse optimisée pour smartphone</span>
+                </div>
+              </div>
             </div>
 
             {/* ============================================================ */}
@@ -5255,6 +5363,66 @@ export default function AdminPage() {
           setWaitingForMobilePin(false);
         }}
       />
+
+      {/* Barre de navigation basse pour l'application mobile Android */}
+      {isMobileMode && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-stone-200 py-2 px-2 z-40 flex items-center justify-around shadow-2xl">
+          <button
+            type="button"
+            onClick={() => { setActiveAdminTab('tickets'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className={`flex flex-col items-center gap-0.5 text-[10px] font-bold py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeAdminTab === 'tickets' ? 'text-rose-600 bg-rose-50' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <ShoppingBag className="w-5 h-5" />
+            <span>Commandes</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveAdminTab('delivered_orders'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className={`flex flex-col items-center gap-0.5 text-[10px] font-bold py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeAdminTab === 'delivered_orders' ? 'text-rose-600 bg-rose-50' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <CheckCircle2 className="w-5 h-5" />
+            <span>Colis reçus</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveAdminTab('group_buys'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className={`flex flex-col items-center gap-0.5 text-[10px] font-bold py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeAdminTab === 'group_buys' ? 'text-rose-600 bg-rose-50' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            <span>Groupés</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveAdminTab('marketing'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className={`flex flex-col items-center gap-0.5 text-[10px] font-bold py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeAdminTab === 'marketing' ? 'text-rose-600 bg-rose-50' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <TrendingUp className="w-5 h-5" />
+            <span>Stats</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveAdminTab('settings'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className={`flex flex-col items-center gap-0.5 text-[10px] font-bold py-1.5 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeAdminTab === 'settings' ? 'text-rose-600 bg-rose-50' : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+            <span>Paramètres</span>
+          </button>
+        </nav>
+      )}
 
     </div>
   );
