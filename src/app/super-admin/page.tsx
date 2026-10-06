@@ -751,16 +751,19 @@ export default function SuperAdminPage() {
             
             {/* Montant mensuel à payer */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-stone-300 uppercase tracking-wider">
-                Montant de la cotisation (FCFA) *
+              <label className="block text-xs font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Montant de la cotisation (FCFA) *</span>
+                <span className="text-xs font-mono font-black text-amber-400">
+                  {feeInput ? Number(feeInput).toLocaleString('fr-FR') : '0'} FCFA
+                </span>
               </label>
               <div className="relative">
                 <input
                   type="number"
                   required
                   min={100}
-                  step={500}
-                  placeholder="Ex: 15000"
+                  step="any"
+                  placeholder="Ex: 1000, 5000, 15000"
                   value={feeInput}
                   onChange={(e) => setFeeInput(Number(e.target.value))}
                   className="w-full px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-amber-400 font-mono font-bold text-base focus:border-amber-500 outline-hidden"
@@ -769,8 +772,34 @@ export default function SuperAdminPage() {
                   FCFA / cycle
                 </span>
               </div>
+
+              {/* Raccourcis de montants rapides */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                {[
+                  { label: '1 000 F', val: 1000 },
+                  { label: '2 000 F', val: 2000 },
+                  { label: '5 000 F', val: 5000 },
+                  { label: '10 000 F', val: 10000 },
+                  { label: '15 000 F', val: 15000 },
+                  { label: '20 000 F', val: 20000 },
+                ].map(p => (
+                  <button
+                    key={p.val}
+                    type="button"
+                    onClick={() => setFeeInput(p.val)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                      Number(feeInput) === p.val
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 ring-1 ring-amber-500/40'
+                        : 'bg-stone-800 text-stone-400 border-stone-700 hover:text-stone-200'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
               <p className="text-[11px] text-stone-500">
-                Montant Mobile Money (MTN, Moov, Celtiis) réglé par l'administrateur.
+                Montant exact Mobile Money (MTN, Moov, Celtiis) réglé par l'administrateur.
               </p>
             </div>
 
