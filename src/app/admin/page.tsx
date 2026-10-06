@@ -61,12 +61,18 @@ import {
   Globe,
   Crown,
   Key,
-  XCircle
+  XCircle,
+  Camera,
+  Star,
+  MapPin,
+  ThumbsUp,
+  Upload
 } from 'lucide-react';
 import { AnalyticsSummary, AnalyticsEvent } from '@/lib/analytics';
 import { useSettings } from '@/context/SettingsContext';
 import FeexPayRenewalModal from '@/components/FeexPayRenewalModal';
 import { setClientAuth } from '@/lib/authClient';
+import { DeliveredOrder } from '@/lib/deliveredOrdersData';
 
 export default function AdminPage() {
   const { refreshSettings } = useSettings();
@@ -79,7 +85,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'group_buys' | 'platforms' | 'settings' | 'telegram' | 'marketing'>('tickets');
+  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'group_buys' | 'delivered_orders' | 'platforms' | 'settings' | 'telegram' | 'marketing'>('tickets');
 
   // Données Marketing & Statistiques
   const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
@@ -148,6 +154,32 @@ export default function AdminPage() {
   const [gbError, setGbError] = useState<string | null>(null);
   const [gbSuccess, setGbSuccess] = useState(false);
 
+  // Colis Reçus & Preuves Clients (Carrousel Suivi)
+  const [deliveredOrders, setDeliveredOrders] = useState<DeliveredOrder[]>([]);
+  const [loadingDeliveredOrders, setLoadingDeliveredOrders] = useState(false);
+  const [showDeliveredModal, setShowDeliveredModal] = useState(false);
+  const [editingDeliveredOrder, setEditingDeliveredOrder] = useState<DeliveredOrder | null>(null);
+  const [delSaving, setDelSaving] = useState(false);
+  const [delError, setDelError] = useState<string | null>(null);
+  const [delSuccess, setDelSuccess] = useState<string | null>(null);
+  const [deliveredFilter, setDeliveredFilter] = useState<'all' | 'air' | 'sea' | 'shein' | 'temu' | 'alibaba'>('all');
+  const [deliveredSearch, setDeliveredSearch] = useState('');
+
+  // Formulaire Colis Reçu
+  const [delClientName, setDelClientName] = useState('');
+  const [delLocation, setDelLocation] = useState('Cotonou (Akpakpa)');
+  const [delTicketId, setDelTicketId] = useState('');
+  const [delPlatform, setDelPlatform] = useState<'Shein' | 'Temu' | 'Alibaba' | 'Autre'>('Shein');
+  const [delShippingMode, setDelShippingMode] = useState<'air' | 'sea'>('air');
+  const [delTransitDays, setDelTransitDays] = useState<number>(18);
+  const [delDeliveryDate, setDelDeliveryDate] = useState('Reçu il y a 3 jours');
+  const [delTitle, setDelTitle] = useState('');
+  const [delItemsSummary, setDelItemsSummary] = useState('');
+  const [delRating, setDelRating] = useState<number>(5);
+  const [delReview, setDelReview] = useState('');
+  const [delImageUrl, setDelImageUrl] = useState('');
+  const [delVerified, setDelVerified] = useState<boolean>(true);
+
   // Paramètres & Plateformes
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState(false);
@@ -190,6 +222,7 @@ export default function AdminPage() {
       fetchSettings();
       fetchGroupBuys();
       fetchAnalytics();
+      fetchDeliveredOrders();
     }
   }, []);
 
@@ -322,6 +355,188 @@ export default function AdminPage() {
     }
   };
 
+  // ============================================================
+  // HANDLERS : GESTION DES COLIS REÇUS (PREUVES CLIENTS)
+  // ============================================================
+  const fetchDeliveredOrders = async () => {
+    try {
+      setLoadingDeliveredOrders(true);
+      const res = await fetch('/api/delivered-orders');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        setDeliveredOrders(data.orders);
+      }
+    } catch (err) {
+      console.error('Erreur chargement colis reçus:', err);
+    } finally {
+      setLoadingDeliveredOrders(false);
+    }
+  };
+
+  const handleOpenCreateDelivered = () => {
+    setEditingDeliveredOrder(null);
+    setDelClientName('');
+    setDelLocation('Cotonou (Akpakpa)');
+    setDelTicketId('');
+    setDelPlatform('Shein');
+    setDelShippingMode('air');
+    setDelTransitDays(18);
+    setDelDeliveryDate('Reçu il y a 3 jours');
+    setDelTitle('');
+    setDelItemsSummary('');
+    setDelRating(5);
+    setDelReview('Colis bien emballé et reçu sans aucun dommage. Articles 100% conformes !');
+    setDelImageUrl('https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80');
+    setDelVerified(true);
+    setDelError(null);
+    setShowDeliveredModal(true);
+  };
+
+  const handleOpenEditDelivered = (item: DeliveredOrder) => {
+    setEditingDeliveredOrder(item);
+    setDelClientName(item.clientName);
+    setDelLocation(item.location);
+    setDelTicketId(item.ticketId || '');
+    setDelPlatform(item.platform);
+    setDelShippingMode(item.shippingMode);
+    setDelTransitDays(item.transitDays || 18);
+    setDelDeliveryDate(item.deliveryDate || 'Récemment reçu');
+    setDelTitle(item.title);
+    setDelItemsSummary(item.itemsSummary || '');
+    setDelRating(item.rating || 5);
+    setDelReview(item.review || '');
+    setDelImageUrl(item.imageUrl || '');
+    setDelVerified(item.verified !== false);
+    setDelError(null);
+    setShowDeliveredModal(true);
+  };
+
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      alert('La photo est trop lourde (max 4 Mo). Veuillez choisir une photo plus légère.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setDelImageUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveDeliveredOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDelError(null);
+
+    if (!delClientName.trim() || !delTitle.trim() || !delImageUrl.trim()) {
+      setDelError('Veuillez renseigner le nom du client, le titre et la photo.');
+      return;
+    }
+
+    try {
+      setDelSaving(true);
+      const payload = {
+        clientName: delClientName.trim(),
+        location: delLocation.trim() || 'Cotonou, Bénin',
+        ticketId: delTicketId.trim(),
+        platform: delPlatform,
+        shippingMode: delShippingMode,
+        transitDays: Number(delTransitDays) || 18,
+        deliveryDate: delDeliveryDate.trim() || 'Récemment livré',
+        title: delTitle.trim(),
+        itemsSummary: delItemsSummary.trim() || delTitle.trim(),
+        rating: Number(delRating) || 5,
+        review: delReview.trim(),
+        imageUrl: delImageUrl.trim(),
+        verified: delVerified
+      };
+
+      if (editingDeliveredOrder) {
+        const res = await fetch(`/api/delivered-orders/${editingDeliveredOrder.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Erreur mise à jour');
+        setDeliveredOrders(prev => prev.map(o => o.id === editingDeliveredOrder.id ? data.order : o));
+      } else {
+        const res = await fetch('/api/delivered-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Erreur création');
+        setDeliveredOrders(prev => [data.order, ...prev]);
+      }
+
+      setShowDeliveredModal(false);
+      setDelSuccess(editingDeliveredOrder ? 'Preuve de réception mise à jour !' : 'Nouveau colis reçu ajouté avec succès !');
+      setTimeout(() => setDelSuccess(null), 3500);
+    } catch (err: any) {
+      setDelError(err.message || 'Une erreur est survenue lors de l\'enregistrement.');
+    } finally {
+      setDelSaving(false);
+    }
+  };
+
+  const handleDeleteDeliveredOrder = async (id: string) => {
+    if (!confirm('Voulez-vous vraiment supprimer ce colis reçu de la galerie et du carrousel public ?')) return;
+    try {
+      const res = await fetch(`/api/delivered-orders/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erreur suppression');
+      setDeliveredOrders(prev => prev.filter(o => o.id !== id));
+      setDelSuccess('Colis supprimé du carrousel.');
+      setTimeout(() => setDelSuccess(null), 3000);
+    } catch (err: any) {
+      alert(err.message || 'Erreur suppression');
+    }
+  };
+
+  const handleResetDefaultDeliveredOrders = async () => {
+    if (!confirm('Voulez-vous réinitialiser la liste des colis reçus avec les exemples d\'origine ?')) return;
+    try {
+      const res = await fetch('/api/delivered-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_default' })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erreur réinitialisation');
+      setDeliveredOrders(data.orders);
+      setDelSuccess('Galerie réinitialisée avec succès aux modèles par défaut !');
+      setTimeout(() => setDelSuccess(null), 3000);
+    } catch (err: any) {
+      alert(err.message || 'Erreur réinitialisation');
+    }
+  };
+
+  const handlePromoteTicketToDeliveredProof = (ticket: TicketOrder) => {
+    setEditingDeliveredOrder(null);
+    setDelClientName(ticket.client?.name || 'Client Christaline');
+    setDelLocation(ticket.client?.city ? `${ticket.client.city} (Bénin)` : 'Cotonou, Bénin');
+    setDelTicketId(ticket.id);
+    const platform = (ticket.items?.[0]?.platform as any) || 'Shein';
+    setDelPlatform(['Shein', 'Temu', 'Alibaba'].includes(platform) ? platform : 'Autre');
+    setDelShippingMode(ticket.shippingMode || 'air');
+    setDelTransitDays(ticket.shippingMode === 'sea' ? 65 : 18);
+    setDelDeliveryDate('Reçu récemment');
+    setDelTitle(ticket.items?.[0]?.name ? `Commande : ${ticket.items[0].name}` : `Commande de ${ticket.client?.name}`);
+    setDelItemsSummary(ticket.items?.map(i => `${i.quantity}x ${i.name}`).join(' + ') || 'Articles livrés');
+    setDelRating(5);
+    setDelReview('Colis bien reçu à destination, très satisfait du service de Christaline Shop !');
+    setDelImageUrl(ticket.items?.[0]?.url && ticket.items[0].url.startsWith('http') ? ticket.items[0].url : 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80');
+    setDelVerified(true);
+    setDelError(null);
+    setIsEditing(false);
+    setShowDeliveredModal(true);
+  };
+
   const fetchSubscriptionStatus = async () => {
     try {
       const res = await fetch('/api/subscription/status');
@@ -379,6 +594,7 @@ export default function AdminPage() {
       fetchSettings();
       fetchGroupBuys();
       fetchAnalytics();
+      fetchDeliveredOrders();
     } catch (err: any) {
       setAuthError(err.message || 'Mot de passe incorrect.');
     } finally {
@@ -1059,6 +1275,21 @@ export default function AdminPage() {
             </button>
 
             <button
+              onClick={() => {
+                setActiveAdminTab('delivered_orders');
+                fetchDeliveredOrders();
+              }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeAdminTab === 'delivered_orders'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>Colis Reçus ({deliveredOrders.length})</span>
+            </button>
+
+            <button
               onClick={() => setActiveAdminTab('platforms')}
               className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeAdminTab === 'platforms'
@@ -1117,12 +1348,12 @@ export default function AdminPage() {
             </button>
 
             <button
-              onClick={() => { fetchTickets(); fetchSettings(); fetchGroupBuys(); fetchAnalytics(); }}
-              disabled={loading || loadingGb || loadingAnalytics}
+              onClick={() => { fetchTickets(); fetchSettings(); fetchGroupBuys(); fetchAnalytics(); fetchDeliveredOrders(); }}
+              disabled={loading || loadingGb || loadingAnalytics || loadingDeliveredOrders}
               className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors shrink-0 cursor-pointer"
               title="Actualiser"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading || loadingGb || loadingAnalytics ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading || loadingGb || loadingAnalytics || loadingDeliveredOrders ? 'animate-spin' : ''}`} />
             </button>
 
             <button
@@ -3387,6 +3618,361 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ============================================================ */}
+        {/* ONGLET : GESTION DES COLIS REÇUS (PREUVES CLIENTS CARROUSEL) */}
+        {/* ============================================================ */}
+        {activeAdminTab === 'delivered_orders' && (
+          <div className="space-y-6">
+
+            {/* Notification de succès */}
+            {delSuccess && (
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-bold flex items-center justify-between shadow-xs">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{delSuccess}</span>
+                </div>
+                <button onClick={() => setDelSuccess(null)} className="text-emerald-500 hover:text-emerald-700 cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* EN-TÊTE DE LA SECTION */}
+            <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-xs">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-[10px] font-black uppercase tracking-wider mb-2 border border-rose-200">
+                    <Sparkles className="w-3 h-3 text-rose-500" />
+                    <span>Preuves Sociales & Avis Clients (Bénin)</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-stone-900 font-serif">
+                    Colis Reçus & Photos Déballages
+                  </h2>
+                  <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-2xl leading-relaxed">
+                    Ces photos réelles et témoignages s'affichent instantanément dans le grand carrousel de la page{' '}
+                    <strong className="text-stone-700">Suivre mon colis</strong> (/suivi) pour prouver le sérieux de Christaline Shop et rassurer les nouveaux acheteurs béninois.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <Link
+                    href="/suivi#colis-recus"
+                    target="_blank"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-stone-300 text-stone-700 text-xs font-bold hover:bg-stone-50 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-stone-500" />
+                    <span>Voir sur le site (/suivi)</span>
+                  </Link>
+
+                  <button
+                    onClick={handleResetDefaultDeliveredOrders}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors cursor-pointer"
+                    title="Rétablir les exemples de base"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Réinitialiser exemples</span>
+                  </button>
+
+                  <button
+                    onClick={handleOpenCreateDelivered}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs font-black shadow-md shadow-rose-200 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Ajouter une photo de colis</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* STATS RAPIDES */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-stone-100">
+                <div className="bg-stone-50 p-3.5 rounded-2xl border border-stone-100">
+                  <div className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Total Colis Publiés</div>
+                  <div className="text-2xl font-black text-stone-900 mt-0.5">{deliveredOrders.length}</div>
+                </div>
+
+                <div className="bg-sky-50/60 p-3.5 rounded-2xl border border-sky-100">
+                  <div className="text-[10px] font-bold text-sky-700 uppercase tracking-wider flex items-center gap-1">
+                    <Plane className="w-3 h-3 text-sky-600" />
+                    <span>Voie Aérienne</span>
+                  </div>
+                  <div className="text-2xl font-black text-sky-950 mt-0.5">
+                    {deliveredOrders.filter(o => o.shippingMode === 'air').length}
+                  </div>
+                </div>
+
+                <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100">
+                  <div className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider flex items-center gap-1">
+                    <Ship className="w-3 h-3 text-indigo-600" />
+                    <span>Voie Maritime</span>
+                  </div>
+                  <div className="text-2xl font-black text-indigo-950 mt-0.5">
+                    {deliveredOrders.filter(o => o.shippingMode === 'sea').length}
+                  </div>
+                </div>
+
+                <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-100">
+                  <div className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1">
+                    <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+                    <span>Satisfaction</span>
+                  </div>
+                  <div className="text-2xl font-black text-amber-950 mt-0.5">
+                    5.0 / 5 ★
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FILTRES & RECHERCHE */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-stone-200">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Rechercher par client, ville, article ou plateforme..."
+                  value={deliveredSearch}
+                  onChange={(e) => setDeliveredSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-stone-200 text-xs bg-stone-50/50 focus:bg-white outline-hidden"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+                {[
+                  { id: 'all', label: 'Tous' },
+                  { id: 'shein', label: 'Shein' },
+                  { id: 'temu', label: 'Temu' },
+                  { id: 'alibaba', label: 'Alibaba' },
+                  { id: 'air', label: '✈️ Aérien' },
+                  { id: 'sea', label: '🚢 Maritime' }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setDeliveredFilter(f.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                      deliveredFilter === f.id
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* LISTE DES COLIS REÇUS */}
+            {loadingDeliveredOrders ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-stone-200">
+                <RefreshCw className="w-8 h-8 text-rose-500 animate-spin mx-auto mb-3" />
+                <p className="text-xs text-stone-500 font-medium">Chargement des colis reçus...</p>
+              </div>
+            ) : deliveredOrders.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-stone-200 space-y-4">
+                <div className="w-16 h-16 rounded-3xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                  <Camera className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold text-stone-800">Aucun colis reçu pour le moment</h3>
+                <p className="text-xs text-stone-500 max-w-md mx-auto">
+                  Ajoutez les premières photos de colis reçus par vos clients ou réinitialisez les exemples de démonstration.
+                </p>
+                <div className="flex items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={handleResetDefaultDeliveredOrders}
+                    className="px-4 py-2 rounded-xl bg-stone-100 text-stone-700 text-xs font-bold hover:bg-stone-200 cursor-pointer"
+                  >
+                    Charger les exemples
+                  </button>
+                  <button
+                    onClick={handleOpenCreateDelivered}
+                    className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 cursor-pointer"
+                  >
+                    + Ajouter une photo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {deliveredOrders
+                  .filter((order) => {
+                    const q = deliveredSearch.toLowerCase();
+                    const matchSearch =
+                      !deliveredSearch ||
+                      order.title.toLowerCase().includes(q) ||
+                      order.clientName.toLowerCase().includes(q) ||
+                      order.location.toLowerCase().includes(q) ||
+                      order.platform.toLowerCase().includes(q) ||
+                      (order.ticketId && order.ticketId.toLowerCase().includes(q));
+
+                    if (!matchSearch) return false;
+                    if (deliveredFilter === 'all') return true;
+                    if (deliveredFilter === 'air') return order.shippingMode === 'air';
+                    if (deliveredFilter === 'sea') return order.shippingMode === 'sea';
+                    if (deliveredFilter === 'shein') return order.platform.toLowerCase() === 'shein';
+                    if (deliveredFilter === 'temu') return order.platform.toLowerCase() === 'temu';
+                    if (deliveredFilter === 'alibaba') return order.platform.toLowerCase() === 'alibaba';
+                    return true;
+                  })
+                  .map((order) => {
+                    const platformStyles: Record<string, string> = {
+                      Shein: 'bg-stone-900 text-white',
+                      Temu: 'bg-amber-500 text-white',
+                      Alibaba: 'bg-orange-600 text-white',
+                      Autre: 'bg-purple-600 text-white'
+                    };
+
+                    return (
+                      <div
+                        key={order.id}
+                        className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                      >
+                        <div>
+                          {/* Image du Colis avec badges */}
+                          <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-stone-100">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={order.imageUrl}
+                              alt={order.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              onError={(e) => {
+                                (e.target as any).src = 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+
+                            {/* Badge Plateforme */}
+                            <div className="absolute top-3 left-3">
+                              <span
+                                className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-xs ${
+                                  platformStyles[order.platform] || 'bg-stone-900 text-white'
+                                }`}
+                              >
+                                {order.platform}
+                              </span>
+                            </div>
+
+                            {/* Badge Mode de transport */}
+                            <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white/90 backdrop-blur-xs text-stone-800 shadow-xs flex items-center gap-1">
+                                {order.shippingMode === 'sea' ? (
+                                  <>
+                                    <Ship className="w-3 h-3 text-indigo-600" />
+                                    <span>Mer • {order.transitDays}j</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plane className="w-3 h-3 text-sky-600" />
+                                    <span>Air • {order.transitDays}j</span>
+                                  </>
+                                )}
+                              </span>
+                            </div>
+
+                            {/* Date et ticket en bas de l'image */}
+                            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] text-white/90 font-medium">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-rose-300" />
+                                <span>{order.deliveryDate}</span>
+                              </div>
+                              {order.ticketId && (
+                                <span className="font-mono bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] text-rose-300 font-bold">
+                                  {order.ticketId}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Contenu de la carte */}
+                          <div className="p-4 sm:p-5 space-y-3">
+                            {/* Nom Client & Ville */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-stone-900 text-sm">
+                                  {order.clientName}
+                                </span>
+                                {order.verified && (
+                                  <span title="Client Vérifié" className="inline-flex items-center">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 text-[11px] text-stone-500">
+                                <MapPin className="w-3 h-3 text-stone-400 shrink-0" />
+                                <span className="truncate max-w-[120px]">{order.location}</span>
+                              </div>
+                            </div>
+
+                            {/* Titre & Articles */}
+                            <div>
+                              <h4 className="font-serif font-black text-stone-900 text-sm leading-snug line-clamp-1">
+                                {order.title}
+                              </h4>
+                              {order.itemsSummary && (
+                                <p className="text-[11px] text-stone-500 mt-0.5 line-clamp-1">
+                                  {order.itemsSummary}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Étoiles de note */}
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star
+                                  key={s}
+                                  className={`w-3.5 h-3.5 ${
+                                    s <= (order.rating || 5)
+                                      ? 'text-amber-400 fill-amber-400'
+                                      : 'text-stone-300'
+                                  }`}
+                                />
+                              ))}
+                              <span className="text-[10px] text-stone-400 font-bold ml-1">
+                                {order.rating || 5}/5
+                              </span>
+                            </div>
+
+                            {/* Avis client */}
+                            {order.review && (
+                              <div className="p-3 bg-stone-50 rounded-2xl border border-stone-100 text-xs italic text-stone-600 leading-relaxed line-clamp-3">
+                                &ldquo;{order.review}&rdquo;
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions de la carte */}
+                        <div className="p-4 pt-0 border-t border-stone-100 flex items-center justify-between mt-2">
+                          <span className="text-[10px] font-bold text-stone-400 uppercase">
+                            ID: {order.id}
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEditDelivered(order)}
+                              className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                              title="Modifier"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Modifier</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteDeliveredOrder(order.id)}
+                              className="p-1.5 rounded-xl bg-stone-100 hover:bg-red-50 text-stone-400 hover:text-red-600 transition-colors cursor-pointer"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
+          </div>
+        )}
+
       </main>
 
       {/* ============================================================ */}
@@ -3669,15 +4255,29 @@ export default function AdminPage() {
 
             {/* BOUTONS ACTIONS MODAL */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-stone-200">
-              <a
-                href={generateClientWhatsAppMessage(selectedTicket)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-colors"
-              >
-                <MessageCircle className="w-4 h-4 fill-white" />
-                <span>Notifier le client sur WhatsApp (Bénin)</span>
-              </a>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={generateClientWhatsAppMessage(selectedTicket)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-xs transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4 fill-white" />
+                  <span>Notifier le client sur WhatsApp (Bénin)</span>
+                </a>
+
+                {(editStatus === 'delivered' || selectedTicket.quote?.status === 'delivered' || selectedTicket.tracking?.currentStatus === 'delivered') && (
+                  <button
+                    type="button"
+                    onClick={() => handlePromoteTicketToDeliveredProof(selectedTicket)}
+                    className="inline-flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    title="Publier ce colis dans la galerie publique de suivi"
+                  >
+                    <Camera className="w-4 h-4 text-rose-600" />
+                    <span>📸 Publier en Colis Reçu</span>
+                  </button>
+                )}
+              </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
@@ -4107,6 +4707,393 @@ export default function AdminPage() {
                 Fermer
               </button>
             </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* MODAL CRÉATION / ÉDITION D'UNE PREUVE DE COLIS REÇU */}
+      {/* ============================================================ */}
+      {showDeliveredModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-stone-200 p-6 sm:p-8 space-y-6 my-auto">
+            
+            {/* Titre Modal */}
+            <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-stone-900 font-serif">
+                    {editingDeliveredOrder ? 'Modifier la Preuve de Réception' : 'Nouvelle Preuve de Colis Reçu'}
+                  </h2>
+                  <p className="text-xs text-stone-500">
+                    Ces détails seront affichés dans le carrousel animé de la page de suivi (/suivi)
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowDeliveredModal(false)}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {delError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{delError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveDeliveredOrder} className="space-y-4">
+              
+              {/* PHOTO DU COLIS (URL, UPLOAD OU EXEMPLES) */}
+              <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
+                <label className="block text-xs font-bold text-stone-800 uppercase tracking-wider">
+                  Photo du Colis / Déballage *
+                </label>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  {/* Prévisualisation */}
+                  <div className="w-28 h-28 rounded-2xl bg-stone-200 border-2 border-dashed border-stone-300 overflow-hidden shrink-0 flex items-center justify-center relative">
+                    {delImageUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={delImageUrl}
+                        alt="Prévisualisation colis"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as any).src = 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                    ) : (
+                      <Camera className="w-8 h-8 text-stone-400" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-2 w-full">
+                    {/* Upload direct */}
+                    <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white hover:bg-stone-100 text-stone-800 font-bold text-xs cursor-pointer border border-stone-300 shadow-2xs">
+                      <Upload className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Sélectionner une photo depuis l'appareil</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageFileUpload}
+                      />
+                    </label>
+
+                    {/* Champ URL direct */}
+                    <div>
+                      <input
+                        type="url"
+                        placeholder="Ou collez l'URL d'une image (https://...)"
+                        value={delImageUrl}
+                        onChange={(e) => setDelImageUrl(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Exemples rapides */}
+                <div>
+                  <span className="text-[11px] font-bold text-stone-500 block mb-1.5">
+                    Ou choisir un visuel haute définition en 1 clic :
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      👗 Robe de Soirée
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      👟 Sneakers / Sport
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      🧳 Valises Voyage
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      👜 Sac à Main
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      💄 Cosmétiques
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      👔 Blazer & Chic
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      ⌚ High-Tech / Montre
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDelImageUrl('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80')}
+                      className="text-[10px] bg-white hover:bg-rose-50 hover:text-rose-700 px-2.5 py-1 rounded-lg border border-stone-200 font-bold cursor-pointer"
+                    >
+                      📦 Colis Ouvert
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* CLIENT & LOCALISATION AU BÉNIN */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Nom ou Prénom du Client *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Nadège G."
+                    value={delClientName}
+                    onChange={(e) => setDelClientName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Ville ou Quartier (Bénin) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Cotonou (Akpakpa) ou Calavi"
+                    value={delLocation}
+                    onChange={(e) => setDelLocation(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* TITRE & N° TICKET */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Titre du Colis / Produits reçus *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: Robes de Soirée & Escarpins Strass"
+                    value={delTitle}
+                    onChange={(e) => setDelTitle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    N° Ticket associé (Optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: CS-784210"
+                    value={delTicketId}
+                    onChange={(e) => setDelTicketId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 font-mono text-sm uppercase text-rose-700"
+                  />
+                </div>
+              </div>
+
+              {/* ARTICLES SOMMAIRE */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Résumé des articles dans le colis
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: 2 Robes gala satin + 1 Paire d’escarpins dorés"
+                  value={delItemsSummary}
+                  onChange={(e) => setDelItemsSummary(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs"
+                />
+              </div>
+
+              {/* PLATEFORME & MODE D'EXPÉDITION */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Plateforme d'achat *
+                  </label>
+                  <select
+                    value={delPlatform}
+                    onChange={(e) => setDelPlatform(e.target.value as any)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-bold"
+                  >
+                    <option value="Shein">SHEIN</option>
+                    <option value="Temu">TEMU</option>
+                    <option value="Alibaba">ALIBABA</option>
+                    <option value="Autre">AUTRE FOURNISSEUR</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Mode d'expédition Bénin *
+                  </label>
+                  <select
+                    value={delShippingMode}
+                    onChange={(e) => setDelShippingMode(e.target.value as 'air' | 'sea')}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-bold"
+                  >
+                    <option value="air">✈️ Voie Aérienne (au plus 1 mois)</option>
+                    <option value="sea">🚢 Voie Maritime (2 à 3 mois)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* TRANSIT & DATE D'AFFICHAGE */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Délai de transit réel (jours)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={150}
+                    value={delTransitDays}
+                    onChange={(e) => setDelTransitDays(Number(e.target.value))}
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs font-bold"
+                  />
+                  <p className="text-[10px] text-stone-400 mt-1">Ex: 18 pour aérien, 70 pour maritime</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                    Mention de réception affichée
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Reçu il y a 3 jours, Livré hier..."
+                    value={delDeliveryDate}
+                    onChange={(e) => setDelDeliveryDate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* NOTE EN ÉTOILES */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Note du Client (1 à 5 Étoiles)
+                </label>
+                <div className="flex items-center gap-1.5 p-2 bg-stone-50 rounded-xl border border-stone-200">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setDelRating(star)}
+                      className="p-1 rounded hover:scale-110 transition-transform cursor-pointer"
+                    >
+                      <Star
+                        className={`w-6 h-6 ${
+                          star <= delRating
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-stone-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-3 text-xs font-bold text-stone-700">
+                    {delRating} sur 5 étoiles
+                  </span>
+                </div>
+              </div>
+
+              {/* AVIS CLIENT */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
+                  Témoignage / Retour du Client *
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Ex: Articles magnifiques et emballage soigné. Reçu pile avant mon événement familial, je recommande vivement Christaline Shop !"
+                  value={delReview}
+                  onChange={(e) => setDelReview(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-stone-300 text-xs leading-relaxed"
+                />
+              </div>
+
+              {/* BADGE VÉRIFIÉ */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="delVerifiedCheck"
+                  checked={delVerified}
+                  onChange={(e) => setDelVerified(e.target.checked)}
+                  className="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
+                />
+                <label htmlFor="delVerifiedCheck" className="text-xs font-bold text-stone-700 cursor-pointer flex items-center gap-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Afficher le badge vert &laquo; Client Vérifié &raquo;</span>
+                </label>
+              </div>
+
+              {/* BOUTONS ACTIONS */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100">
+                <button
+                  type="button"
+                  onClick={() => setShowDeliveredModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-600 font-bold text-xs hover:bg-stone-100 cursor-pointer"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={delSaving}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-black text-xs shadow-md shadow-rose-200 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {delSaving ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Enregistrement...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>{editingDeliveredOrder ? 'Mettre à jour' : 'Enregistrer la Preuve'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
 
           </div>
         </div>
