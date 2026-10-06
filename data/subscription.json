@@ -1,17 +1,17 @@
 {
   "superAdminPassword": "superadmin2026",
-  "monthlyFeeCFA": 15000,
+  "monthlyFeeCFA": 1100,
+  "subscriptionDurationDays": 7,
   "activeAdminPassword": "CS-KHKJ4U",
-  "passwordExpiresAt": "2026-11-05T00:00:00.000Z",
+  "passwordExpiresAt": "2026-11-11T14:45:45.723Z",
   "feexpayConfig": {
     "enabled": true,
-    "shopId": "",
-    "apiToken": "",
-    "mode": "SANDBOX",
+    "shopId": "W9UI9xt0dpzBxNI",
+    "apiToken": "fp_yK5LTDuJYFkx3t6ElDkrC1wfC9ZIgOJ6ua3rCNj8pktir1oBExlVDRkQvOGidNZW",
+    "mode": "LIVE",
     "callbackUrl": ""
   },
   "paymentHistory": [],
   "adminTelegramChatId": "",
-  "adminTelegramBotToken": "",
-  "subscriptionDurationDays": 30
+  "adminTelegramBotToken": ""
 }

@@ -268,79 +268,71 @@ export default function FeexPayRenewalModal({
               {/* Opérateurs Bénin */}
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Moyen de Paiement FeexPay (Bénin) *
+                  Opérateur Mobile Money (Bénin) *
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setRenewalOperator('MTN')}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
                       renewalOperator === 'MTN'
-                        ? 'border-yellow-500 bg-yellow-50 text-yellow-900 ring-2 ring-yellow-400/30'
+                        ? 'border-yellow-500 bg-yellow-50 text-yellow-950 ring-2 ring-yellow-400/40 shadow-xs'
                         : 'border-stone-200 bg-white hover:bg-stone-50 text-stone-700'
                     }`}
                   >
                     <span className="block font-black text-xs">MTN MoMo</span>
-                    <span className="text-[9px] text-stone-500 font-normal">Bénin</span>
+                    <span className="text-[10px] text-stone-500 font-medium">Bénin</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setRenewalOperator('Moov')}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
                       renewalOperator === 'Moov'
-                        ? 'border-blue-500 bg-blue-50 text-blue-900 ring-2 ring-blue-400/30'
+                        ? 'border-blue-500 bg-blue-50 text-blue-950 ring-2 ring-blue-400/40 shadow-xs'
                         : 'border-stone-200 bg-white hover:bg-stone-50 text-stone-700'
                     }`}
                   >
                     <span className="block font-black text-xs">Moov Money</span>
-                    <span className="text-[9px] text-stone-500 font-normal">Bénin</span>
+                    <span className="text-[10px] text-stone-500 font-medium">Bénin</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setRenewalOperator('Celtiis')}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
                       renewalOperator === 'Celtiis'
-                        ? 'border-purple-500 bg-purple-50 text-purple-900 ring-2 ring-purple-400/30'
+                        ? 'border-purple-500 bg-purple-50 text-purple-950 ring-2 ring-purple-400/40 shadow-xs'
                         : 'border-stone-200 bg-white hover:bg-stone-50 text-stone-700'
                     }`}
                   >
                     <span className="block font-black text-xs">Celtiis Cash</span>
-                    <span className="text-[9px] text-stone-500 font-normal">Bénin</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setRenewalOperator('Card')}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all cursor-pointer ${
-                      renewalOperator === 'Card'
-                        ? 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-400/30'
-                        : 'border-stone-200 bg-white hover:bg-stone-50 text-stone-700'
-                    }`}
-                  >
-                    <span className="block font-black text-xs">Carte VISA</span>
-                    <span className="text-[9px] text-stone-500 font-normal">MasterCard</span>
+                    <span className="text-[10px] text-stone-500 font-medium">Bénin</span>
                   </button>
                 </div>
               </div>
 
               {/* Numéro de téléphone Mobile Money */}
               <div>
-                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Numéro de Téléphone Mobile Money *
+                <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>Numéro de Téléphone Mobile Money *</span>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    Bénin (+229)
+                  </span>
                 </label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="Ex: 0154072488 ou 97000000"
-                  value={renewalPhone}
-                  onChange={(e) => setRenewalPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-stone-300 font-mono text-sm bg-white focus:border-rose-500 outline-hidden"
-                />
+                <div className="relative">
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Ex: 01 97 00 00 00 ou 97 00 00 00"
+                    value={renewalPhone}
+                    onChange={(e) => setRenewalPhone(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-300 font-mono text-sm bg-white focus:border-rose-500 outline-hidden"
+                  />
+                </div>
                 <p className="text-[11px] text-stone-500 mt-1">
                   {feexpayMode === 'LIVE'
-                    ? `Une demande de débit Mobile Money de ${monthlyFeeCFA.toLocaleString('fr-FR')} FCFA sera directement envoyée à ce numéro.`
+                    ? `Une demande de débit Mobile Money de ${monthlyFeeCFA.toLocaleString('fr-FR')} FCFA sera transmise à votre téléphone (formats 8 ou 10 chiffres acceptés).`
                     : `Simulation Sandbox : test de paiement de ${monthlyFeeCFA.toLocaleString('fr-FR')} FCFA sans débit réel.`}
                 </p>
               </div>

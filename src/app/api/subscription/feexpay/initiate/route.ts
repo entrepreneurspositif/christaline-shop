@@ -22,14 +22,31 @@ export async function POST(request: Request) {
 
     // 1. Si mode LIVE et clés configurées : appel officiel RequestToPay
     if (isLive) {
+      if (operator === 'Card') {
+        return NextResponse.json({
+          success: false,
+          error: 'Le paiement par Carte Bancaire n’est pas activé sur FeexPay. Veuillez sélectionner MTN MoMo, Moov Money ou Celtiis Cash.',
+          mode: 'LIVE'
+        }, { status: 400 });
+      }
+
+      const cleanPhone = String(phoneNumber || '').trim();
+      if (!cleanPhone) {
+        return NextResponse.json({
+          success: false,
+          error: 'Veuillez saisir votre numéro de téléphone Mobile Money (ex: 01 97 00 00 00).',
+          mode: 'LIVE'
+        }, { status: 400 });
+      }
+
       const liveRes = await sendFeexPayRequestToPay({
         amount,
-        phoneNumber: phoneNumber || '0154072488',
+        phoneNumber: cleanPhone,
         operator: operator || 'MTN',
         reference,
         shopId: feexpay.shopId,
         apiToken: feexpay.apiToken,
-        description: `Abonnement Admin Christaline Shop (${reference})`,
+        description: 'Abonnement Christaline',
         callbackUrl: feexpay.callbackUrl || `${baseUrl}/api/subscription/feexpay/webhook`,
         merchantDomain: baseUrl
       });

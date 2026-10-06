@@ -40,16 +40,49 @@ export function getFeexPayNetworkCode(operator: string): string {
 }
 
 /**
- * Nettoie et formate le numéro de téléphone béninois (format international 229XXXXXXXX)
+ * Nettoie et formate le numéro de téléphone béninois pour l'API FeexPay v2.
+ * FeexPay v2 exige strictement un format à 13 chiffres commençant par 22901 (ex: 2290197430303).
+ * Cette fonction gère automatiquement :
+ * - 8 chiffres anciens (ex: 97430303, 54072488) -> ajoute 01 et 229
+ * - 10 chiffres nouveaux (ex: 0197430303) -> ajoute 229
+ * - Avec indicatif (+229 97430303 ou +229 0197430303) -> normalise en 22901...
+ * - Espaces, tirets, parenthèses nettoyés
  */
 export function formatBeninPhoneForFeexPay(phone: string): string {
-  let cleaned = phone.replace(/[^\d]/g, '');
-  if (cleaned.startsWith('00229')) {
-    cleaned = cleaned.substring(2);
-  } else if (!cleaned.startsWith('229')) {
-    cleaned = `229${cleaned}`;
+  if (!phone) return '';
+  let digits = String(phone).replace(/[^\d]/g, '');
+
+  // Retirer l'indicatif international si déjà présent
+  if (digits.startsWith('00229')) {
+    digits = digits.substring(5);
+  } else if (digits.startsWith('229')) {
+    digits = digits.substring(3);
   }
-  return cleaned;
+
+  // Nettoyer d'éventuels zéros en tête superflus (sauf si suivi d'un 1 pour 01)
+  if (digits.startsWith('00')) {
+    digits = digits.replace(/^0+/, '');
+  }
+
+  // Gestion du préfixe national béninois (01)
+  if (digits.length === 8) {
+    // Ancien format 8 chiffres : ajouter le préfixe 01 imposé par l'ARCEP Bénin
+    digits = `01${digits}`;
+  } else if (digits.length === 10) {
+    if (!digits.startsWith('01')) {
+      // Si 10 chiffres mais sans préfixe 01, conserver les 8 derniers et préfixer par 01
+      digits = `01${digits.slice(-8)}`;
+    }
+  } else if (digits.length === 9 && digits.startsWith('1')) {
+    // Si l'utilisateur a tapé 1XXXXXXXX (oublié le zéro initial de 01)
+    digits = `0${digits}`;
+  } else if (digits.length > 8 && !digits.startsWith('01')) {
+    digits = `01${digits.slice(-8)}`;
+  } else if (!digits.startsWith('01')) {
+    digits = `01${digits}`;
+  }
+
+  return `229${digits}`;
 }
 
 const FEEXPAY_V2_BASE = 'https://api-v2.feexpay.me';
@@ -174,6 +207,15 @@ export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Pro
   const network = getFeexPayNetworkCode(params.operator);
   const formattedPhone = formatBeninPhoneForFeexPay(params.phoneNumber);
 
+  if (network === 'CARD') {
+    return {
+      success: false,
+      reference: params.reference,
+      status: 'FAILED',
+      error: 'Le paiement par Carte Bancaire n’est pas activé sur cet environnement FeexPay. Veuillez sélectionner MTN MoMo, Moov Money ou Celtiis Cash.'
+    };
+  }
+
   // Sélection de la route FeexPay v2 selon l'opérateur
   let v2SubPath = 'mtn';
   if (network === 'MOOV') v2SubPath = 'moov';
@@ -185,7 +227,7 @@ export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Pro
     shop: params.shopId.trim(),
     amount: Number(params.amount),
     phoneNumber: formattedPhone,
-    description: params.description || `Abonnement Admin Christaline Shop (${params.reference})`,
+    description: (params.description || 'Abonnement Christaline').slice(0, 38),
     customId: params.reference,
     callback_url: params.callbackUrl,
     callback_info: params.reference,
@@ -213,11 +255,22 @@ export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Pro
     const data = await res.json().catch(() => ({}));
 
     if (res.ok) {
-      const status = (data?.status || 'PENDING').toUpperCase() as any;
+      const rawStatus = String(data?.status || 'PENDING').toUpperCase();
+      // Si l'opérateur a immédiatement rejeté (ex: Moov non enregistré ou solde insuffisant sous code 202)
+      if (rawStatus === 'FAILED' || rawStatus === 'CANCELLED' || rawStatus === 'REJECTED') {
+        return {
+          success: false,
+          reference: data?.reference || params.reference,
+          status: 'FAILED',
+          error: data?.reason || data?.message || 'Transaction refusée par l\'opérateur. Vérifiez votre numéro ou votre solde.',
+          rawResponse: data
+        };
+      }
+
       return {
         success: true,
         reference: data?.reference || params.reference,
-        status: status,
+        status: rawStatus as any,
         transaction_id: data?.transaction_id || data?.id,
         payment_url: data?.payment_url,
         message: data?.message || 'Demande de débit Mobile Money envoyée sur votre téléphone.',
@@ -227,7 +280,20 @@ export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Pro
 
     // Si erreur spécifique retournée par l'opérateur / FeexPay
     if (res.status === 400 || res.status === 401 || res.status === 422) {
-      const errMsg = data?.message || data?.error || data?.reason || `Erreur FeexPay HTTP ${res.status}`;
+      let errMsg = data?.message || data?.error || data?.reason || `Erreur FeexPay HTTP ${res.status}`;
+      // Extraire le détail précis si FeexPay renvoie un tableau d'erreurs (Validation failed)
+      if (Array.isArray(data?.errors) && data.errors.length > 0) {
+        const details = data.errors.map((e: any) => {
+          if (Array.isArray(e?.constraints)) return e.constraints.join(', ');
+          if (e?.constraints && typeof e?.constraints === 'object') return Object.values(e.constraints).join(', ');
+          return e?.property ? `Champ ${e.property} invalide` : '';
+        }).filter(Boolean).join(' | ');
+
+        if (details) {
+          errMsg = `${errMsg} : ${details}`;
+        }
+      }
+
       return {
         success: false,
         reference: params.reference,
