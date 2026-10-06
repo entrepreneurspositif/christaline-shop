@@ -56,7 +56,9 @@ export function setClientAuth(role: AuthRole, isSuperAdmin = false) {
         localStorage.setItem('cs_is_super_admin', 'true');
       } else {
         sessionStorage.removeItem('cs_is_super_admin');
+        sessionStorage.removeItem('cs_super_admin_pass');
         localStorage.removeItem('cs_is_super_admin');
+        localStorage.removeItem('cs_super_admin_auth');
       }
     }
 

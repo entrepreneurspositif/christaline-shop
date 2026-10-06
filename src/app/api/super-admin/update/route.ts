@@ -19,7 +19,11 @@ export async function POST(request: Request) {
     if (feexpayConfig) {
       data.feexpayConfig = {
         ...data.feexpayConfig,
-        ...feexpayConfig
+        enabled: feexpayConfig.enabled !== undefined ? !!feexpayConfig.enabled : true,
+        shopId: feexpayConfig.shopId !== undefined ? String(feexpayConfig.shopId).trim() : data.feexpayConfig.shopId,
+        apiToken: feexpayConfig.apiToken !== undefined ? String(feexpayConfig.apiToken).trim() : data.feexpayConfig.apiToken,
+        mode: (feexpayConfig.mode === 'LIVE' || feexpayConfig.mode === 'SANDBOX') ? feexpayConfig.mode : data.feexpayConfig.mode,
+        callbackUrl: feexpayConfig.callbackUrl !== undefined ? String(feexpayConfig.callbackUrl).trim() : data.feexpayConfig.callbackUrl
       };
     }
 

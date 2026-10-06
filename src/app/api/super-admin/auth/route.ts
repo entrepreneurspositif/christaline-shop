@@ -8,7 +8,15 @@ export async function POST(request: Request) {
 
     const data = readSubscriptionData();
 
-    if (password === data.superAdminPassword) {
+    // Bloquer formellement le mot de passe Admin de la boutique sur le Super Admin
+    if (password && password.trim() === data.activeAdminPassword) {
+      return NextResponse.json({
+        success: false,
+        error: "Accès refusé : Ce mot de passe est un accès Administrateur boutique (/admin). L'administrateur n'a pas l'autorisation d'accéder au tableau de bord Super Admin."
+      }, { status: 403 });
+    }
+
+    if (password && password.trim() === data.superAdminPassword) {
       return NextResponse.json({
         success: true,
         message: 'Authentification Super Admin réussie'

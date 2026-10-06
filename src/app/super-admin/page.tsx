@@ -54,9 +54,16 @@ export default function SuperAdminPage() {
   const [telegramBotTokenInput, setTelegramBotTokenInput] = useState('');
   const [sendingTelegram, setSendingTelegram] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
+  const [testingFeexPay, setTestingFeexPay] = useState(false);
+  const [feexpayTestResult, setFeexpayTestResult] = useState<{
+    success: boolean;
+    message: string;
+    shopName?: string;
+  } | null>(null);
 
   // UI state
   const [copiedPass, setCopiedPass] = useState(false);
+  const [copiedVercelEnv, setCopiedVercelEnv] = useState(false);
   const [showCurrentPass, setShowCurrentPass] = useState(true);
 
   // Vérification session
@@ -77,7 +84,7 @@ export default function SuperAdminPage() {
       const res = await fetch('/api/super-admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: masterPassword })
+        body: JSON.stringify({ password: masterPassword.trim() })
       });
 
       const data = await res.json();
@@ -86,9 +93,9 @@ export default function SuperAdminPage() {
       }
 
       setIsAuthenticated(true);
-      sessionStorage.setItem('cs_super_admin_pass', masterPassword);
+      sessionStorage.setItem('cs_super_admin_pass', masterPassword.trim());
       setClientAuth('super-admin', true);
-      await loadSuperAdminData(masterPassword);
+      await loadSuperAdminData(masterPassword.trim());
     } catch (err: any) {
       setAuthError(err.message || 'Erreur authentification');
     } finally {
@@ -109,13 +116,39 @@ export default function SuperAdminPage() {
       if (data.success && data.subscription) {
         setIsAuthenticated(true);
         setSubscription(data.subscription);
-        setFeeInput(data.subscription.monthlyFeeCFA || 15000);
-        setShopIdInput(data.subscription.feexpayConfig?.shopId || '');
-        setApiTokenInput(data.subscription.feexpayConfig?.apiToken || '');
-        setModeInput(data.subscription.feexpayConfig?.mode || 'SANDBOX');
-        setTelegramChatIdInput(data.subscription.adminTelegramChatId || '');
-        setTelegramBotTokenInput(data.subscription.adminTelegramBotToken || '');
+        const sub = data.subscription;
+
+        let curFee = sub.monthlyFeeCFA || 15000;
+        let curShopId = sub.feexpayConfig?.shopId || '';
+        let curToken = sub.feexpayConfig?.apiToken || '';
+        let curMode = sub.feexpayConfig?.mode || 'SANDBOX';
+        let curChatId = sub.adminTelegramChatId || '';
+        let curBotToken = sub.adminTelegramBotToken || '';
+
+        // Récupérer depuis localStorage en cas de redémarrage de conteneur Vercel
+        try {
+          const cached = localStorage.getItem('cs_super_admin_saved_config');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (!curShopId && parsed.shopId) curShopId = parsed.shopId;
+            if (!curToken && parsed.apiToken) curToken = parsed.apiToken;
+            if (parsed.fee && curFee === 15000) curFee = parsed.fee;
+            if (parsed.mode) curMode = parsed.mode;
+            if (!curChatId && parsed.chatId) curChatId = parsed.chatId;
+            if (!curBotToken && parsed.botToken) curBotToken = parsed.botToken;
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        setFeeInput(curFee);
+        setShopIdInput(curShopId);
+        setApiTokenInput(curToken);
+        setModeInput(curMode);
+        setTelegramChatIdInput(curChatId);
+        setTelegramBotTokenInput(curBotToken);
       } else {
+        sessionStorage.removeItem('cs_super_admin_pass');
         setClientAuth('none');
         setIsAuthenticated(false);
       }
@@ -126,7 +159,41 @@ export default function SuperAdminPage() {
     }
   };
 
+  const handleTestFeexPay = async () => {
+    if (!shopIdInput.trim() || !apiTokenInput.trim()) {
+      alert('Veuillez saisir le Shop ID et le Token FeexPay avant de lancer le test.');
+      return;
+    }
+    setTestingFeexPay(true);
+    setFeexpayTestResult(null);
+    try {
+      const res = await fetch('/api/super-admin/test-feexpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          masterPassword,
+          shopId: shopIdInput.trim(),
+          apiToken: apiTokenInput.trim()
+        })
+      });
+      const data = await res.json();
+      setFeexpayTestResult({
+        success: !!data.success,
+        message: data.message || data.error || (data.success ? 'Connexion réussie' : 'Test échoué'),
+        shopName: data.shopName
+      });
+    } catch (err: any) {
+      setFeexpayTestResult({
+        success: false,
+        message: err.message || 'Erreur lors du test de connexion FeexPay'
+      });
+    } finally {
+      setTestingFeexPay(false);
+    }
+  };
+
   const handleLogout = () => {
+    sessionStorage.removeItem('cs_super_admin_pass');
     setClientAuth('none');
     setIsAuthenticated(false);
     setMasterPassword('');
@@ -240,8 +307,22 @@ export default function SuperAdminPage() {
         setNewMasterPasswordInput('');
       }
 
+      // Sauvegarde dans localStorage comme sécurité client
+      try {
+        localStorage.setItem('cs_super_admin_saved_config', JSON.stringify({
+          fee: Number(feeInput),
+          shopId: shopIdInput.trim(),
+          apiToken: apiTokenInput.trim(),
+          mode: modeInput,
+          chatId: telegramChatIdInput.trim(),
+          botToken: telegramBotTokenInput.trim()
+        }));
+      } catch (e) {
+        // ignore
+      }
+
       setActionSuccess('Paramètres FeexPay & Tarif mensuel enregistrés avec succès !');
-      await loadSuperAdminData(masterPassword);
+      await loadSuperAdminData(newMasterPasswordInput.trim() || masterPassword);
       setTimeout(() => setActionSuccess(null), 4000);
     } catch (err: any) {
       setActionError(err.message || 'Erreur sauvegarde');
@@ -645,7 +726,40 @@ export default function SuperAdminPage() {
                 onChange={(e) => setApiTokenInput(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-stone-200 font-mono text-xs focus:border-amber-500 outline-hidden"
               />
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  disabled={testingFeexPay}
+                  onClick={handleTestFeexPay}
+                  className="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {testingFeexPay ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-amber-400" />}
+                  <span>Tester la connexion FeexPay</span>
+                </button>
+                <span className="text-[10px] text-stone-500">Vérifie vos clés en direct</span>
+              </div>
             </div>
+
+            {/* Résultat du test FeexPay */}
+            {feexpayTestResult && (
+              <div className={`col-span-1 md:col-span-2 p-3.5 rounded-xl border text-xs font-medium flex items-start gap-2.5 ${
+                feexpayTestResult.success
+                  ? 'bg-emerald-950/60 border-emerald-700 text-emerald-200'
+                  : 'bg-amber-950/60 border-amber-700 text-amber-200'
+              }`}>
+                {feexpayTestResult.success ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                )}
+                <div className="space-y-0.5">
+                  <div className="font-bold">{feexpayTestResult.message}</div>
+                  {feexpayTestResult.shopName && (
+                    <div className="text-[11px] text-emerald-300">Boutique active : <strong>{feexpayTestResult.shopName}</strong></div>
+                  )}
+                </div>
+              </div>
+            )}
             {/* Chat ID Telegram de l'Admin pour la transmission du mot de passe */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
@@ -711,6 +825,32 @@ export default function SuperAdminPage() {
             </div>
             <p className="text-[11px] text-stone-500">
               FeexPay appellera automatiquement cette URL pour prolonger l'abonnement et délivrer le mot de passe dès que le virement MoMo/Moov/Celtiis est validé.
+            </p>
+          </div>
+
+          {/* Guide persistance permanente sur Vercel */}
+          <div className="p-4 bg-stone-800/40 rounded-2xl border border-stone-700/50 space-y-2 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-stone-200 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Persistance garantie sur Vercel (Variables d'environnement) :</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const envContent = `FEEXPAY_SHOP_ID=${shopIdInput.trim()}\nFEEXPAY_API_TOKEN=${apiTokenInput.trim()}\nFEEXPAY_MODE=${modeInput}\nFEEXPAY_MONTHLY_FEE=${feeInput}\nSUPER_ADMIN_PASSWORD=${masterPassword}`;
+                  navigator.clipboard.writeText(envContent);
+                  setCopiedVercelEnv(true);
+                  setTimeout(() => setCopiedVercelEnv(false), 2500);
+                }}
+                className="px-2.5 py-1 rounded-lg bg-stone-700 hover:bg-stone-600 text-stone-200 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                {copiedVercelEnv ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedVercelEnv ? 'Copié !' : 'Copier pour Vercel'}</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-stone-400 leading-relaxed">
+              Vos réglages sont sauvegardés instantanément en mémoire, dans le stockage temporaire Vercel (<code className="text-amber-300">/tmp</code>) et dans votre navigateur. Pour une persistance permanente même lors de redéploiements futurs du projet, vous pouvez copier ces variables dans votre dashboard <strong>Vercel &gt; Settings &gt; Environment Variables</strong>.
             </p>
           </div>
 

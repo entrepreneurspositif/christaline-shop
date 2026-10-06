@@ -9,8 +9,9 @@ import {
   X, 
   RefreshCw, 
   ArrowRight,
-  ShieldCheck,
-  Send
+  Send,
+  Smartphone,
+  ExternalLink
 } from 'lucide-react';
 
 interface FeexPayRenewalModalProps {
@@ -29,6 +30,10 @@ interface FeexPayRenewalModalProps {
   } | null;
   paymentError: string | null;
   onSuccessProceed: () => void;
+  waitingForMobilePin?: boolean;
+  onManualCheckStatus?: () => void;
+  feexpayMode?: 'LIVE' | 'SANDBOX';
+  paymentUrl?: string;
 }
 
 export default function FeexPayRenewalModal({
@@ -43,7 +48,11 @@ export default function FeexPayRenewalModal({
   onSubmitRenewal,
   paymentSuccessData,
   paymentError,
-  onSuccessProceed
+  onSuccessProceed,
+  waitingForMobilePin = false,
+  onManualCheckStatus,
+  feexpayMode = 'SANDBOX',
+  paymentUrl
 }: FeexPayRenewalModalProps) {
   if (!isOpen) return null;
 
@@ -51,7 +60,9 @@ export default function FeexPayRenewalModal({
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-lg w-full max-h-[94vh] overflow-y-auto shadow-2xl border border-stone-200 p-6 sm:p-8 space-y-6 my-auto animate-fade-in text-stone-900">
         
-        {/* ÉCRAN SUCCÈS : DÉLIVRANCE DU MOT DE PASSE GÉNÉRÉ */}
+        {/* ============================================================ */}
+        {/* ÉCRAN 1 : SUCCÈS (Délivrance du mot de passe généré) */}
+        {/* ============================================================ */}
         {paymentSuccessData ? (
           <div className="space-y-6 text-center animate-fade-in">
             <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
@@ -110,8 +121,86 @@ export default function FeexPayRenewalModal({
               </button>
             </div>
           </div>
+        ) : waitingForMobilePin ? (
+          /* ============================================================ */
+          /* ÉCRAN 2 : EN ATTENTE DU CODE SECRET SUR LE TÉLÉPHONE (LIVE) */
+          /* ============================================================ */
+          <div className="space-y-6 text-center animate-fade-in">
+            <div className="relative w-20 h-20 rounded-3xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+              <Smartphone className="w-10 h-10 animate-bounce" />
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500"></span>
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                Demande transmise à votre opérateur {renewalOperator}
+              </span>
+              <h3 className="text-xl font-black text-stone-900 font-serif">
+                Validez le paiement sur votre mobile
+              </h3>
+              <p className="text-xs text-stone-600 max-w-sm mx-auto leading-relaxed">
+                Une notification de débit de <strong>{monthlyFeeCFA.toLocaleString('fr-FR')} FCFA</strong> a été envoyée sur votre numéro <strong>{renewalPhone}</strong> ({renewalOperator}).
+                <br /><br />
+                Composez votre <strong>code secret Mobile Money</strong> sur votre téléphone pour confirmer.
+              </p>
+            </div>
+
+            {paymentError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2 text-left">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{paymentError}</span>
+              </div>
+            )}
+
+            <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 flex items-center justify-center gap-3">
+              <RefreshCw className="w-4 h-4 text-rose-600 animate-spin" />
+              <span className="text-xs font-bold text-stone-700">
+                En attente de votre validation mobile en temps réel...
+              </span>
+            </div>
+
+            {paymentUrl && (
+              <div className="pt-1">
+                <a
+                  href={paymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 font-bold underline"
+                >
+                  <span>Ou payer via le guichet web FeexPay sécurisé</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-3 px-4 rounded-xl border border-stone-300 font-bold text-xs hover:bg-stone-100 text-stone-600"
+              >
+                Fermer
+              </button>
+
+              {onManualCheckStatus && (
+                <button
+                  type="button"
+                  onClick={onManualCheckStatus}
+                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-200 flex items-center justify-center gap-2"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>J'ai validé (Vérifier)</span>
+                </button>
+              )}
+            </div>
+          </div>
         ) : (
-          /* FORMULAIRE DE RÈGLEMENT FEEXPAY */
+          /* ============================================================ */
+          /* ÉCRAN 3 : FORMULAIRE DE RÈGLEMENT FEEXPAY */
+          /* ============================================================ */
           <div className="space-y-6">
             
             <div className="flex items-start justify-between border-b border-stone-100 pb-4">
@@ -120,10 +209,17 @@ export default function FeexPayRenewalModal({
                   <CreditCard className="w-6 h-6" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                    Passerelle FeexPay Bénin
-                  </span>
-                  <h3 className="text-lg font-black text-stone-900 font-serif mt-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                      Passerelle FeexPay Bénin
+                    </span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${
+                      feexpayMode === 'LIVE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'
+                    }`}>
+                      {feexpayMode === 'LIVE' ? '🚀 Mode Réel' : '🧪 Mode Test (Sandbox)'}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-black text-stone-900 font-serif mt-1">
                     Renouveler l'Accès Administrateur
                   </h3>
                   <p className="text-xs text-stone-500">
@@ -160,7 +256,7 @@ export default function FeexPayRenewalModal({
             </div>
 
             {paymentError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2">
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
                 <span>{paymentError}</span>
               </div>
@@ -241,7 +337,9 @@ export default function FeexPayRenewalModal({
                   className="w-full px-4 py-2.5 rounded-xl border border-stone-300 font-mono text-sm bg-white focus:border-rose-500 outline-hidden"
                 />
                 <p className="text-[11px] text-stone-500 mt-1">
-                  Une notification de validation de {monthlyFeeCFA.toLocaleString('fr-FR')} FCFA sera transmise à ce compte Mobile Money.
+                  {feexpayMode === 'LIVE'
+                    ? `Une demande de débit Mobile Money de ${monthlyFeeCFA.toLocaleString('fr-FR')} FCFA sera directement envoyée à ce numéro.`
+                    : `Simulation Sandbox : test de paiement de ${monthlyFeeCFA.toLocaleString('fr-FR')} FCFA sans débit réel.`}
                 </p>
               </div>
 
@@ -263,7 +361,7 @@ export default function FeexPayRenewalModal({
                   {processingPayment ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Traitement FeexPay...</span>
+                      <span>Initialisation FeexPay...</span>
                     </>
                   ) : (
                     <>

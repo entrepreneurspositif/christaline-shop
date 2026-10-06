@@ -111,6 +111,9 @@ export default function AdminPage() {
     expiresAt: string;
   } | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [waitingForMobilePin, setWaitingForMobilePin] = useState(false);
+  const [pendingPaymentRef, setPendingPaymentRef] = useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | undefined>(undefined);
 
   // État Test Telegram
   const [testingTelegram, setTestingTelegram] = useState(false);
@@ -379,11 +382,94 @@ export default function AdminPage() {
     }
   };
 
+  const pollPaymentStatus = (ref: string) => {
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      if (attempts > 20) {
+        clearInterval(interval);
+        setWaitingForMobilePin(false);
+        setPaymentError('Délai de validation mobile écoulé. Si vous avez validé le paiement sur votre téléphone, cliquez sur "J\'ai validé (Vérifier)".');
+        return;
+      }
+      try {
+        const res = await fetch('/api/subscription/feexpay/check-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reference: ref,
+            phoneNumber: renewalPhone.trim(),
+            operator: renewalOperator,
+            amountCFA: subscriptionInfo?.monthlyFeeCFA || 15000
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.status === 'SUCCESS') {
+          clearInterval(interval);
+          setWaitingForMobilePin(false);
+          setPaymentSuccessData({
+            newPassword: data.newPassword,
+            expiresAt: data.expiresAt
+          });
+          setPassword(data.newPassword);
+          setAuthError('');
+          fetchSubscriptionStatus();
+        } else if (data.status === 'FAILED' || data.status === 'INSUFFICIENT_FUNDS') {
+          clearInterval(interval);
+          setWaitingForMobilePin(false);
+          setPaymentError(data.error || 'Le paiement a échoué ou a été refusé sur votre mobile.');
+        }
+      } catch (err) {
+        // ignore polling network errors
+      }
+    }, 4000);
+  };
+
+  const handleManualCheckPendingStatus = async () => {
+    if (!pendingPaymentRef) return;
+    setProcessingPayment(true);
+    setPaymentError(null);
+    try {
+      const res = await fetch('/api/subscription/feexpay/check-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reference: pendingPaymentRef,
+          phoneNumber: renewalPhone.trim(),
+          operator: renewalOperator,
+          amountCFA: subscriptionInfo?.monthlyFeeCFA || 15000,
+          forceConfirm: false
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.status === 'SUCCESS') {
+        setWaitingForMobilePin(false);
+        setPaymentSuccessData({
+          newPassword: data.newPassword,
+          expiresAt: data.expiresAt
+        });
+        setPassword(data.newPassword);
+        setAuthError('');
+        fetchSubscriptionStatus();
+      } else if (data.status === 'PENDING') {
+        alert('Votre paiement est toujours en attente de validation sur votre téléphone Mobile Money.');
+      } else {
+        throw new Error(data.error || 'Transaction non validée.');
+      }
+    } catch (err: any) {
+      setPaymentError(err.message || 'Erreur lors de la vérification.');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
   const handleFeexPayRenewal = async (e: React.FormEvent) => {
     e.preventDefault();
     setProcessingPayment(true);
     setPaymentError(null);
     setPaymentSuccessData(null);
+    setWaitingForMobilePin(false);
+    setPaymentUrl(undefined);
 
     try {
       const initRes = await fetch('/api/subscription/feexpay/initiate', {
@@ -401,14 +487,27 @@ export default function AdminPage() {
         throw new Error(initData.error || 'Erreur initialisation FeexPay');
       }
 
-      const confirmRes = await fetch('/api/subscription/feexpay/confirm', {
+      setPendingPaymentRef(initData.reference);
+      if (initData.paymentUrl) setPaymentUrl(initData.paymentUrl);
+
+      // Si mode LIVE : attendre la validation sur le téléphone
+      if (initData.mode === 'LIVE') {
+        setWaitingForMobilePin(true);
+        setProcessingPayment(false);
+        pollPaymentStatus(initData.reference);
+        return;
+      }
+
+      // Si mode SANDBOX : confirmation immédiate de test
+      const confirmRes = await fetch('/api/subscription/feexpay/check-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reference: initData.reference,
           phoneNumber: renewalPhone.trim(),
           operator: renewalOperator,
-          amountCFA: initData.amountCFA
+          amountCFA: initData.amountCFA,
+          forceConfirm: true
         })
       });
 
@@ -848,7 +947,10 @@ export default function AdminPage() {
         {/* Modal de renouvellement FeexPay (sur l'écran de login) */}
         <FeexPayRenewalModal
           isOpen={showRenewalModal}
-          onClose={() => setShowRenewalModal(false)}
+          onClose={() => {
+            setShowRenewalModal(false);
+            setWaitingForMobilePin(false);
+          }}
           monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
           renewalPhone={renewalPhone}
           setRenewalPhone={setRenewalPhone}
@@ -858,9 +960,14 @@ export default function AdminPage() {
           onSubmitRenewal={handleFeexPayRenewal}
           paymentSuccessData={paymentSuccessData}
           paymentError={paymentError}
+          waitingForMobilePin={waitingForMobilePin}
+          onManualCheckStatus={handleManualCheckPendingStatus}
+          feexpayMode={(subscriptionInfo as any)?.feexpayMode || 'SANDBOX'}
+          paymentUrl={paymentUrl}
           onSuccessProceed={() => {
             if (paymentSuccessData) {
               setShowRenewalModal(false);
+              setWaitingForMobilePin(false);
               setPassword(paymentSuccessData.newPassword);
             }
           }}
@@ -1019,17 +1126,6 @@ export default function AdminPage() {
             >
               Déconnexion
             </button>
-
-            {subscriptionInfo?.isSuperAdmin && (
-              <Link
-                href="/super-admin"
-                className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
-                title="Accès Super Administrateur"
-              >
-                <Crown className="w-3.5 h-3.5 text-amber-600" />
-                <span className="hidden sm:inline">Super Admin</span>
-              </Link>
-            )}
           </div>
         </div>
 
@@ -4014,7 +4110,10 @@ export default function AdminPage() {
       {/* Modal de renouvellement FeexPay (dans le Dashboard) */}
       <FeexPayRenewalModal
         isOpen={showRenewalModal}
-        onClose={() => setShowRenewalModal(false)}
+        onClose={() => {
+          setShowRenewalModal(false);
+          setWaitingForMobilePin(false);
+        }}
         monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
         renewalPhone={renewalPhone}
         setRenewalPhone={setRenewalPhone}
@@ -4024,8 +4123,13 @@ export default function AdminPage() {
         onSubmitRenewal={handleFeexPayRenewal}
         paymentSuccessData={paymentSuccessData}
         paymentError={paymentError}
+        waitingForMobilePin={waitingForMobilePin}
+        onManualCheckStatus={handleManualCheckPendingStatus}
+        feexpayMode={(subscriptionInfo as any)?.feexpayMode || 'SANDBOX'}
+        paymentUrl={paymentUrl}
         onSuccessProceed={() => {
           setShowRenewalModal(false);
+          setWaitingForMobilePin(false);
         }}
       />
 

@@ -8,6 +8,13 @@ import {
 } from './subscription';
 
 const SUBSCRIPTION_FILE = path.join(process.cwd(), 'data', 'subscription.json');
+const TMP_SUBSCRIPTION_FILE = path.join(process.platform === 'win32' ? (process.env.TEMP || 'C:\\Windows\\Temp') : '/tmp', 'subscription.json');
+
+// Cache global en mémoire (persiste entre requêtes sur la même instance Lambda Vercel)
+declare global {
+  // eslint-disable-next-line no-var
+  var __cs_subscription_data: AdminSubscriptionData | undefined;
+}
 
 // Date d'expiration initiale : 30 jours à partir de maintenant
 const initialExpiration = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -30,15 +37,18 @@ const DEFAULT_SUBSCRIPTION: AdminSubscriptionData = {
 };
 
 export function readSubscriptionData(): AdminSubscriptionData {
+  let result: AdminSubscriptionData = { ...DEFAULT_SUBSCRIPTION };
+
+  // 1. Essai de lecture depuis data/subscription.json (fichier initial du projet)
   try {
     if (fs.existsSync(SUBSCRIPTION_FILE)) {
       const raw = fs.readFileSync(SUBSCRIPTION_FILE, 'utf-8');
       const parsed = JSON.parse(raw);
-      return {
-        ...DEFAULT_SUBSCRIPTION,
+      result = {
+        ...result,
         ...parsed,
         feexpayConfig: {
-          ...DEFAULT_SUBSCRIPTION.feexpayConfig,
+          ...result.feexpayConfig,
           ...(parsed.feexpayConfig || {})
         },
         paymentHistory: Array.isArray(parsed.paymentHistory) ? parsed.paymentHistory : [],
@@ -47,12 +57,87 @@ export function readSubscriptionData(): AdminSubscriptionData {
       };
     }
   } catch (error) {
-    console.error('Erreur lecture subscription.json:', error);
+    // ignore
   }
-  return DEFAULT_SUBSCRIPTION;
+
+  // 2. Essai de lecture depuis /tmp/subscription.json (modifications runtime sur Vercel serverless)
+  try {
+    if (fs.existsSync(TMP_SUBSCRIPTION_FILE)) {
+      const rawTmp = fs.readFileSync(TMP_SUBSCRIPTION_FILE, 'utf-8');
+      const parsedTmp = JSON.parse(rawTmp);
+      result = {
+        ...result,
+        ...parsedTmp,
+        feexpayConfig: {
+          ...result.feexpayConfig,
+          ...(parsedTmp.feexpayConfig || {})
+        },
+        paymentHistory: Array.isArray(parsedTmp.paymentHistory) ? parsedTmp.paymentHistory : result.paymentHistory,
+        adminTelegramChatId: parsedTmp.adminTelegramChatId ?? result.adminTelegramChatId,
+        adminTelegramBotToken: parsedTmp.adminTelegramBotToken ?? result.adminTelegramBotToken
+      };
+    }
+  } catch (error) {
+    // ignore
+  }
+
+  // 3. Essai de lecture depuis la mémoire globale (même instance Lambda active)
+  if (globalThis.__cs_subscription_data) {
+    result = {
+      ...result,
+      ...globalThis.__cs_subscription_data,
+      feexpayConfig: {
+        ...result.feexpayConfig,
+        ...(globalThis.__cs_subscription_data.feexpayConfig || {})
+      }
+    };
+  }
+
+  // 4. Overrides via Variables d'Environnement Vercel (Recommandé pour persistance garantie)
+  if (process.env.FEEXPAY_SHOP_ID && process.env.FEEXPAY_SHOP_ID.trim()) {
+    result.feexpayConfig.shopId = process.env.FEEXPAY_SHOP_ID.trim();
+  }
+  if (process.env.FEEXPAY_API_TOKEN && process.env.FEEXPAY_API_TOKEN.trim()) {
+    result.feexpayConfig.apiToken = process.env.FEEXPAY_API_TOKEN.trim();
+  }
+  if (process.env.FEEXPAY_MODE) {
+    const m = process.env.FEEXPAY_MODE.trim().toUpperCase();
+    if (m === 'LIVE' || m === 'SANDBOX') {
+      result.feexpayConfig.mode = m as 'LIVE' | 'SANDBOX';
+    }
+  }
+  if (process.env.FEEXPAY_MONTHLY_FEE && Number(process.env.FEEXPAY_MONTHLY_FEE) > 0) {
+    result.monthlyFeeCFA = Number(process.env.FEEXPAY_MONTHLY_FEE);
+  }
+  if (process.env.SUPER_ADMIN_PASSWORD && process.env.SUPER_ADMIN_PASSWORD.trim()) {
+    result.superAdminPassword = process.env.SUPER_ADMIN_PASSWORD.trim();
+  }
+  if (process.env.ADMIN_TELEGRAM_CHAT_ID && process.env.ADMIN_TELEGRAM_CHAT_ID.trim()) {
+    result.adminTelegramChatId = process.env.ADMIN_TELEGRAM_CHAT_ID.trim();
+  }
+  if (process.env.ADMIN_TELEGRAM_BOT_TOKEN && process.env.ADMIN_TELEGRAM_BOT_TOKEN.trim()) {
+    result.adminTelegramBotToken = process.env.ADMIN_TELEGRAM_BOT_TOKEN.trim();
+  }
+
+  return result;
 }
 
 export function writeSubscriptionData(data: AdminSubscriptionData) {
+  // 1. Mettre à jour le cache mémoire
+  globalThis.__cs_subscription_data = JSON.parse(JSON.stringify(data));
+
+  // 2. Écrire dans /tmp (toujours autorisé sur Vercel serverless / Lambda)
+  try {
+    const tmpDir = path.dirname(TMP_SUBSCRIPTION_FILE);
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
+    }
+    fs.writeFileSync(TMP_SUBSCRIPTION_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Impossible d’écrire dans TMP_SUBSCRIPTION_FILE:', err);
+  }
+
+  // 3. Écrire dans data/subscription.json (en local ou si filesystem accessible)
   try {
     const dir = path.dirname(SUBSCRIPTION_FILE);
     if (!fs.existsSync(dir)) {
@@ -60,7 +145,7 @@ export function writeSubscriptionData(data: AdminSubscriptionData) {
     }
     fs.writeFileSync(SUBSCRIPTION_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (error) {
-    console.error('Erreur écriture subscription.json:', error);
+    // Normal sur environnement serverless read-only
   }
 }
 
