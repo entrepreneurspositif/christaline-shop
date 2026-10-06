@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Search, ArrowRight, Clock, HelpCircle, Sparkles, ShoppingBag, ShieldCheck, MessageCircle } from 'lucide-react';
+import DeliveredOrdersCarousel from '@/components/DeliveredOrdersCarousel';
+import { Search, ArrowRight, Clock, HelpCircle, Sparkles, ShoppingBag, ShieldCheck, MessageCircle, Package } from 'lucide-react';
 import { useSettings } from '@/context/SettingsContext';
 import { getWhatsAppDirectUrl } from '@/lib/settings';
 
@@ -39,7 +40,7 @@ export default function SuiviPage() {
     <div className="min-h-screen flex flex-col bg-stone-50/60">
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 w-full space-y-12">
+      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 w-full space-y-16">
         
         {/* Titre & Hero */}
         <div className="text-center space-y-3">
@@ -158,6 +159,44 @@ export default function SuiviPage() {
               </div>
               <div className="text-stone-500 mt-1">Grace Bamba • Jogging Shein (Commande achevée)</div>
             </button>
+          </div>
+        </div>
+
+        {/* SECTION CARROUSEL : COMMANDES DES CLIENTS DÉJÀ REÇUES */}
+        <section className="pt-4 border-t border-stone-200/80">
+          <DeliveredOrdersCarousel />
+        </section>
+
+        {/* Bannière de réassurance & Sécurité */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-stone-900 block">Marchandises 100% Assurées</span>
+              <span className="text-[11px] text-stone-500">Protection totale contre la casse ou la perte</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+              <Package className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-stone-900 block">Vérification à l'Arrivée</span>
+              <span className="text-[11px] text-stone-500">Inspection minutieuse des articles à Cotonou</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-xs flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-xs font-bold text-stone-900 block">Retrait ou Livraison Bénin</span>
+              <span className="text-[11px] text-stone-500">À notre agence ou livré directement chez vous</span>
+            </div>
           </div>
         </div>
 
