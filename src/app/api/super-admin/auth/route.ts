@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { readSubscriptionData } from '@/lib/subscriptionServer';
+import { readSubscriptionDataAsync } from '@/lib/subscriptionServer';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { password } = body;
 
-    const data = readSubscriptionData();
+    const data = await readSubscriptionDataAsync();
 
     // Bloquer formellement le mot de passe Admin de la boutique sur le Super Admin
     if (password && password.trim() === data.activeAdminPassword) {

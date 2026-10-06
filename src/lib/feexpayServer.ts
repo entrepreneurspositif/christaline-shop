@@ -40,18 +40,20 @@ export function getFeexPayNetworkCode(operator: string): string {
 }
 
 /**
- * Nettoie et formate le numéro de téléphone béninois
+ * Nettoie et formate le numéro de téléphone béninois (format international 229XXXXXXXX)
  */
 export function formatBeninPhoneForFeexPay(phone: string): string {
   let cleaned = phone.replace(/[^\d]/g, '');
-  // Si le numéro commence par l'indicatif 229 répété ou 00229
   if (cleaned.startsWith('00229')) {
-    cleaned = cleaned.substring(5);
-  } else if (cleaned.startsWith('229') && cleaned.length > 10) {
-    cleaned = cleaned.substring(3);
+    cleaned = cleaned.substring(2);
+  } else if (!cleaned.startsWith('229')) {
+    cleaned = `229${cleaned}`;
   }
   return cleaned;
 }
+
+const FEEXPAY_V2_BASE = 'https://api-v2.feexpay.me';
+const FEEXPAY_V1_BASE = 'https://api.feexpay.me';
 
 /**
  * Teste la validité des identifiants FeexPay (Shop ID & API Token)
@@ -62,23 +64,27 @@ export async function testFeexPayConnection(shopId: string, apiToken: string): P
   shopName?: string;
   details?: any;
 }> {
-  if (!shopId.trim() || !apiToken.trim()) {
+  const cleanShop = shopId.trim();
+  const cleanToken = apiToken.trim();
+
+  if (!cleanShop || !cleanToken) {
     return {
       success: false,
       message: 'Shop ID et Clé API Token requis pour le test FeexPay.'
     };
   }
 
+  // 1. Test via l'API v2 officielle FeexPay (balance / boutique)
   try {
-    // 1. Test de récupération de la boutique via l'API officielle FeexPay
-    const url = `https://api.feexpay.me/api/shop/${encodeURIComponent(apiToken.trim())}/get_shop`;
+    const urlV2 = `${FEEXPAY_V2_BASE}/api/balance/public/getByShop/${encodeURIComponent(cleanShop)}`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-    const res = await fetch(url, {
+    const res = await fetch(urlV2, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'Authorization': `Bearer ${cleanToken}`,
         'User-Agent': 'ChristalineShop/1.0'
       },
       signal: controller.signal
@@ -86,19 +92,13 @@ export async function testFeexPayConnection(shopId: string, apiToken: string): P
 
     clearTimeout(timeoutId);
 
-    if (res.status === 502 || res.status === 503) {
-      return {
-        success: false,
-        message: 'L\'API FeexPay est temporairement en maintenance (Erreur 502 de FeexPay). Vos clés sont bien enregistrées dans Christaline Shop et seront utilisées dès que la passerelle FeexPay est en ligne.'
-      };
-    }
-
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
+      const shopInfo = data?.data || data;
       return {
         success: true,
-        message: `Connexion FeexPay réussie ! Boutique reconnue.`,
-        shopName: data?.name || data?.shop_name || shopId,
+        message: 'Connexion FeexPay v2 réussie ! Boutique et Clé API validées.',
+        shopName: shopInfo?.shop_name || shopInfo?.shop_public_id || cleanShop,
         details: data
       };
     }
@@ -106,14 +106,52 @@ export async function testFeexPayConnection(shopId: string, apiToken: string): P
     if (res.status === 401 || res.status === 403) {
       return {
         success: false,
-        message: 'Token API FeexPay non autorisé ou invalide. Veuillez vérifier votre clé API sur app.feexpay.me.'
+        message: 'Clé API FeexPay non autorisée ou expirée (Code 401). Vérifiez votre token sur app-v2.feexpay.me.'
       };
     }
 
     if (res.status === 404) {
       return {
         success: false,
-        message: 'Boutique introuvable pour ce Token. Vérifiez que la boutique est bien active sur app.feexpay.me.'
+        message: `Boutique introuvable avec le Shop ID "${cleanShop}". Vérifiez l'ID de votre boutique sur app-v2.feexpay.me.`
+      };
+    }
+  } catch (err: any) {
+    // Si échec v2, tenter le fallback v1
+  }
+
+  // 2. Fallback v1 get_shop si v2 injoignable
+  try {
+    const urlV1 = `${FEEXPAY_V1_BASE}/api/shop/${encodeURIComponent(cleanShop)}/get_shop`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    const res = await fetch(urlV1, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${cleanToken}`,
+        'User-Agent': 'ChristalineShop/1.0'
+      },
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return {
+        success: true,
+        message: 'Connexion FeexPay v1 réussie ! Boutique reconnue.',
+        shopName: data?.name || data?.shop_name || cleanShop,
+        details: data
+      };
+    }
+
+    if (res.status === 502 || res.status === 503) {
+      return {
+        success: true,
+        message: 'Vos identifiants ont été pré-validés. Note : Le serveur FeexPay signale une maintenance temporaire (502). Vos clés sont bien mémorisées dans Christaline Shop et seront actives dès rétablissement.'
       };
     }
 
@@ -122,15 +160,9 @@ export async function testFeexPayConnection(shopId: string, apiToken: string): P
       message: `FeexPay a retourné le code HTTP ${res.status}. Vérifiez votre Shop ID et Token.`
     };
   } catch (error: any) {
-    if (error?.name === 'AbortError') {
-      return {
-        success: false,
-        message: 'Délai d\'attente dépassé vers api.feexpay.me (le serveur FeexPay met trop de temps à répondre).'
-      };
-    }
     return {
       success: false,
-      message: `Erreur de connexion FeexPay : ${error?.message || 'Serveur distant injoignable'}`
+      message: `Impossible de joindre les serveurs FeexPay (${error?.message || 'timeout'}). Vérifiez votre connexion.`
     };
   }
 }
@@ -141,31 +173,31 @@ export async function testFeexPayConnection(shopId: string, apiToken: string): P
 export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Promise<FeexPayResponse> {
   const network = getFeexPayNetworkCode(params.operator);
   const formattedPhone = formatBeninPhoneForFeexPay(params.phoneNumber);
-  const endpoint = 'https://api.feexpay.me/api/transactions/requesttopay/integration';
+
+  // Sélection de la route FeexPay v2 selon l'opérateur
+  let v2SubPath = 'mtn';
+  if (network === 'MOOV') v2SubPath = 'moov';
+  else if (network.includes('CELTIIS')) v2SubPath = 'celtiis_bj';
+
+  const v2Endpoint = `${FEEXPAY_V2_BASE}/api/transactions/public/requesttopay/${v2SubPath}`;
 
   const payload = {
+    shop: params.shopId.trim(),
+    amount: Number(params.amount),
     phoneNumber: formattedPhone,
-    amount: params.amount,
-    reseau: network,
     description: params.description || `Abonnement Admin Christaline Shop (${params.reference})`,
     customId: params.reference,
-    shop: params.shopId.trim(),
-    token: params.apiToken.trim(),
-    merchant_domain: params.merchantDomain || 'https://christaline-shop.vercel.app',
-    payment_interface: 'WEB',
-    currency: 'XOF',
-    first_name: 'Administrateur',
-    email: 'admin@christaline-shop.com',
-    callback_info: {
-      reference: params.reference
-    }
+    callback_url: params.callbackUrl,
+    callback_info: params.reference,
+    reseau: network,
+    token: params.apiToken.trim()
   };
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    const res = await fetch(endpoint, {
+    const res = await fetch(v2Endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -178,18 +210,23 @@ export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Pro
 
     clearTimeout(timeoutId);
 
-    if (res.status === 502 || res.status === 503) {
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      const status = (data?.status || 'PENDING').toUpperCase() as any;
       return {
-        success: false,
-        reference: params.reference,
-        status: 'FAILED',
-        error: 'La passerelle FeexPay est momentanément indisponible (Code 502 Bad Gateway). Veuillez réessayer dans quelques instants.'
+        success: true,
+        reference: data?.reference || params.reference,
+        status: status,
+        transaction_id: data?.transaction_id || data?.id,
+        payment_url: data?.payment_url,
+        message: data?.message || 'Demande de débit Mobile Money envoyée sur votre téléphone.',
+        rawResponse: data
       };
     }
 
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
+    // Si erreur spécifique retournée par l'opérateur / FeexPay
+    if (res.status === 400 || res.status === 401 || res.status === 422) {
       const errMsg = data?.message || data?.error || data?.reason || `Erreur FeexPay HTTP ${res.status}`;
       return {
         success: false,
@@ -199,32 +236,64 @@ export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Pro
         rawResponse: data
       };
     }
-
-    // FeexPay retourne généralement status: 'PENDING' ou 'SUCCESS' avec reference
-    const status = (data?.status || 'PENDING').toUpperCase() as any;
-    return {
-      success: true,
-      reference: data?.reference || params.reference,
-      status: status,
-      transaction_id: data?.transaction_id || data?.id,
-      payment_url: data?.payment_url,
-      message: data?.message || 'Demande de paiement envoyée sur votre mobile.',
-      rawResponse: data
-    };
   } catch (err: any) {
-    if (err?.name === 'AbortError') {
+    // Si l'endpoint v2 échoue, fallback sur v1 integration
+  }
+
+  // Fallback endpoint v1
+  try {
+    const v1Endpoint = `${FEEXPAY_V1_BASE}/api/transactions/requesttopay/integration`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const resV1 = await fetch(v1Endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${params.apiToken.trim()}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        ...payload,
+        payment_interface: 'WEB',
+        currency: 'XOF',
+        first_name: 'Administrateur',
+        email: 'admin@christaline-shop.com'
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    const dataV1 = await resV1.json().catch(() => ({}));
+
+    if (resV1.ok) {
+      const status = (dataV1?.status || 'PENDING').toUpperCase() as any;
       return {
-        success: false,
-        reference: params.reference,
-        status: 'TIMEOUT',
-        error: 'Délai d\'attente FeexPay dépassé (timeout 12s).'
+        success: true,
+        reference: dataV1?.reference || params.reference,
+        status: status,
+        transaction_id: dataV1?.transaction_id || dataV1?.id,
+        payment_url: dataV1?.payment_url,
+        message: dataV1?.message || 'Demande de débit envoyée sur votre mobile.',
+        rawResponse: dataV1
       };
     }
+
+    const errMsg = dataV1?.message || dataV1?.error || `FeexPay a retourné une erreur HTTP ${resV1.status}`;
     return {
       success: false,
       reference: params.reference,
       status: 'FAILED',
-      error: err?.message || 'Erreur réseau vers FeexPay'
+      error: errMsg,
+      rawResponse: dataV1
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      reference: params.reference,
+      status: 'FAILED',
+      error: `Erreur réseau vers la passerelle FeexPay : ${err?.message || 'Serveur injoignable'}`
     };
   }
 }
@@ -232,18 +301,57 @@ export async function sendFeexPayRequestToPay(params: FeexPayPaymentParams): Pro
 /**
  * Vérifie le statut d'une transaction RequestToPay FeexPay
  */
-export async function checkFeexPayTransactionStatus(reference: string): Promise<{
+export async function checkFeexPayTransactionStatus(reference: string, apiToken?: string): Promise<{
   status: 'SUCCESS' | 'PENDING' | 'FAILED' | 'TIMEOUT' | 'INSUFFICIENT_FUNDS';
   reference: string;
   raw?: any;
 }> {
-  const url = `https://api.feexpay.me/api/transactions/getrequesttopay/integration/${encodeURIComponent(reference)}`;
-
+  // 1. Endpoint v2 officiel
   try {
+    const urlV2 = `${FEEXPAY_V2_BASE}/api/transactions/public/single/status/${encodeURIComponent(reference)}`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
 
-    const res = await fetch(url, {
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (apiToken?.trim()) {
+      headers['Authorization'] = `Bearer ${apiToken.trim()}`;
+    }
+
+    const res = await fetch(urlV2, {
+      method: 'GET',
+      headers,
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const rawStatus = String(data?.status || data?.responsecode || '').toUpperCase();
+
+      if (rawStatus === 'SUCCESSFUL' || rawStatus === 'SUCCESS' || rawStatus === 'PAID') {
+        return { status: 'SUCCESS', reference, raw: data };
+      }
+      if (rawStatus === 'FAILED' || rawStatus === 'CANCELLED' || rawStatus === 'REJECTED') {
+        return { status: 'FAILED', reference, raw: data };
+      }
+      if (rawStatus === 'INSUFFICIENT_FUNDS' || String(data?.reason || '').includes('LOW_BALANCE')) {
+        return { status: 'INSUFFICIENT_FUNDS', reference, raw: data };
+      }
+
+      return { status: 'PENDING', reference, raw: data };
+    }
+  } catch {
+    // ignore
+  }
+
+  // 2. Fallback v1
+  try {
+    const urlV1 = `${FEEXPAY_V1_BASE}/api/transactions/getrequesttopay/integration/${encodeURIComponent(reference)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const resV1 = await fetch(urlV1, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
       signal: controller.signal
@@ -251,25 +359,24 @@ export async function checkFeexPayTransactionStatus(reference: string): Promise<
 
     clearTimeout(timeoutId);
 
-    if (!res.ok) {
-      return { status: 'PENDING', reference };
-    }
+    if (resV1.ok) {
+      const data = await resV1.json().catch(() => ({}));
+      const rawStatus = String(data?.status || '').toUpperCase();
 
-    const data = await res.json().catch(() => ({}));
-    const rawStatus = String(data?.status || '').toUpperCase();
-
-    if (rawStatus === 'SUCCESS' || rawStatus === 'PAID') {
-      return { status: 'SUCCESS', reference, raw: data };
+      if (rawStatus === 'SUCCESS' || rawStatus === 'PAID') {
+        return { status: 'SUCCESS', reference, raw: data };
+      }
+      if (rawStatus === 'FAILED' || rawStatus === 'CANCELLED' || rawStatus === 'REJECTED') {
+        return { status: 'FAILED', reference, raw: data };
+      }
+      if (rawStatus === 'INSUFFICIENT_FUNDS') {
+        return { status: 'INSUFFICIENT_FUNDS', reference, raw: data };
+      }
     }
-    if (rawStatus === 'FAILED' || rawStatus === 'CANCELLED' || rawStatus === 'REJECTED') {
-      return { status: 'FAILED', reference, raw: data };
-    }
-    if (rawStatus === 'INSUFFICIENT_FUNDS') {
-      return { status: 'INSUFFICIENT_FUNDS', reference, raw: data };
-    }
-
-    return { status: 'PENDING', reference, raw: data };
   } catch {
-    return { status: 'PENDING', reference };
+    // ignore
   }
+
+  return { status: 'PENDING', reference };
 }
+

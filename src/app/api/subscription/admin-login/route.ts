@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyAdminLogin } from '@/lib/subscriptionServer';
+import { verifyAdminLoginAsync } from '@/lib/subscriptionServer';
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Mot de passe requis' }, { status: 400 });
     }
 
-    const result = verifyAdminLogin(password.trim());
+    const result = await verifyAdminLoginAsync(password.trim());
 
     if (!result.success) {
       return NextResponse.json(result, { status: result.expired ? 403 : 401 });

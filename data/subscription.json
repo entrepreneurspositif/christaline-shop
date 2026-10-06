@@ -2,7 +2,7 @@
   "superAdminPassword": "superadmin2026",
   "monthlyFeeCFA": 15000,
   "activeAdminPassword": "CS-KHKJ4U",
-  "passwordExpiresAt": "2026-11-04T14:45:45.723Z",
+  "passwordExpiresAt": "2026-11-05T00:00:00.000Z",
   "feexpayConfig": {
     "enabled": true,
     "shopId": "",

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { processSuccessfulPayment, readSubscriptionData } from '@/lib/subscriptionServer';
+import { processSuccessfulPaymentAsync, readSubscriptionDataAsync } from '@/lib/subscriptionServer';
 import { checkFeexPayTransactionStatus } from '@/lib/feexpayServer';
 import { notifyNewAdminPasswordTelegram } from '@/lib/telegram';
 
@@ -12,13 +12,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Référence requise' }, { status: 400 });
     }
 
-    const data = readSubscriptionData();
+    const data = await readSubscriptionDataAsync();
     const isLive = data.feexpayConfig.mode === 'LIVE' && !!(data.feexpayConfig.shopId && data.feexpayConfig.apiToken);
 
     let isSuccess = false;
 
     if (isLive && !forceConfirm) {
-      const statusRes = await checkFeexPayTransactionStatus(reference);
+      const statusRes = await checkFeexPayTransactionStatus(reference, data.feexpayConfig.apiToken);
 
       if (statusRes.status === 'PENDING') {
         return NextResponse.json({
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
 
     if (isSuccess) {
       const fee = amountCFA || data.monthlyFeeCFA || 15000;
-      const paymentResult = processSuccessfulPayment({
+      const paymentResult = await processSuccessfulPaymentAsync({
         amountCFA: fee,
         reference: reference,
         feexpayTransactionId: `FP_TX_${Math.random().toString(36).substring(2, 8).toUpperCase()}`,

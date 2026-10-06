@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readSubscriptionData } from '@/lib/subscriptionServer';
+import { readSubscriptionDataAsync } from '@/lib/subscriptionServer';
 import { sendFeexPayRequestToPay } from '@/lib/feexpayServer';
 
 export async function POST(request: Request) {
@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { phoneNumber, operator } = body;
 
-    const data = readSubscriptionData();
+    const data = await readSubscriptionDataAsync();
     const amount = data.monthlyFeeCFA || 15000;
     const reference = `FP_CS_${Date.now()}_${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 

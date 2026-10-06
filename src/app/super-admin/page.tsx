@@ -118,22 +118,22 @@ export default function SuperAdminPage() {
         setSubscription(data.subscription);
         const sub = data.subscription;
 
-        let curFee = sub.monthlyFeeCFA || 15000;
+        let curFee = sub.monthlyFeeCFA;
         let curShopId = sub.feexpayConfig?.shopId || '';
         let curToken = sub.feexpayConfig?.apiToken || '';
         let curMode = sub.feexpayConfig?.mode || 'SANDBOX';
         let curChatId = sub.adminTelegramChatId || '';
         let curBotToken = sub.adminTelegramBotToken || '';
 
-        // Récupérer depuis localStorage en cas de redémarrage de conteneur Vercel
+        // Récupérer depuis localStorage si non initialisé sur le serveur
         try {
           const cached = localStorage.getItem('cs_super_admin_saved_config');
           if (cached) {
             const parsed = JSON.parse(cached);
             if (!curShopId && parsed.shopId) curShopId = parsed.shopId;
             if (!curToken && parsed.apiToken) curToken = parsed.apiToken;
-            if (parsed.fee && curFee === 15000) curFee = parsed.fee;
-            if (parsed.mode) curMode = parsed.mode;
+            if (!curFee && parsed.fee) curFee = parsed.fee;
+            if (parsed.mode && !sub.feexpayConfig?.shopId) curMode = parsed.mode;
             if (!curChatId && parsed.chatId) curChatId = parsed.chatId;
             if (!curBotToken && parsed.botToken) curBotToken = parsed.botToken;
           }
@@ -141,7 +141,7 @@ export default function SuperAdminPage() {
           // ignore
         }
 
-        setFeeInput(curFee);
+        setFeeInput(curFee || 15000);
         setShopIdInput(curShopId);
         setApiTokenInput(curToken);
         setModeInput(curMode);
@@ -301,9 +301,20 @@ export default function SuperAdminPage() {
         throw new Error(data.error || 'Erreur lors de la sauvegarde');
       }
 
+      if (data.subscription) {
+        setSubscription(data.subscription);
+        if (data.subscription.monthlyFeeCFA) setFeeInput(data.subscription.monthlyFeeCFA);
+        if (data.subscription.feexpayConfig?.shopId !== undefined) setShopIdInput(data.subscription.feexpayConfig.shopId);
+        if (data.subscription.feexpayConfig?.apiToken !== undefined) setApiTokenInput(data.subscription.feexpayConfig.apiToken);
+        if (data.subscription.feexpayConfig?.mode) setModeInput(data.subscription.feexpayConfig.mode);
+        if (data.subscription.adminTelegramChatId !== undefined) setTelegramChatIdInput(data.subscription.adminTelegramChatId);
+        if (data.subscription.adminTelegramBotToken !== undefined) setTelegramBotTokenInput(data.subscription.adminTelegramBotToken);
+      }
+
       if (newMasterPasswordInput.trim()) {
-        setMasterPassword(newMasterPasswordInput.trim());
-        sessionStorage.setItem('cs_super_admin_pass', newMasterPasswordInput.trim());
+        const nextPass = newMasterPasswordInput.trim();
+        setMasterPassword(nextPass);
+        sessionStorage.setItem('cs_super_admin_pass', nextPass);
         setNewMasterPasswordInput('');
       }
 
@@ -321,8 +332,7 @@ export default function SuperAdminPage() {
         // ignore
       }
 
-      setActionSuccess('Paramètres FeexPay & Tarif mensuel enregistrés avec succès !');
-      await loadSuperAdminData(newMasterPasswordInput.trim() || masterPassword);
+      setActionSuccess('Paramètres FeexPay & Tarif mensuel enregistrés et appliqués avec succès !');
       setTimeout(() => setActionSuccess(null), 4000);
     } catch (err: any) {
       setActionError(err.message || 'Erreur sauvegarde');
@@ -468,6 +478,50 @@ export default function SuperAdminPage() {
             <span>{actionError}</span>
           </div>
         )}
+
+        {/* STATUT SYSTEME FEEXPAY & MONGO */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-3 h-3 rounded-full ${subscription?.feexpayConfig?.shopId && subscription?.feexpayConfig?.apiToken ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-amber-500'}`} />
+              <div>
+                <span className="font-bold text-white block">Passerelle FeexPay</span>
+                <span className="text-[11px] text-stone-400">
+                  {subscription?.feexpayConfig?.shopId && subscription?.feexpayConfig?.apiToken 
+                    ? `Configurée (${subscription.feexpayConfig.mode === 'LIVE' ? '🚀 Mode Réel LIVE' : '🧪 Mode SANDBOX'})` 
+                    : 'Non configurée (Shop ID ou Token manquant)'}
+                </span>
+              </div>
+            </div>
+            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${subscription?.feexpayConfig?.shopId && subscription?.feexpayConfig?.apiToken ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}`}>
+              {subscription?.feexpayConfig?.shopId && subscription?.feexpayConfig?.apiToken ? 'Opérationnelle' : 'À configurer'}
+            </span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-stone-900 border border-stone-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-3 h-3 rounded-full ${(subscription as any)?.mongoConnected ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-sky-500'}`} />
+              <div>
+                <span className="font-bold text-white block">Persistance des Données</span>
+                <span className="text-[11px] text-stone-400">
+                  {(subscription as any)?.mongoConnected 
+                    ? 'MongoDB Atlas connecté en direct' 
+                    : 'Stockage persistant actif (Fichier local & /tmp)'}
+                </span>
+              </div>
+            </div>
+            <a
+              href="https://cloud.mongodb.com/v2/6ac478b0e319c56481b102a2#/security/network/accessList"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] font-bold text-amber-400 hover:text-amber-300 underline flex items-center gap-1 shrink-0"
+              title="Autoriser 0.0.0.0/0 dans MongoDB Atlas Network Access"
+            >
+              <span>Accès Atlas</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
 
         {/* 4 KPIS EN CARTOUCHES */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -838,7 +892,7 @@ export default function SuperAdminPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const mongoUri = (subscriptionData as any)?.mongoUri || "mongodb://entrepreneurspositif_db_user:<password>@ac-csxovuk-shard-00-00.mqtdbfu.mongodb.net:27017,ac-csxovuk-shard-00-01.mqtdbfu.mongodb.net:27017,ac-csxovuk-shard-00-02.mqtdbfu.mongodb.net:27017/christaline_db?ssl=true&replicaSet=atlas-zdln9a-shard-0&authSource=admin&appName=Christaline";
+                  const mongoUri = (subscription as any)?.mongoUri || "mongodb://entrepreneurspositif_db_user:<password>@ac-csxovuk-shard-00-00.mqtdbfu.mongodb.net:27017,ac-csxovuk-shard-00-01.mqtdbfu.mongodb.net:27017,ac-csxovuk-shard-00-02.mqtdbfu.mongodb.net:27017/christaline_db?ssl=true&replicaSet=atlas-zdln9a-shard-0&authSource=admin&appName=Christaline";
                   const envContent = `MONGODB_URI=${mongoUri}\nMONGODB_DB=christaline_db\nFEEXPAY_SHOP_ID=${shopIdInput.trim()}\nFEEXPAY_API_TOKEN=${apiTokenInput.trim()}\nFEEXPAY_MODE=${modeInput}\nFEEXPAY_MONTHLY_FEE=${feeInput}\nSUPER_ADMIN_PASSWORD=${masterPassword}`;
                   navigator.clipboard.writeText(envContent);
                   setCopiedVercelEnv(true);

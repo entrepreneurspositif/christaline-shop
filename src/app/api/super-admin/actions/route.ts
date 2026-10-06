@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { 
-  readSubscriptionData, 
-  superAdminManualGeneratePassword, 
-  superAdminExtendDays, 
-  superAdminRevokeAccess 
+  readSubscriptionDataAsync, 
+  superAdminManualGeneratePasswordAsync, 
+  superAdminExtendDaysAsync, 
+  superAdminRevokeAccessAsync 
 } from '@/lib/subscriptionServer';
 import { notifyNewAdminPasswordTelegram } from '@/lib/telegram';
 
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { masterPassword, action, days } = body;
 
-    const data = readSubscriptionData();
+    const data = await readSubscriptionDataAsync();
 
     if (masterPassword !== data.superAdminPassword) {
       return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const baseUrl = host ? `${protocol}://${host}` : '';
 
     if (action === 'generate_password') {
-      const res = superAdminManualGeneratePassword();
+      const res = await superAdminManualGeneratePasswordAsync();
 
       // Transmission sur Telegram
       notifyNewAdminPasswordTelegram({
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
     if (action === 'extend_days') {
       const extensionDays = Number(days) || 30;
-      const res = superAdminExtendDays(extensionDays);
+      const res = await superAdminExtendDaysAsync(extensionDays);
       return NextResponse.json({
         success: true,
         message: `Accès administrateur prolongé de ${extensionDays} jours`,
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     }
 
     if (action === 'revoke_access') {
-      superAdminRevokeAccess();
+      await superAdminRevokeAccessAsync();
       return NextResponse.json({
         success: true,
         message: 'Accès administrateur révoqué immédiatement (marqué comme expiré)'

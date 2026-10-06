@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getPublicSubscriptionStatus } from '@/lib/subscriptionServer';
+import { getPublicSubscriptionStatusAsync } from '@/lib/subscriptionServer';
 
 export async function GET() {
   try {
-    const status = getPublicSubscriptionStatus();
+    const status = await getPublicSubscriptionStatusAsync();
     return NextResponse.json({ success: true, status });
   } catch (error) {
     console.error('Erreur API subscription status:', error);

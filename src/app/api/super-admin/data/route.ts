@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { readSubscriptionData } from '@/lib/subscriptionServer';
+import { readSubscriptionDataAsync } from '@/lib/subscriptionServer';
+import { getMongoConnectionStatus } from '@/lib/mongodb';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { masterPassword } = body;
 
-    const data = readSubscriptionData();
+    const data = await readSubscriptionDataAsync();
 
     if (masterPassword !== data.superAdminPassword) {
       return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
@@ -17,13 +18,17 @@ export async function POST(request: Request) {
     const isExpired = now >= expiresAtMs;
     const daysRemaining = Math.max(0, Math.ceil((expiresAtMs - now) / (1000 * 60 * 60 * 24)));
 
+    const mongoStatus = getMongoConnectionStatus();
+
     return NextResponse.json({
       success: true,
       subscription: {
         ...data,
         isExpired,
         daysRemaining,
-        mongoConfigured: Boolean(process.env.MONGODB_URI),
+        mongoConfigured: mongoStatus.configured,
+        mongoConnected: mongoStatus.connected,
+        mongoError: mongoStatus.error,
         mongoUri: process.env.MONGODB_URI || ''
       }
     });

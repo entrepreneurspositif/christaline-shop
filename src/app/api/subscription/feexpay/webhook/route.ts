@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
-import { processSuccessfulPayment, readSubscriptionData } from '@/lib/subscriptionServer';
+import { processSuccessfulPaymentAsync, readSubscriptionDataAsync } from '@/lib/subscriptionServer';
 import { notifyNewAdminPasswordTelegram } from '@/lib/telegram';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     // Format typique webhook FeexPay
-    const status = body?.status || body?.transaction_status;
-    const reference = body?.reference || body?.custom_id || body?.id;
-    const amount = Number(body?.amount) || 15000;
+    const status = String(body?.status || body?.transaction_status || '').toUpperCase();
+    const reference = body?.reference || body?.custom_id || body?.id || `FP_WH_${Date.now()}`;
+    const amount = Number(body?.amount) || 0;
     const phoneNumber = body?.phoneNumber || body?.phone;
     const operator = body?.operator || 'FeexPay';
 
     if (status === 'SUCCESSFUL' || status === 'SUCCESS' || status === 'PAID') {
-      const data = readSubscriptionData();
-      const result = processSuccessfulPayment({
-        amountCFA: amount || data.monthlyFeeCFA,
+      const data = await readSubscriptionDataAsync();
+      const fee = amount > 0 ? amount : data.monthlyFeeCFA;
+
+      const result = await processSuccessfulPaymentAsync({
+        amountCFA: fee,
         reference: String(reference),
         feexpayTransactionId: body?.id ? String(body.id) : undefined,
         phoneNumber,
@@ -23,13 +25,13 @@ export async function POST(request: Request) {
       });
 
       const host = request.headers.get('host') || '';
-      const protocol = request.headers.get('x-forwarded-proto') || 'http';
-      const baseUrl = host ? `${protocol}://${host}` : '';
+      const protocol = request.headers.get('x-forwarded-proto') || 'https';
+      const baseUrl = host ? `${protocol}://${host}` : 'https://christaline-shop.vercel.app';
 
       notifyNewAdminPasswordTelegram({
         newPassword: result.newPassword,
         expiresAt: result.expiresAt,
-        amountCFA: amount || data.monthlyFeeCFA,
+        amountCFA: fee,
         reference: String(reference),
         operator,
         source: 'feexpay',

@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { readSubscriptionData, writeSubscriptionData } from '@/lib/subscriptionServer';
+import { readSubscriptionDataAsync, writeSubscriptionDataAsync } from '@/lib/subscriptionServer';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { masterPassword, monthlyFeeCFA, feexpayConfig, newMasterPassword } = body;
 
-    const data = readSubscriptionData();
+    const data = await readSubscriptionDataAsync();
 
     if (masterPassword !== data.superAdminPassword) {
       return NextResponse.json({ success: false, error: 'Non autorisé' }, { status: 401 });
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       data.adminTelegramBotToken = String(body.adminTelegramBotToken).trim();
     }
 
-    writeSubscriptionData(data);
+    await writeSubscriptionDataAsync(data);
 
     return NextResponse.json({
       success: true,
