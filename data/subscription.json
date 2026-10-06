@@ -12,5 +12,6 @@
   },
   "paymentHistory": [],
   "adminTelegramChatId": "",
-  "adminTelegramBotToken": ""
+  "adminTelegramBotToken": "",
+  "subscriptionDurationDays": 30
 }

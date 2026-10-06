@@ -46,6 +46,7 @@ export default function SuperAdminPage() {
 
   // Formulaire configuration
   const [feeInput, setFeeInput] = useState<number>(15000);
+  const [durationDaysInput, setDurationDaysInput] = useState<number>(30);
   const [shopIdInput, setShopIdInput] = useState('');
   const [apiTokenInput, setApiTokenInput] = useState('');
   const [modeInput, setModeInput] = useState<'LIVE' | 'SANDBOX'>('SANDBOX');
@@ -119,6 +120,7 @@ export default function SuperAdminPage() {
         const sub = data.subscription;
 
         let curFee = sub.monthlyFeeCFA;
+        let curDuration = sub.subscriptionDurationDays || 30;
         let curShopId = sub.feexpayConfig?.shopId || '';
         let curToken = sub.feexpayConfig?.apiToken || '';
         let curMode = sub.feexpayConfig?.mode || 'SANDBOX';
@@ -133,6 +135,7 @@ export default function SuperAdminPage() {
             if (!curShopId && parsed.shopId) curShopId = parsed.shopId;
             if (!curToken && parsed.apiToken) curToken = parsed.apiToken;
             if (!curFee && parsed.fee) curFee = parsed.fee;
+            if (!sub.subscriptionDurationDays && parsed.durationDays) curDuration = parsed.durationDays;
             if (parsed.mode && !sub.feexpayConfig?.shopId) curMode = parsed.mode;
             if (!curChatId && parsed.chatId) curChatId = parsed.chatId;
             if (!curBotToken && parsed.botToken) curBotToken = parsed.botToken;
@@ -142,6 +145,7 @@ export default function SuperAdminPage() {
         }
 
         setFeeInput(curFee || 15000);
+        setDurationDaysInput(curDuration || 30);
         setShopIdInput(curShopId);
         setApiTokenInput(curToken);
         setModeInput(curMode);
@@ -284,6 +288,7 @@ export default function SuperAdminPage() {
         body: JSON.stringify({
           masterPassword,
           monthlyFeeCFA: Number(feeInput),
+          subscriptionDurationDays: Number(durationDaysInput),
           feexpayConfig: {
             enabled: true,
             shopId: shopIdInput.trim(),
@@ -304,6 +309,7 @@ export default function SuperAdminPage() {
       if (data.subscription) {
         setSubscription(data.subscription);
         if (data.subscription.monthlyFeeCFA) setFeeInput(data.subscription.monthlyFeeCFA);
+        if (data.subscription.subscriptionDurationDays) setDurationDaysInput(data.subscription.subscriptionDurationDays);
         if (data.subscription.feexpayConfig?.shopId !== undefined) setShopIdInput(data.subscription.feexpayConfig.shopId);
         if (data.subscription.feexpayConfig?.apiToken !== undefined) setApiTokenInput(data.subscription.feexpayConfig.apiToken);
         if (data.subscription.feexpayConfig?.mode) setModeInput(data.subscription.feexpayConfig.mode);
@@ -322,6 +328,7 @@ export default function SuperAdminPage() {
       try {
         localStorage.setItem('cs_super_admin_saved_config', JSON.stringify({
           fee: Number(feeInput),
+          durationDays: Number(durationDaysInput),
           shopId: shopIdInput.trim(),
           apiToken: apiTokenInput.trim(),
           mode: modeInput,
@@ -579,24 +586,26 @@ export default function SuperAdminPage() {
               </button>
             </div>
             <p className="text-[10px] text-stone-500">
-              Généré chaque 1 mois après paiement FeexPay
+              Généré chaque {subscription?.subscriptionDurationDays || 30} jours après paiement FeexPay
             </p>
           </div>
 
-          {/* KPI 3 : TARIF MENSUEL DÉFINI */}
+          {/* KPI 3 : TARIF & DURÉE DÉFINIS */}
           <div className="p-5 rounded-3xl bg-stone-900 border border-stone-800 shadow-lg">
             <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-stone-400">
-              <span>Tarif Mensuel FeexPay</span>
+              <span>Tarif & Durée FeexPay</span>
               <DollarSign className="w-4 h-4 text-amber-400" />
             </div>
             <div className="mt-2 flex items-baseline gap-1">
               <span className="text-2xl font-black font-mono text-white">
                 {(subscription?.monthlyFeeCFA || 15000).toLocaleString('fr-FR')}
               </span>
-              <span className="text-xs font-bold text-amber-400">FCFA / mois</span>
+              <span className="text-xs font-bold text-amber-400">
+                FCFA / {subscription?.subscriptionDurationDays || 30}j
+              </span>
             </div>
             <p className="text-[11px] text-stone-400 mt-1">
-              Somme à régler par l'admin pour renouveler
+              Validité : <strong>{subscription?.subscriptionDurationDays || 30} jours</strong> par renouvellement
             </p>
           </div>
 
@@ -640,10 +649,10 @@ export default function SuperAdminPage() {
             >
               <span className="flex items-center gap-1.5 font-black text-amber-200">
                 <RefreshCw className="w-4 h-4 text-amber-400" />
-                <span>Générer Nouveau Mot de Passe (+30j)</span>
+                <span>Générer Clé Admin (+{durationDaysInput || 30}j)</span>
               </span>
               <span className="text-[11px] text-stone-400 font-normal">
-                Crée une nouvelle clé, prolonge de 30j et l'envoie sur Telegram
+                Crée une nouvelle clé, prolonge de {durationDaysInput || 30}j et l'envoie sur Telegram
               </span>
             </button>
 
@@ -664,12 +673,12 @@ export default function SuperAdminPage() {
 
             <button
               type="button"
-              onClick={() => triggerAction('extend_days', 30)}
+              onClick={() => triggerAction('extend_days', durationDaysInput || 30)}
               className="p-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5 font-black text-emerald-200">
                 <Calendar className="w-4 h-4 text-emerald-400" />
-                <span>Prolonger de +30 Jours (Gratuit)</span>
+                <span>Prolonger (+{durationDaysInput || 30} Jours)</span>
               </span>
               <span className="text-[11px] text-stone-400 font-normal">
                 Conserve le mot de passe actuel et repousse l'expiration
@@ -709,16 +718,32 @@ export default function SuperAdminPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <span className="text-xs font-bold text-stone-400">Mode Passerelle :</span>
-              <select
-                value={modeInput}
-                onChange={(e) => setModeInput(e.target.value as 'LIVE' | 'SANDBOX')}
-                className="px-3 py-1.5 rounded-xl bg-stone-800 border border-stone-700 text-xs font-bold text-amber-300"
-              >
-                <option value="SANDBOX">🧪 SANDBOX (Mode Test / Démo)</option>
-                <option value="LIVE">🚀 LIVE (Paiements Réels)</option>
-              </select>
+              <div className="inline-flex rounded-xl p-1 bg-stone-800 border border-stone-700">
+                <button
+                  type="button"
+                  onClick={() => setModeInput('SANDBOX')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                    modeInput === 'SANDBOX'
+                      ? 'bg-amber-500 text-stone-950 shadow-md shadow-amber-500/30'
+                      : 'text-stone-400 hover:text-stone-200'
+                  }`}
+                >
+                  🧪 SANDBOX (Test)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModeInput('LIVE')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                    modeInput === 'LIVE'
+                      ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-2 ring-emerald-400/40'
+                      : 'text-stone-400 hover:text-stone-200'
+                  }`}
+                >
+                  🚀 LIVE (Réel)
+                </button>
+              </div>
             </div>
           </div>
 
@@ -727,7 +752,7 @@ export default function SuperAdminPage() {
             {/* Montant mensuel à payer */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-stone-300 uppercase tracking-wider">
-                Montant de l'abonnement mensuel (FCFA) *
+                Montant de la cotisation (FCFA) *
               </label>
               <div className="relative">
                 <input
@@ -741,11 +766,62 @@ export default function SuperAdminPage() {
                   className="w-full px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-amber-400 font-mono font-bold text-base focus:border-amber-500 outline-hidden"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">
-                  FCFA / 30 jours
+                  FCFA / cycle
                 </span>
               </div>
               <p className="text-[11px] text-stone-500">
-                L'administrateur sera invité à régler ce montant précis via Mobile Money (MTN, Moov, Celtiis) sur FeexPay.
+                Montant Mobile Money (MTN, Moov, Celtiis) réglé par l'administrateur.
+              </p>
+            </div>
+
+            {/* Durée de l'abonnement en jours */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-stone-300 uppercase tracking-wider flex items-center justify-between">
+                <span>Durée de l'abonnement (Nombre de jours) *</span>
+                <span className="text-xs font-mono font-black text-amber-400">{durationDaysInput} Jours</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  required
+                  min={1}
+                  max={3650}
+                  placeholder="Ex: 30"
+                  value={durationDaysInput}
+                  onChange={(e) => setDurationDaysInput(Number(e.target.value))}
+                  className="w-full px-4 py-3 rounded-xl bg-stone-800 border border-stone-700 text-amber-400 font-mono font-bold text-base focus:border-amber-500 outline-hidden"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">
+                  Jours par cycle
+                </span>
+              </div>
+
+              {/* Raccourcis de sélection rapide */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                {[
+                  { label: '7 jours (1 sem.)', val: 7 },
+                  { label: '14 jours (2 sem.)', val: 14 },
+                  { label: '30 jours (1 mois)', val: 30 },
+                  { label: '60 jours (2 mois)', val: 60 },
+                  { label: '90 jours (3 mois)', val: 90 },
+                  { label: '365 jours (1 an)', val: 365 },
+                ].map(p => (
+                  <button
+                    key={p.val}
+                    type="button"
+                    onClick={() => setDurationDaysInput(p.val)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                      durationDaysInput === p.val
+                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 ring-1 ring-amber-500/40'
+                        : 'bg-stone-800 text-stone-400 border-stone-700 hover:text-stone-200'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-stone-500">
+                Chaque paiement ou prolongation prolongera l'accès de ce nombre précis de jours.
               </p>
             </div>
 

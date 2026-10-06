@@ -24,20 +24,21 @@ declare global {
 const initialExpiration = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
 const DEFAULT_SUBSCRIPTION: AdminSubscriptionData = {
-  superAdminPassword: 'superadmin2026',
-  monthlyFeeCFA: 15000, // 15 000 FCFA par défaut (modifiable par le Super Admin)
+  superAdminPassword: process.env.SUPER_ADMIN_PASSWORD?.trim() || 'superadmin2026',
+  monthlyFeeCFA: Number(process.env.FEEXPAY_MONTHLY_FEE) || 15000,
+  subscriptionDurationDays: Number(process.env.SUBSCRIPTION_DURATION_DAYS) || 30, // 30 jours par défaut
   activeAdminPassword: 'admin123',
   passwordExpiresAt: initialExpiration,
   feexpayConfig: {
     enabled: true,
-    shopId: '',
-    apiToken: '',
-    mode: 'SANDBOX',
+    shopId: process.env.FEEXPAY_SHOP_ID?.trim() || '',
+    apiToken: process.env.FEEXPAY_API_TOKEN?.trim() || '',
+    mode: (process.env.FEEXPAY_MODE?.toUpperCase() === 'LIVE' ? 'LIVE' : 'SANDBOX'),
     callbackUrl: ''
   },
   paymentHistory: [],
-  adminTelegramChatId: '',
-  adminTelegramBotToken: ''
+  adminTelegramChatId: process.env.ADMIN_TELEGRAM_CHAT_ID?.trim() || '',
+  adminTelegramBotToken: process.env.ADMIN_TELEGRAM_BOT_TOKEN?.trim() || ''
 };
 
 function sanitizeData(raw: any, fallback: AdminSubscriptionData): AdminSubscriptionData {
@@ -45,6 +46,9 @@ function sanitizeData(raw: any, fallback: AdminSubscriptionData): AdminSubscript
   return {
     superAdminPassword: raw.superAdminPassword || fallback.superAdminPassword,
     monthlyFeeCFA: Number(raw.monthlyFeeCFA) > 0 ? Number(raw.monthlyFeeCFA) : fallback.monthlyFeeCFA,
+    subscriptionDurationDays: Number(raw.subscriptionDurationDays) > 0 
+      ? Number(raw.subscriptionDurationDays) 
+      : (fallback.subscriptionDurationDays || 30),
     activeAdminPassword: raw.activeAdminPassword || fallback.activeAdminPassword,
     passwordExpiresAt: raw.passwordExpiresAt || fallback.passwordExpiresAt,
     feexpayConfig: {
@@ -61,12 +65,10 @@ function sanitizeData(raw: any, fallback: AdminSubscriptionData): AdminSubscript
 }
 
 /**
- * Lecture asynchrone garantie : consulte MongoDB Atlas (avec timeout rapide de 2s)
+ * Lecture asynchrone garantie : consulte MongoDB Atlas (autorité primaire)
  * et fusionne avec le cache local/tmp.
  */
 export async function readSubscriptionDataAsync(): Promise<AdminSubscriptionData> {
-  const localCurrent = readSubscriptionData();
-
   try {
     const dbPromise = getDatabase();
     const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
@@ -76,10 +78,11 @@ export async function readSubscriptionDataAsync(): Promise<AdminSubscriptionData
       const doc = await db.collection('subscription').findOne({ _id: 'admin_subscription' as any });
       if (doc) {
         const { _id, ...rest } = doc;
-        const merged = sanitizeData(rest, localCurrent);
+        const current = globalThis.__cs_subscription_data || readSubscriptionData();
+        const merged = sanitizeData(rest, current);
         globalThis.__cs_subscription_data = merged;
 
-        // Mettre à jour /tmp et local en arrière-plan
+        // Synchroniser /tmp et local en tâche de fond
         try {
           const tmpDir = path.dirname(TMP_SUBSCRIPTION_FILE);
           if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
@@ -93,11 +96,13 @@ export async function readSubscriptionDataAsync(): Promise<AdminSubscriptionData
     console.warn('Erreur lecture MongoDB Atlas pour subscription (fallback local actif):', err);
   }
 
-  return localCurrent;
+  return readSubscriptionData();
 }
 
 /**
- * Lecture synchrone immédiate (0ms) : data/subscription.json -> /tmp -> globalThis -> env
+ * Lecture synchrone immédiate (0ms) : /tmp -> data/subscription.json -> globalThis
+ * Note : les variables d'environnement servent uniquement de valeur par défaut initiale
+ * et N'ÉCRASENT JAMAIS les réglages enregistrés en mémoire ou en base de données.
  */
 export function readSubscriptionData(): AdminSubscriptionData {
   let result: AdminSubscriptionData = { ...DEFAULT_SUBSCRIPTION };
@@ -120,35 +125,9 @@ export function readSubscriptionData(): AdminSubscriptionData {
     }
   } catch {}
 
-  // 3. Essai de lecture depuis la mémoire globale
+  // 3. Essai de lecture depuis la mémoire globale (prioritaire sur les fichiers)
   if (globalThis.__cs_subscription_data) {
     result = sanitizeData(globalThis.__cs_subscription_data, result);
-  }
-
-  // 4. Overrides via Variables d'Environnement Vercel (si définies)
-  if (process.env.FEEXPAY_SHOP_ID && process.env.FEEXPAY_SHOP_ID.trim()) {
-    result.feexpayConfig.shopId = process.env.FEEXPAY_SHOP_ID.trim();
-  }
-  if (process.env.FEEXPAY_API_TOKEN && process.env.FEEXPAY_API_TOKEN.trim()) {
-    result.feexpayConfig.apiToken = process.env.FEEXPAY_API_TOKEN.trim();
-  }
-  if (process.env.FEEXPAY_MODE) {
-    const m = process.env.FEEXPAY_MODE.trim().toUpperCase();
-    if (m === 'LIVE' || m === 'SANDBOX') {
-      result.feexpayConfig.mode = m as 'LIVE' | 'SANDBOX';
-    }
-  }
-  if (process.env.FEEXPAY_MONTHLY_FEE && Number(process.env.FEEXPAY_MONTHLY_FEE) > 0) {
-    result.monthlyFeeCFA = Number(process.env.FEEXPAY_MONTHLY_FEE);
-  }
-  if (process.env.SUPER_ADMIN_PASSWORD && process.env.SUPER_ADMIN_PASSWORD.trim()) {
-    result.superAdminPassword = process.env.SUPER_ADMIN_PASSWORD.trim();
-  }
-  if (process.env.ADMIN_TELEGRAM_CHAT_ID && process.env.ADMIN_TELEGRAM_CHAT_ID.trim()) {
-    result.adminTelegramChatId = process.env.ADMIN_TELEGRAM_CHAT_ID.trim();
-  }
-  if (process.env.ADMIN_TELEGRAM_BOT_TOKEN && process.env.ADMIN_TELEGRAM_BOT_TOKEN.trim()) {
-    result.adminTelegramBotToken = process.env.ADMIN_TELEGRAM_BOT_TOKEN.trim();
   }
 
   return result;
@@ -161,7 +140,7 @@ export function readSubscriptionData(): AdminSubscriptionData {
 export async function writeSubscriptionDataAsync(data: AdminSubscriptionData): Promise<void> {
   const sanitized = sanitizeData(data, DEFAULT_SUBSCRIPTION);
 
-  // 1. Mettre à jour le cache mémoire
+  // 1. Mettre à jour le cache mémoire immédiatement
   globalThis.__cs_subscription_data = JSON.parse(JSON.stringify(sanitized));
 
   // 2. Écrire dans /tmp (toujours autorisé sur Vercel serverless / Lambda)
@@ -184,10 +163,10 @@ export async function writeSubscriptionDataAsync(data: AdminSubscriptionData): P
     fs.writeFileSync(SUBSCRIPTION_FILE, JSON.stringify(sanitized, null, 2), 'utf-8');
   } catch {}
 
-  // 4. Écrire dans MongoDB Atlas avec timeout rapide
+  // 4. Écrire dans MongoDB Atlas avec timeout
   try {
     const dbPromise = getDatabase();
-    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
     const db = await Promise.race([dbPromise, timeoutPromise]);
 
     if (db) {
@@ -221,7 +200,7 @@ export function writeSubscriptionData(data: AdminSubscriptionData) {
     fs.writeFileSync(SUBSCRIPTION_FILE, JSON.stringify(sanitized, null, 2), 'utf-8');
   } catch {}
 
-  // MongoDB en tâche de fond si non-attendu
+  // MongoDB en tâche de fond
   getDatabase().then(db => {
     if (db) {
       db.collection('subscription').updateOne(
@@ -248,6 +227,7 @@ export async function getPublicSubscriptionStatusAsync(): Promise<PublicSubscrip
     expiresAt: data.passwordExpiresAt,
     daysRemaining,
     monthlyFeeCFA: data.monthlyFeeCFA,
+    subscriptionDurationDays: data.subscriptionDurationDays || 30,
     feexpayConfigured: !!(data.feexpayConfig.shopId && data.feexpayConfig.apiToken),
     feexpayMode: data.feexpayConfig.mode,
     feexpayShopId: data.feexpayConfig.shopId || undefined
@@ -269,6 +249,7 @@ export function getPublicSubscriptionStatus(): PublicSubscriptionStatus {
     expiresAt: data.passwordExpiresAt,
     daysRemaining,
     monthlyFeeCFA: data.monthlyFeeCFA,
+    subscriptionDurationDays: data.subscriptionDurationDays || 30,
     feexpayConfigured: !!(data.feexpayConfig.shopId && data.feexpayConfig.apiToken),
     feexpayMode: data.feexpayConfig.mode,
     feexpayShopId: data.feexpayConfig.shopId || undefined
@@ -296,6 +277,7 @@ export async function verifyAdminLoginAsync(password: string): Promise<{
   expiresAt?: string;
   daysRemaining?: number;
   monthlyFeeCFA?: number;
+  subscriptionDurationDays?: number;
   isSuperAdmin?: boolean;
   error?: string;
 }> {
@@ -304,6 +286,7 @@ export async function verifyAdminLoginAsync(password: string): Promise<{
   const expiresAtMs = new Date(data.passwordExpiresAt).getTime();
   const isExpired = now >= expiresAtMs;
   const daysRemaining = Math.max(0, Math.ceil((expiresAtMs - now) / (1000 * 60 * 60 * 24)));
+  const duration = data.subscriptionDurationDays || 30;
 
   // Super Admin a toujours un accès permanent
   if (password === data.superAdminPassword) {
@@ -313,6 +296,7 @@ export async function verifyAdminLoginAsync(password: string): Promise<{
       expiresAt: data.passwordExpiresAt,
       daysRemaining,
       monthlyFeeCFA: data.monthlyFeeCFA,
+      subscriptionDurationDays: duration,
       isSuperAdmin: true
     };
   }
@@ -326,7 +310,8 @@ export async function verifyAdminLoginAsync(password: string): Promise<{
         expiresAt: data.passwordExpiresAt,
         daysRemaining: 0,
         monthlyFeeCFA: data.monthlyFeeCFA,
-        error: `Votre abonnement mensuel d'administration a expiré le ${new Date(data.passwordExpiresAt).toLocaleDateString('fr-FR')}. Veuillez régler la cotisation mensuelle de ${data.monthlyFeeCFA.toLocaleString('fr-FR')} FCFA via FeexPay pour générer votre nouveau mot de passe.`
+        subscriptionDurationDays: duration,
+        error: `Votre abonnement d'administration (${duration} jours) a expiré le ${new Date(data.passwordExpiresAt).toLocaleDateString('fr-FR')}. Veuillez régler la cotisation de ${data.monthlyFeeCFA.toLocaleString('fr-FR')} FCFA via FeexPay pour générer votre nouveau mot de passe.`
       };
     }
 
@@ -336,6 +321,7 @@ export async function verifyAdminLoginAsync(password: string): Promise<{
       expiresAt: data.passwordExpiresAt,
       daysRemaining,
       monthlyFeeCFA: data.monthlyFeeCFA,
+      subscriptionDurationDays: duration,
       isSuperAdmin: false
     };
   }
@@ -355,6 +341,7 @@ export function verifyAdminLogin(password: string) {
   const expiresAtMs = new Date(data.passwordExpiresAt).getTime();
   const isExpired = now >= expiresAtMs;
   const daysRemaining = Math.max(0, Math.ceil((expiresAtMs - now) / (1000 * 60 * 60 * 24)));
+  const duration = data.subscriptionDurationDays || 30;
 
   if (password === data.superAdminPassword) {
     return {
@@ -363,6 +350,7 @@ export function verifyAdminLogin(password: string) {
       expiresAt: data.passwordExpiresAt,
       daysRemaining,
       monthlyFeeCFA: data.monthlyFeeCFA,
+      subscriptionDurationDays: duration,
       isSuperAdmin: true
     };
   }
@@ -375,7 +363,8 @@ export function verifyAdminLogin(password: string) {
         expiresAt: data.passwordExpiresAt,
         daysRemaining: 0,
         monthlyFeeCFA: data.monthlyFeeCFA,
-        error: `Votre abonnement mensuel d'administration a expiré le ${new Date(data.passwordExpiresAt).toLocaleDateString('fr-FR')}. Veuillez régler la cotisation mensuelle de ${data.monthlyFeeCFA.toLocaleString('fr-FR')} FCFA via FeexPay pour générer votre nouveau mot de passe.`
+        subscriptionDurationDays: duration,
+        error: `Votre abonnement d'administration (${duration} jours) a expiré le ${new Date(data.passwordExpiresAt).toLocaleDateString('fr-FR')}. Veuillez régler la cotisation de ${data.monthlyFeeCFA.toLocaleString('fr-FR')} FCFA via FeexPay pour générer votre nouveau mot de passe.`
       };
     }
 
@@ -385,6 +374,7 @@ export function verifyAdminLogin(password: string) {
       expiresAt: data.passwordExpiresAt,
       daysRemaining,
       monthlyFeeCFA: data.monthlyFeeCFA,
+      subscriptionDurationDays: duration,
       isSuperAdmin: false
     };
   }
@@ -396,7 +386,7 @@ export function verifyAdminLogin(password: string) {
 }
 
 /**
- * Enregistre un paiement FeexPay et génère un nouveau mot de passe Admin valable 1 mois (30 jours)
+ * Enregistre un paiement FeexPay et génère un nouveau mot de passe Admin valable pour la durée configurée
  */
 export async function processSuccessfulPaymentAsync(params: {
   amountCFA: number;
@@ -412,9 +402,10 @@ export async function processSuccessfulPaymentAsync(params: {
   const data = await readSubscriptionDataAsync();
   const newPassword = generateRandomAdminPassword();
 
+  const durationDays = data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30;
   const currentExpiry = new Date(data.passwordExpiresAt).getTime();
   const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-  const newExpiresAt = new Date(baseTime + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const newExpiresAt = new Date(baseTime + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
   const record: SubscriptionPaymentRecord = {
     id: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -456,9 +447,10 @@ export function processSuccessfulPayment(params: {
   const data = readSubscriptionData();
   const newPassword = generateRandomAdminPassword();
 
+  const durationDays = data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30;
   const currentExpiry = new Date(data.passwordExpiresAt).getTime();
   const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-  const newExpiresAt = new Date(baseTime + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const newExpiresAt = new Date(baseTime + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
   const record: SubscriptionPaymentRecord = {
     id: `pay_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -492,7 +484,8 @@ export function processSuccessfulPayment(params: {
 export async function superAdminManualGeneratePasswordAsync(): Promise<{ newPassword: string; expiresAt: string }> {
   const data = await readSubscriptionDataAsync();
   const newPassword = generateRandomAdminPassword();
-  const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const durationDays = data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30;
+  const newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
   const record: SubscriptionPaymentRecord = {
     id: `manual_${Date.now()}`,
@@ -517,7 +510,8 @@ export async function superAdminManualGeneratePasswordAsync(): Promise<{ newPass
 export function superAdminManualGeneratePassword(): { newPassword: string; expiresAt: string } {
   const data = readSubscriptionData();
   const newPassword = generateRandomAdminPassword();
-  const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const durationDays = data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30;
+  const newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
   const record: SubscriptionPaymentRecord = {
     id: `manual_${Date.now()}`,
@@ -539,11 +533,12 @@ export function superAdminManualGeneratePassword(): { newPassword: string; expir
   return { newPassword, expiresAt: newExpiresAt };
 }
 
-export async function superAdminExtendDaysAsync(days: number): Promise<{ expiresAt: string; daysRemaining: number }> {
+export async function superAdminExtendDaysAsync(days?: number): Promise<{ expiresAt: string; daysRemaining: number }> {
   const data = await readSubscriptionDataAsync();
+  const extensionDays = (days && days > 0) ? days : (data.subscriptionDurationDays || 30);
   const currentExpiry = new Date(data.passwordExpiresAt).getTime();
   const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-  const newExpiresAt = new Date(baseTime + days * 24 * 60 * 60 * 1000).toISOString();
+  const newExpiresAt = new Date(baseTime + extensionDays * 24 * 60 * 60 * 1000).toISOString();
 
   data.passwordExpiresAt = newExpiresAt;
   await writeSubscriptionDataAsync(data);
@@ -552,11 +547,12 @@ export async function superAdminExtendDaysAsync(days: number): Promise<{ expires
   return { expiresAt: newExpiresAt, daysRemaining };
 }
 
-export function superAdminExtendDays(days: number): { expiresAt: string; daysRemaining: number } {
+export function superAdminExtendDays(days?: number): { expiresAt: string; daysRemaining: number } {
   const data = readSubscriptionData();
+  const extensionDays = (days && days > 0) ? days : (data.subscriptionDurationDays || 30);
   const currentExpiry = new Date(data.passwordExpiresAt).getTime();
   const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
-  const newExpiresAt = new Date(baseTime + days * 24 * 60 * 60 * 1000).toISOString();
+  const newExpiresAt = new Date(baseTime + extensionDays * 24 * 60 * 60 * 1000).toISOString();
 
   data.passwordExpiresAt = newExpiresAt;
   writeSubscriptionData(data);

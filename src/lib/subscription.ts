@@ -25,6 +25,7 @@ export interface SubscriptionPaymentRecord {
 export interface AdminSubscriptionData {
   superAdminPassword: string;
   monthlyFeeCFA: number;
+  subscriptionDurationDays?: number; // Durée configurable de l'abonnement en jours (ex: 30)
   activeAdminPassword: string;
   passwordExpiresAt: string; // ISO date
   feexpayConfig: FeexPayConfig;
@@ -38,6 +39,7 @@ export interface PublicSubscriptionStatus {
   expiresAt: string;
   daysRemaining: number;
   monthlyFeeCFA: number;
+  subscriptionDurationDays?: number; // Durée d'un cycle en jours (ex: 30)
   feexpayConfigured: boolean;
   feexpayMode: FeexPayMode;
   feexpayShopId?: string;

@@ -4,7 +4,7 @@ import { readSubscriptionDataAsync, writeSubscriptionDataAsync } from '@/lib/sub
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { masterPassword, monthlyFeeCFA, feexpayConfig, newMasterPassword } = body;
+    const { masterPassword, monthlyFeeCFA, subscriptionDurationDays, feexpayConfig, newMasterPassword } = body;
 
     const data = await readSubscriptionDataAsync();
 
@@ -14,6 +14,10 @@ export async function POST(request: Request) {
 
     if (monthlyFeeCFA !== undefined && Number(monthlyFeeCFA) > 0) {
       data.monthlyFeeCFA = Number(monthlyFeeCFA);
+    }
+
+    if (subscriptionDurationDays !== undefined && Number(subscriptionDurationDays) > 0) {
+      data.subscriptionDurationDays = Number(subscriptionDurationDays);
     }
 
     if (feexpayConfig) {

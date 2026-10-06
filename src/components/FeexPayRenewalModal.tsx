@@ -18,6 +18,7 @@ interface FeexPayRenewalModalProps {
   isOpen: boolean;
   onClose: () => void;
   monthlyFeeCFA: number;
+  subscriptionDurationDays?: number;
   renewalPhone: string;
   setRenewalPhone: (phone: string) => void;
   renewalOperator: string;
@@ -40,6 +41,7 @@ export default function FeexPayRenewalModal({
   isOpen,
   onClose,
   monthlyFeeCFA,
+  subscriptionDurationDays = 30,
   renewalPhone,
   setRenewalPhone,
   renewalOperator,
@@ -77,14 +79,14 @@ export default function FeexPayRenewalModal({
                 Nouveau Mot de Passe Administrateur
               </h3>
               <p className="text-xs text-stone-600 max-w-sm mx-auto">
-                Votre accès administrateur a été validé pour <strong>1 mois (30 jours)</strong> jusqu'au {new Date(paymentSuccessData.expiresAt).toLocaleDateString('fr-FR')}.
+                Votre accès administrateur a été validé pour <strong>{subscriptionDurationDays} jours</strong> jusqu'au {new Date(paymentSuccessData.expiresAt).toLocaleDateString('fr-FR')}.
               </p>
             </div>
 
             {/* Boîte Mot de Passe */}
             <div className="bg-gradient-to-br from-amber-50 via-rose-50 to-purple-50 p-6 rounded-2xl border-2 border-dashed border-amber-300 relative space-y-2.5">
               <div className="text-[11px] font-bold uppercase text-stone-500">
-                Votre mot de passe actif (Valable 30 jours) :
+                Votre mot de passe actif (Valable {subscriptionDurationDays} jours) :
               </div>
               <div className="text-3xl font-mono font-black text-rose-700 tracking-wider select-all">
                 {paymentSuccessData.newPassword}
@@ -241,7 +243,7 @@ export default function FeexPayRenewalModal({
             <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">
-                  Cotisation Mensuelle Définie :
+                  Cotisation d'Abonnement Définie :
                 </span>
                 <span className="text-2xl font-black text-amber-950 font-mono">
                   {monthlyFeeCFA.toLocaleString('fr-FR')} FCFA
@@ -250,7 +252,7 @@ export default function FeexPayRenewalModal({
               <div className="text-right">
                 <span className="text-[11px] text-amber-700 font-medium block">Période accordée :</span>
                 <span className="text-xs font-bold text-amber-900 bg-white/90 px-2 py-0.5 rounded-md border border-amber-200">
-                  1 Mois (30 jours)
+                  {subscriptionDurationDays} Jours
                 </span>
               </div>
             </div>

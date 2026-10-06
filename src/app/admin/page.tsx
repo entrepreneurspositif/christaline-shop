@@ -100,7 +100,9 @@ export default function AdminPage() {
     expiresAt: string;
     daysRemaining: number;
     monthlyFeeCFA: number;
+    subscriptionDurationDays?: number;
     isSuperAdmin?: boolean;
+    feexpayMode?: string;
   } | null>(null);
   const [showRenewalModal, setShowRenewalModal] = useState(false);
   const [renewalPhone, setRenewalPhone] = useState('0154072488');
@@ -351,7 +353,8 @@ export default function AdminPage() {
           isExpired: true,
           expiresAt: data.expiresAt || new Date().toISOString(),
           daysRemaining: 0,
-          monthlyFeeCFA: data.monthlyFeeCFA || 15000
+          monthlyFeeCFA: data.monthlyFeeCFA || 15000,
+          subscriptionDurationDays: data.subscriptionDurationDays || 30
         });
         setShowRenewalModal(true);
         setAuthError(data.error || 'Votre abonnement a expiré. Veuillez le renouveler avec FeexPay.');
@@ -369,6 +372,7 @@ export default function AdminPage() {
         expiresAt: data.expiresAt,
         daysRemaining: data.daysRemaining || 30,
         monthlyFeeCFA: data.monthlyFeeCFA || 15000,
+        subscriptionDurationDays: data.subscriptionDurationDays || 30,
         isSuperAdmin: data.isSuperAdmin
       });
       fetchTickets();
@@ -952,6 +956,7 @@ export default function AdminPage() {
             setWaitingForMobilePin(false);
           }}
           monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
+          subscriptionDurationDays={subscriptionInfo?.subscriptionDurationDays || 30}
           renewalPhone={renewalPhone}
           setRenewalPhone={setRenewalPhone}
           renewalOperator={renewalOperator}
@@ -4115,6 +4120,7 @@ export default function AdminPage() {
           setWaitingForMobilePin(false);
         }}
         monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
+        subscriptionDurationDays={subscriptionInfo?.subscriptionDurationDays || 30}
         renewalPhone={renewalPhone}
         setRenewalPhone={setRenewalPhone}
         renewalOperator={renewalOperator}
