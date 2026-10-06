@@ -1,4 +1,4 @@
-package com.christalineshop.admin;
+package com.christalineshop.app;
 
 import android.os.Bundle;
 import android.webkit.WebView;

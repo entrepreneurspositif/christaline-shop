@@ -39,8 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-# root android apk
+# root android binaries
 /Christaline-Admin.apk
+/Christaline-Shop.aab
+*.jks
+*.keystore
 next-env.d.ts
 
 .vercel

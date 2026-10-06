@@ -1,22 +1,22 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.christalineshop.admin',
-  appName: 'Christaline Admin',
+  appId: 'com.christalineshop.app',
+  appName: 'Christaline Shop',
   webDir: 'public',
   server: {
-    url: 'https://christaline-shop.vercel.app/admin?app=mobile',
-    cleartext: true,
+    url: 'https://christaline-shop.vercel.app',
+    cleartext: false,
     allowNavigation: [
       'christaline-shop.vercel.app',
       'api.feexpay.me',
-      'api.telegram.org',
-      'localhost'
+      'wa.me',
+      'api.whatsapp.com'
     ]
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 1800,
+      launchShowDuration: 2000,
       launchAutoHide: true,
       backgroundColor: '#9d174d',
       androidSplashResourceName: 'splash',
