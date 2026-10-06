@@ -3,7 +3,7 @@ import { getAllGroupBuys, createGroupBuy } from '@/lib/groupBuyStorage';
 
 export async function GET(req: NextRequest) {
   try {
-    const items = getAllGroupBuys();
+    const items = await getAllGroupBuys();
     return NextResponse.json({ success: true, count: items.length, groupBuys: items });
   } catch (error: any) {
     console.error('Erreur API GET /api/group-buys:', error);
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const newItem = createGroupBuy({
+    const newItem = await createGroupBuy({
       title: body.title,
       description: body.description || '',
       imageUrl: body.imageUrl || '',

@@ -22,7 +22,9 @@ export async function POST(request: Request) {
       subscription: {
         ...data,
         isExpired,
-        daysRemaining
+        daysRemaining,
+        mongoConfigured: Boolean(process.env.MONGODB_URI),
+        mongoUri: process.env.MONGODB_URI || ''
       }
     });
   } catch (error) {

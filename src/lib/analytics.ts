@@ -84,6 +84,8 @@ function writeAnalyticsData(data: AnalyticsData) {
   }
 }
 
+import { getDatabase } from './mongodb';
+
 export function recordAnalyticsEvent(eventData: Omit<AnalyticsEvent, 'id' | 'timestamp'>): AnalyticsEvent {
   const data = readAnalyticsData();
   const event: AnalyticsEvent = {
@@ -95,13 +97,29 @@ export function recordAnalyticsEvent(eventData: Omit<AnalyticsEvent, 'id' | 'tim
 
   data.events.push(event);
   writeAnalyticsData(data);
+
+  // Écrire également dans MongoDB Atlas en arrière-plan
+  getDatabase().then(db => {
+    if (db) {
+      db.collection('analytics').updateOne(
+        { _id: 'store_analytics' as any },
+        { 
+          $push: { 
+            events: { 
+              $each: [event], 
+              $slice: -MAX_STORED_EVENTS 
+            } as any
+          } 
+        },
+        { upsert: true }
+      ).catch(e => console.error('Erreur écriture analytics MongoDB:', e));
+    }
+  }).catch(() => {});
+
   return event;
 }
 
-export function getAnalyticsSummary(): AnalyticsSummary {
-  const data = readAnalyticsData();
-  const events = data.events;
-
+export function computeAnalyticsSummary(events: AnalyticsEvent[]): AnalyticsSummary {
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -122,44 +140,42 @@ export function getAnalyticsSummary(): AnalyticsSummary {
   // Initialiser les 7 derniers jours dans la timeline
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    const dateKey = d.toISOString().split('T')[0];
-    timelineMap[dateKey] = { visits: 0, leads: 0, reservations: 0 };
+    const dateStr = d.toISOString().split('T')[0];
+    timelineMap[dateStr] = { visits: 0, leads: 0, reservations: 0 };
   }
 
   for (const ev of events) {
     const evDate = new Date(ev.timestamp);
-    const evDateStr = ev.timestamp ? ev.timestamp.split('T')[0] : '';
+    const dateStr = ev.timestamp.split('T')[0];
 
     if (ev.type === 'page_view') {
       totalVisits++;
-      if (evDateStr === todayStr) {
-        todayVisits++;
-      }
-      if (evDate >= sevenDaysAgo) {
-        last7DaysVisits++;
-      }
+      if (dateStr === todayStr) todayVisits++;
+      if (evDate >= sevenDaysAgo) last7DaysVisits++;
 
+      // Sources
       const src = ev.utmSource || 'direct';
       sourceCounts[src] = (sourceCounts[src] || 0) + 1;
 
+      // Campagnes
       if (ev.utmCampaign) {
         campaignCounts[ev.utmCampaign] = (campaignCounts[ev.utmCampaign] || 0) + 1;
       }
 
-      if (timelineMap[evDateStr]) {
-        timelineMap[evDateStr].visits++;
+      if (timelineMap[dateStr]) {
+        timelineMap[dateStr].visits++;
       }
     } else if (ev.type === 'initiate_checkout') {
       totalInitiateCheckout++;
     } else if (ev.type === 'lead_quote') {
       totalLeads++;
-      if (timelineMap[evDateStr]) {
-        timelineMap[evDateStr].leads++;
+      if (timelineMap[dateStr]) {
+        timelineMap[dateStr].leads++;
       }
     } else if (ev.type === 'group_buy_joined') {
       totalGroupBuyReservations++;
-      if (timelineMap[evDateStr]) {
-        timelineMap[evDateStr].reservations++;
+      if (timelineMap[dateStr]) {
+        timelineMap[dateStr].reservations++;
       }
     } else if (ev.type === 'whatsapp_click') {
       totalWhatsappClicks++;
@@ -219,6 +235,42 @@ export function getAnalyticsSummary(): AnalyticsSummary {
     funnel,
     recentEvents: events.slice(-30).reverse()
   };
+}
+
+export async function getAnalyticsSummaryAsync(): Promise<AnalyticsSummary> {
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const doc = await db.collection('analytics').findOne({ _id: 'store_analytics' as any });
+      if (doc && Array.isArray(doc.events)) {
+        return computeAnalyticsSummary(doc.events);
+      }
+    }
+  } catch (err) {
+    console.error('Erreur getAnalyticsSummaryAsync MongoDB:', err);
+  }
+  return getAnalyticsSummary();
+}
+
+export function getAnalyticsSummary(): AnalyticsSummary {
+  const data = readAnalyticsData();
+  return computeAnalyticsSummary(data.events);
+}
+
+export async function resetAnalyticsDataAsync() {
+  writeAnalyticsData({ events: [] });
+  try {
+    const db = await getDatabase();
+    if (db) {
+      await db.collection('analytics').updateOne(
+        { _id: 'store_analytics' as any },
+        { $set: { events: [], _id: 'store_analytics' } },
+        { upsert: true }
+      );
+    }
+  } catch (e) {
+    console.error('Erreur reset analytics MongoDB:', e);
+  }
 }
 
 export function resetAnalyticsData() {

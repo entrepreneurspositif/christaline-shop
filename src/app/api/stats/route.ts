@@ -3,7 +3,7 @@ import { getAllTickets } from '@/lib/storage';
 
 export async function GET() {
   try {
-    const tickets = getAllTickets();
+    const tickets = await getAllTickets();
 
     const total = tickets.length;
     const pendingQuote = tickets.filter(t => t.quote.status === 'pending').length;

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getAnalyticsSummary, resetAnalyticsData } from '@/lib/analytics';
+import { getAnalyticsSummaryAsync, resetAnalyticsDataAsync } from '@/lib/analytics';
 
 export async function GET() {
   try {
-    const summary = getAnalyticsSummary();
+    const summary = await getAnalyticsSummaryAsync();
     return NextResponse.json({ success: true, summary });
   } catch (error) {
     console.error('Erreur API analytics summary:', error);
@@ -13,7 +13,7 @@ export async function GET() {
 
 export async function DELETE() {
   try {
-    resetAnalyticsData();
+    await resetAnalyticsDataAsync();
     return NextResponse.json({ success: true, message: 'Statistiques réinitialisées' });
   } catch (error) {
     console.error('Erreur reset analytics:', error);

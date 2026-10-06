@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { AppSettings } from '@/lib/settings';
-import { getSettings, saveSettings } from '@/lib/settingsServer';
+import { getSettingsAsync, saveSettingsAsync } from '@/lib/settingsServer';
 
 export async function GET() {
   try {
-    const settings = getSettings();
+    const settings = await getSettingsAsync();
     return NextResponse.json({ success: true, settings });
   } catch (error) {
     console.error('Error fetching settings:', error);
@@ -15,7 +15,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json() as Partial<AppSettings>;
-    const current = getSettings();
+    const current = await getSettingsAsync();
     const updated: AppSettings = {
       ...current,
       ...body,
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         }
       }
     };
-    saveSettings(updated);
+    await saveSettingsAsync(updated);
     return NextResponse.json({ success: true, settings: updated });
   } catch (error) {
     console.error('Error saving settings:', error);

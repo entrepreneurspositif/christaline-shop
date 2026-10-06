@@ -8,7 +8,7 @@ interface Params {
 export async function GET(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
-    const item = getGroupBuyById(id);
+    const item = await getGroupBuyById(id);
 
     if (!item) {
       return NextResponse.json(
@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { id } = await params;
     const updates = await req.json();
 
-    const updated = updateGroupBuy(id, updates);
+    const updated = await updateGroupBuy(id, updates);
     if (!updated) {
       return NextResponse.json(
         { success: false, error: 'Vente en groupe introuvable' },
@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
     const { id } = await params;
-    const deleted = deleteGroupBuy(id);
+    const deleted = await deleteGroupBuy(id);
 
     if (!deleted) {
       return NextResponse.json(

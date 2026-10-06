@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       );
     }
 
-    const result = joinGroupBuy(id, {
+    const result = await joinGroupBuy(id, {
       clientName: body.clientName,
       whatsapp: body.whatsapp,
       city: body.city,

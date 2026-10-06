@@ -1,9 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { TicketOrder, QuoteStatus, OrderItem, TrackingEvent, TrackingInfo, QuoteDetails, STATUS_MAP, ShippingModeType } from './types';
+import { getDatabase } from './mongodb';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'tickets.json');
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __cs_tickets_cache: TicketOrder[] | undefined;
+}
 
 export function generateTicketId(): string {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
@@ -106,317 +112,101 @@ export function createDefaultTimeline(status: QuoteStatus, createdAt: string, sh
   ];
 }
 
-const SEED_DATA: TicketOrder[] = [
-  {
-    id: 'CS-784210',
-    createdAt: new Date(Date.now() - 5 * 86400 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
-    shippingMode: 'air',
-    client: {
-      name: 'Sophie Tossou',
-      phone: '0154072488',
-      whatsapp: '0154072488',
-      city: 'Cotonou - Haie Vive',
-      address: 'Près du restaurant Livingstone',
-      notes: 'Merci de bien vérifier la taille 38 pour les talons s’il vous plaît.'
-    },
-    items: [
-      {
-        id: 'item-1',
-        platform: 'shein',
-        url: 'https://shein.com/fr/robe-cocktail-satin-rose-poudree-p-2938472.html',
-        name: 'Robe de cocktail satin rose poudrée plissée',
-        variant: 'Taille M / Rose poudré',
-        quantity: 1,
-        originalPrice: 28.99,
-        originalCurrency: 'EUR',
-        notes: 'Prendre exactement le rose du flyer Christaline',
-        unitPriceCFA: 31000,
-        shippingFeeCFA: 0,
-        serviceFeeCFA: 0,
-        customsFeeCFA: 0,
-        totalItemCFA: 31000,
-        status: 'ordered'
-      },
-      {
-        id: 'item-2',
-        platform: 'shein',
-        url: 'https://shein.com/fr/escarpins-talons-hauts-dore-strass-p-1092837.html',
-        name: 'Escarpins dorés à strass élégants talons 9cm',
-        variant: 'Pointure 38 / Doré champagne',
-        quantity: 1,
-        originalPrice: 24.50,
-        originalCurrency: 'EUR',
-        notes: 'Bien emballer pour ne pas abîmer la boîte',
-        unitPriceCFA: 27500,
-        shippingFeeCFA: 0,
-        serviceFeeCFA: 0,
-        customsFeeCFA: 0,
-        totalItemCFA: 27500,
-        status: 'ordered'
-      }
-    ],
-    quote: {
-      status: 'in_transit',
-      subtotalItemsCFA: 58500,
-      totalShippingCFA: 0,
-      totalServiceFeeCFA: 0,
-      totalCustomsCFA: 0,
-      discountCFA: 0,
-      grandTotalCFA: 58500,
-      depositRequiredCFA: 35000,
-      depositPaidCFA: 35000,
-      balanceRemainingCFA: 23500,
-      adminNote: 'Articles commandés avec succès sur Shein ! Colis groupé en vol fret aérien vers Cotonou.',
-      quotedAt: new Date(Date.now() - 4 * 86400 * 1000).toISOString()
-    },
-    tracking: {
-      currentStatus: 'in_transit',
-      statusLabel: 'En transit international (Vol Aérien vers Cotonou)',
-      shippingMode: 'air',
-      estimatedDelivery: 'Au plus 1 mois',
-      estimatedDeliveryDate: new Date(Date.now() + 10 * 86400 * 1000).toISOString().split('T')[0],
-      supplierOrderNumber: 'SHEIN-FR-98230192',
-      carrierName: 'Christaline Air Cargo Bénin',
-      carrierTrackingNumber: 'CST-BEN-2026-98124',
-      carrierTrackingUrl: 'https://www.17track.net',
-      events: createDefaultTimeline('in_transit', new Date(Date.now() - 5 * 86400 * 1000).toISOString(), 'air')
+function readLocalTickets(): TicketOrder[] {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      const data = JSON.parse(raw) as TicketOrder[];
+      return data;
     }
-  },
-  {
-    id: 'CS-918234',
-    createdAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    shippingMode: 'air',
-    client: {
-      name: 'Aïcha Hounkpatin',
-      phone: '0154072488',
-      whatsapp: '0154072488',
-      city: 'Abomey-Calavi - Arconville',
-      address: 'Carrefour Kpota, face pharmacie',
-      notes: 'C’est pour un anniversaire le mois prochain.'
-    },
-    items: [
-      {
-        id: 'item-1',
-        platform: 'temu',
-        url: 'https://temu.com/fr/kit-pinceaux-maquillage-professionnel-18-pieces.html',
-        name: 'Set de pinceaux de maquillage luxe 18 pièces avec étui cuir',
-        variant: 'Couleur Or Rose / 18 pcs',
-        quantity: 2,
-        originalPrice: 12.99,
-        originalCurrency: 'EUR',
-        notes: '2 coffrets identiques',
-        unitPriceCFA: 12500,
-        shippingFeeCFA: 0,
-        serviceFeeCFA: 0,
-        customsFeeCFA: 0,
-        totalItemCFA: 25000,
-        status: 'quoted'
-      },
-      {
-        id: 'item-2',
-        platform: 'temu',
-        url: 'https://temu.com/fr/palette-fards-a-paupieres-nude-glamour.html',
-        name: 'Palette fards à paupières 35 teintes nudes & paillettes',
-        variant: 'Modèle Glamour Nude',
-        quantity: 1,
-        originalPrice: 14.50,
-        originalCurrency: 'EUR',
-        notes: 'Attention produit fragile',
-        unitPriceCFA: 17000,
-        shippingFeeCFA: 0,
-        serviceFeeCFA: 0,
-        customsFeeCFA: 0,
-        totalItemCFA: 17000,
-        status: 'quoted'
-      }
-    ],
-    quote: {
-      status: 'ready',
-      subtotalItemsCFA: 42000,
-      totalShippingCFA: 0,
-      totalServiceFeeCFA: 0,
-      totalCustomsCFA: 0,
-      discountCFA: 0,
-      grandTotalCFA: 42000,
-      depositRequiredCFA: 25000,
-      depositPaidCFA: 0,
-      balanceRemainingCFA: 42000,
-      adminNote: 'Votre devis Temu est prêt ! Réglez l\'acompte de 25 000 FCFA pour valider l\'achat immédiat.',
-      quotedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
-    },
-    tracking: {
-      currentStatus: 'ready',
-      statusLabel: 'Devis prêt (En attente de paiement acompte)',
-      shippingMode: 'air',
-      estimatedDelivery: 'Au plus 1 mois dès validation',
-      estimatedDeliveryDate: null,
-      supplierOrderNumber: null,
-      carrierName: null,
-      carrierTrackingNumber: null,
-      carrierTrackingUrl: null,
-      events: createDefaultTimeline('ready', new Date(Date.now() - 1 * 86400 * 1000).toISOString(), 'air')
-    }
-  },
-  {
-    id: 'CS-334912',
-    createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    shippingMode: 'sea', // Bateau
-    client: {
-      name: 'Marc Gbaguidi',
-      phone: '0154072488',
-      whatsapp: '0154072488',
-      city: 'Porto-Novo - Ouando',
-      address: 'Près du grand marché Ouando',
-      notes: 'Commande volumineuse choisie par voie maritime.'
-    },
-    items: [
-      {
-        id: 'item-1',
-        platform: 'shein',
-        url: 'https://shein.com/fr/lot-vestes-costumes-homme-mariage.html',
-        name: 'Lot vestes & costumes complets homme',
-        variant: 'Taille Veste 52 / Bleu Nuit',
-        quantity: 3,
-        originalPrice: 35.00,
-        originalCurrency: 'EUR',
-        notes: 'Expédition par conteneur bateau',
-        unitPriceCFA: 0,
-        shippingFeeCFA: 0,
-        serviceFeeCFA: 0,
-        customsFeeCFA: 0,
-        totalItemCFA: 0,
-        status: 'pending'
-      }
-    ],
-    quote: {
-      status: 'pending',
-      subtotalItemsCFA: 0,
-      totalShippingCFA: 0,
-      totalServiceFeeCFA: 0,
-      totalCustomsCFA: 0,
-      discountCFA: 0,
-      grandTotalCFA: 0,
-      depositRequiredCFA: 0,
-      depositPaidCFA: 0,
-      balanceRemainingCFA: 0,
-      adminNote: 'Demande par voie maritime reçue ! Notre équipe prépare votre chiffrage économique.',
-      quotedAt: null
-    },
-    tracking: {
-      currentStatus: 'pending',
-      statusLabel: 'En attente de chiffrage par Christaline Shop',
-      shippingMode: 'sea',
-      estimatedDelivery: '2 à 3 mois (Voie maritime)',
-      estimatedDeliveryDate: null,
-      supplierOrderNumber: null,
-      carrierName: null,
-      carrierTrackingNumber: null,
-      carrierTrackingUrl: null,
-      events: createDefaultTimeline('pending', new Date(Date.now() - 35 * 60 * 1000).toISOString(), 'sea')
-    }
-  },
-  {
-    id: 'CS-652190',
-    createdAt: new Date(Date.now() - 25 * 86400 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
-    shippingMode: 'air',
-    client: {
-      name: 'Grace Dossou',
-      phone: '0154072488',
-      whatsapp: '0154072488',
-      city: 'Cotonou - Cadjehoun',
-      address: 'Près de l\'Aéroport International',
-      notes: 'Livraison impeccable effectuée.'
-    },
-    items: [
-      {
-        id: 'item-1',
-        platform: 'shein',
-        url: 'https://shein.com/fr/jogging-polaire-ensemble-femme-p-382910.html',
-        name: 'Ensemble jogging sweat capuche beige molletonné',
-        variant: 'Taille L / Couleur Beige',
-        quantity: 1,
-        originalPrice: 19.99,
-        originalCurrency: 'EUR',
-        notes: 'Parfait',
-        unitPriceCFA: 23000,
-        shippingFeeCFA: 0,
-        serviceFeeCFA: 0,
-        customsFeeCFA: 0,
-        totalItemCFA: 23000,
-        status: 'ordered'
-      }
-    ],
-    quote: {
-      status: 'delivered',
-      subtotalItemsCFA: 23000,
-      totalShippingCFA: 0,
-      totalServiceFeeCFA: 0,
-      totalCustomsCFA: 0,
-      discountCFA: 0,
-      grandTotalCFA: 23000,
-      depositRequiredCFA: 15000,
-      depositPaidCFA: 23000,
-      balanceRemainingCFA: 0,
-      adminNote: 'Colis livré à Cotonou et solde entièrement réglé. Merci pour votre fidélité !',
-      quotedAt: new Date(Date.now() - 24 * 86400 * 1000).toISOString()
-    },
-    tracking: {
-      currentStatus: 'delivered',
-      statusLabel: 'Colis livré avec succès',
-      shippingMode: 'air',
-      estimatedDelivery: 'Au plus 1 mois (Respecté)',
-      estimatedDeliveryDate: new Date(Date.now() - 2 * 86400 * 1000).toISOString().split('T')[0],
-      supplierOrderNumber: 'SHEIN-FR-889123',
-      carrierName: 'Christaline Express Cotonou',
-      carrierTrackingNumber: 'CST-LIV-0921',
-      carrierTrackingUrl: null,
-      events: createDefaultTimeline('delivered', new Date(Date.now() - 25 * 86400 * 1000).toISOString(), 'air')
-    }
+  } catch (err) {
+    console.error('Erreur lecture locale tickets.json:', err);
   }
-];
+  return [];
+}
 
-function ensureDataFile() {
+function writeLocalTickets(tickets: TicketOrder[]): void {
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, JSON.stringify(SEED_DATA, null, 2), 'utf-8');
-    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(tickets, null, 2), 'utf-8');
   } catch (err) {
     // Environnement read-only (ex: Vercel serverless)
   }
 }
 
-export function getAllTickets(): TicketOrder[] {
-  ensureDataFile();
-  try {
-    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    const data = JSON.parse(raw) as TicketOrder[];
-    return data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } catch (err) {
-    console.error('Erreur lecture tickets.json:', err);
-    return SEED_DATA;
-  }
+function stripMongoId<T extends { _id?: any }>(item: T): Omit<T, '_id'> {
+  const { _id, ...rest } = item;
+  return rest as any;
 }
 
-export function saveTickets(tickets: TicketOrder[]): void {
+export async function getAllTickets(): Promise<TicketOrder[]> {
   try {
-    ensureDataFile();
-    fs.writeFileSync(DATA_FILE, JSON.stringify(tickets, null, 2), 'utf-8');
+    const db = await getDatabase();
+    if (db) {
+      const docs = await db.collection('tickets').find({}).toArray();
+      const tickets = docs.map(stripMongoId) as TicketOrder[];
+      tickets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      global.__cs_tickets_cache = tickets;
+      return tickets;
+    }
   } catch (err) {
-    console.error('Erreur écriture tickets.json (environnement read-only):', err);
+    console.error('Erreur getAllTickets depuis MongoDB Atlas:', err);
   }
+
+  // Fallback cache mémoire puis fichier local
+  if (global.__cs_tickets_cache && global.__cs_tickets_cache.length > 0) {
+    return global.__cs_tickets_cache;
+  }
+  const local = readLocalTickets();
+  global.__cs_tickets_cache = local;
+  return local;
 }
 
-export function getTicketById(id: string): TicketOrder | null {
-  const tickets = getAllTickets();
+export function getAllTicketsSync(): TicketOrder[] {
+  if (global.__cs_tickets_cache && global.__cs_tickets_cache.length > 0) {
+    return global.__cs_tickets_cache;
+  }
+  const local = readLocalTickets();
+  global.__cs_tickets_cache = local;
+  return local;
+}
+
+export async function getTicketById(id: string): Promise<TicketOrder | null> {
   const cleanId = id.trim().toUpperCase();
-  return tickets.find(t => t.id.toUpperCase() === cleanId) || null;
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const doc = await db.collection('tickets').findOne({ id: cleanId });
+      if (doc) {
+        return stripMongoId(doc) as TicketOrder;
+      }
+    }
+  } catch (err) {
+    console.error('Erreur getTicketById depuis MongoDB Atlas:', err);
+  }
+
+  const all = await getAllTickets();
+  return all.find(t => t.id.toUpperCase() === cleanId) || null;
+}
+
+export async function saveTickets(tickets: TicketOrder[]): Promise<void> {
+  global.__cs_tickets_cache = tickets;
+  writeLocalTickets(tickets);
+
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const collection = db.collection('tickets');
+      await collection.deleteMany({});
+      if (tickets.length > 0) {
+        await collection.insertMany(tickets);
+      }
+    }
+  } catch (err) {
+    console.error('Erreur saveTickets sur MongoDB Atlas:', err);
+  }
 }
 
 export interface CreateTicketPayload {
@@ -441,8 +231,8 @@ export interface CreateTicketPayload {
   }>;
 }
 
-export function createNewTicket(payload: CreateTicketPayload): TicketOrder {
-  const tickets = getAllTickets();
+export async function createNewTicket(payload: CreateTicketPayload): Promise<TicketOrder> {
+  const tickets = await getAllTickets();
   const now = new Date().toISOString();
   const shippingMode = payload.shippingMode === 'sea' ? 'sea' : 'air';
   
@@ -513,24 +303,88 @@ export function createNewTicket(payload: CreateTicketPayload): TicketOrder {
     }
   };
 
+  try {
+    const db = await getDatabase();
+    if (db) {
+      await db.collection('tickets').insertOne({ ...newTicket });
+    }
+  } catch (err) {
+    console.error('Erreur createNewTicket MongoDB Atlas:', err);
+  }
+
   tickets.unshift(newTicket);
-  saveTickets(tickets);
+  global.__cs_tickets_cache = tickets;
+  writeLocalTickets(tickets);
+
   return newTicket;
 }
 
-export function updateTicket(id: string, updates: Partial<TicketOrder>): TicketOrder | null {
-  const tickets = getAllTickets();
-  const index = tickets.findIndex(t => t.id.toUpperCase() === id.trim().toUpperCase());
-  if (index === -1) return null;
+export async function updateTicket(id: string, updates: Partial<TicketOrder>): Promise<TicketOrder | null> {
+  const cleanId = id.trim().toUpperCase();
+  const now = new Date().toISOString();
 
-  const current = tickets[index];
-  const updated: TicketOrder = {
-    ...current,
-    ...updates,
-    updatedAt: new Date().toISOString()
-  };
+  let updatedTicket: TicketOrder | null = null;
 
-  tickets[index] = updated;
-  saveTickets(tickets);
-  return updated;
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const existing = await db.collection('tickets').findOne({ id: cleanId });
+      if (existing) {
+        const merged = {
+          ...stripMongoId(existing),
+          ...updates,
+          updatedAt: now
+        } as TicketOrder;
+
+        await db.collection('tickets').updateOne(
+          { id: cleanId },
+          { $set: { ...updates, updatedAt: now } }
+        );
+        updatedTicket = merged;
+      }
+    }
+  } catch (err) {
+    console.error('Erreur updateTicket sur MongoDB Atlas:', err);
+  }
+
+  const tickets = await getAllTickets();
+  const index = tickets.findIndex(t => t.id.toUpperCase() === cleanId);
+  if (index !== -1) {
+    const merged = {
+      ...tickets[index],
+      ...updates,
+      updatedAt: now
+    };
+    tickets[index] = merged;
+    global.__cs_tickets_cache = tickets;
+    writeLocalTickets(tickets);
+    if (!updatedTicket) updatedTicket = merged;
+  }
+
+  return updatedTicket;
+}
+
+export async function deleteTicket(id: string): Promise<boolean> {
+  const cleanId = id.trim().toUpperCase();
+  let deleted = false;
+
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const res = await db.collection('tickets').deleteOne({ id: cleanId });
+      if (res.deletedCount > 0) deleted = true;
+    }
+  } catch (err) {
+    console.error('Erreur deleteTicket sur MongoDB Atlas:', err);
+  }
+
+  const tickets = await getAllTickets();
+  const filtered = tickets.filter(t => t.id.toUpperCase() !== cleanId);
+  if (filtered.length !== tickets.length) {
+    deleted = true;
+    global.__cs_tickets_cache = filtered;
+    writeLocalTickets(filtered);
+  }
+
+  return deleted;
 }

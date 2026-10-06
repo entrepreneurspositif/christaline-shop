@@ -12,7 +12,7 @@ interface PageProps {
 
 export default async function TicketPage({ params }: PageProps) {
   const { id } = await params;
-  const ticket = getTicketById(id);
+  const ticket = await getTicketById(id);
 
   if (!ticket) {
     return (

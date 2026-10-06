@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const status = searchParams.get('status');
     const search = searchParams.get('search');
 
-    let tickets = getAllTickets();
+    let tickets = await getAllTickets();
 
     if (status && status !== 'all') {
       tickets = tickets.filter(t => t.quote.status === status);
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const created = createNewTicket(body);
+    const created = await createNewTicket(body);
 
     // Déclencher l'alerte Telegram en arrière-plan sans bloquer la réponse HTTP
     try {

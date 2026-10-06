@@ -838,7 +838,8 @@ export default function SuperAdminPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const envContent = `FEEXPAY_SHOP_ID=${shopIdInput.trim()}\nFEEXPAY_API_TOKEN=${apiTokenInput.trim()}\nFEEXPAY_MODE=${modeInput}\nFEEXPAY_MONTHLY_FEE=${feeInput}\nSUPER_ADMIN_PASSWORD=${masterPassword}`;
+                  const mongoUri = (subscriptionData as any)?.mongoUri || "mongodb://entrepreneurspositif_db_user:<password>@ac-csxovuk-shard-00-00.mqtdbfu.mongodb.net:27017,ac-csxovuk-shard-00-01.mqtdbfu.mongodb.net:27017,ac-csxovuk-shard-00-02.mqtdbfu.mongodb.net:27017/christaline_db?ssl=true&replicaSet=atlas-zdln9a-shard-0&authSource=admin&appName=Christaline";
+                  const envContent = `MONGODB_URI=${mongoUri}\nMONGODB_DB=christaline_db\nFEEXPAY_SHOP_ID=${shopIdInput.trim()}\nFEEXPAY_API_TOKEN=${apiTokenInput.trim()}\nFEEXPAY_MODE=${modeInput}\nFEEXPAY_MONTHLY_FEE=${feeInput}\nSUPER_ADMIN_PASSWORD=${masterPassword}`;
                   navigator.clipboard.writeText(envContent);
                   setCopiedVercelEnv(true);
                   setTimeout(() => setCopiedVercelEnv(false), 2500);
@@ -850,7 +851,7 @@ export default function SuperAdminPage() {
               </button>
             </div>
             <p className="text-[11px] text-stone-400 leading-relaxed">
-              Vos réglages sont sauvegardés instantanément en mémoire, dans le stockage temporaire Vercel (<code className="text-amber-300">/tmp</code>) et dans votre navigateur. Pour une persistance permanente même lors de redéploiements futurs du projet, vous pouvez copier ces variables dans votre dashboard <strong>Vercel &gt; Settings &gt; Environment Variables</strong>.
+              Vos commandes, ventes groupées et configurations sont désormais synchronisées en direct avec votre cluster <strong>MongoDB Atlas (Christaline)</strong>. Pour que votre déploiement Vercel en production se connecte directement à votre base MongoDB, collez simplement ces variables dans votre dashboard <strong>Vercel &gt; Settings &gt; Environment Variables</strong>.
             </p>
           </div>
 

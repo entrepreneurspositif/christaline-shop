@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getTicketById, updateTicket, getAllTickets, saveTickets, createDefaultTimeline } from '@/lib/storage';
+import { getTicketById, updateTicket, deleteTicket, createDefaultTimeline } from '@/lib/storage';
 import { QuoteStatus, OrderItem, TrackingEvent, STATUS_MAP } from '@/lib/types';
 import { notifyTicketStatusUpdateTelegram } from '@/lib/telegram';
 
@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const ticket = getTicketById(id);
+    const ticket = await getTicketById(id);
 
     if (!ticket) {
       return NextResponse.json({ success: false, error: 'Ticket introuvable' }, { status: 404 });
@@ -28,7 +28,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const ticket = getTicketById(id);
+    const ticket = await getTicketById(id);
 
     if (!ticket) {
       return NextResponse.json({ success: false, error: 'Ticket introuvable' }, { status: 404 });
@@ -144,7 +144,7 @@ export async function PATCH(
       }
     }
 
-    const updated = updateTicket(id, {
+    const updated = await updateTicket(id, {
       items: updatedItems,
       quote: updatedQuote,
       tracking: updatedTracking,
@@ -183,14 +183,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const tickets = getAllTickets();
-    const filtered = tickets.filter(t => t.id.toUpperCase() !== id.trim().toUpperCase());
+    const deleted = await deleteTicket(id);
 
-    if (filtered.length === tickets.length) {
+    if (!deleted) {
       return NextResponse.json({ success: false, error: 'Ticket non trouvé' }, { status: 404 });
     }
 
-    saveTickets(filtered);
     return NextResponse.json({ success: true, message: 'Ticket supprimé' });
   } catch (error) {
     console.error('Error deleting ticket:', error);

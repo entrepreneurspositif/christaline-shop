@@ -2,9 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import { GroupBuyItem, GroupBuyParticipant, GroupBuyStatus, ShippingModeType } from './types';
 import { getAllTickets, saveTickets, generateTicketId, createDefaultTimeline } from './storage';
+import { getDatabase } from './mongodb';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'group_buys.json');
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __cs_groupbuys_cache: GroupBuyItem[] | undefined;
+}
 
 const INITIAL_GROUP_BUYS: GroupBuyItem[] = [
   {
@@ -58,8 +64,9 @@ const INITIAL_GROUP_BUYS: GroupBuyItem[] = [
         whatsapp: '0197441122',
         city: 'Cotonou - Cadjehoun',
         quantity: 3,
-        variant: 'Pointure 38 - Argent Étincelant',
-        reservedAt: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
+        variant: 'Pointure 38 - Doré Champagne',
+        notes: 'Pour mes demoiselles d’honneur',
+        reservedAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
         ticketId: 'CS-551203',
         depositPaid: false
       }
@@ -67,200 +74,223 @@ const INITIAL_GROUP_BUYS: GroupBuyItem[] = [
   },
   {
     id: 'gb-2',
-    title: 'Set 15 Pinceaux de Maquillage Pro + Trousse Velours',
-    description: 'Set complet de pinceaux haute densité ultra-doux pour fond de teint, fards à paupières, contouring et lèvres. Livré avec sa trousse de rangement de luxe.',
-    imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80',
-    priceCFA: 7500,
-    originalPriceCFA: 13500,
-    minQuantity: 15,
-    currentQuantity: 12,
-    orderDate: '2026-10-18',
-    shippingMode: 'air',
-    platform: 'temu',
-    variants: [
-      'Manche Rose Gold & Poils Noirs',
-      'Manche Or Impérial & Poils Blancs',
-      'Manche Noir Mat & Poils Dégradés'
-    ],
-    status: 'open',
-    createdAt: new Date(Date.now() - 4 * 86400 * 1000).toISOString(),
-    participants: [
-      {
-        id: 'part-4',
-        clientName: 'Rachelle Houngbo',
-        whatsapp: '0161223344',
-        city: 'Cotonou - Haie Vive',
-        quantity: 4,
-        variant: 'Manche Rose Gold & Poils Noirs',
-        reservedAt: new Date(Date.now() - 3 * 86400 * 1000).toISOString(),
-        ticketId: 'CS-610111',
-        depositPaid: true
-      },
-      {
-        id: 'part-5',
-        clientName: 'Sonia Agbossou',
-        whatsapp: '0195332211',
-        city: 'Porto-Novo',
-        quantity: 5,
-        variant: 'Manche Or Impérial & Poils Blancs',
-        reservedAt: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
-        ticketId: 'CS-610112',
-        depositPaid: true
-      },
-      {
-        id: 'part-6',
-        clientName: 'Prisca Bio',
-        whatsapp: '0151998877',
-        city: 'Calavi - Tankpè',
-        quantity: 3,
-        variant: 'Manche Noir Mat & Poils Dégradés',
-        reservedAt: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
-        ticketId: 'CS-610113',
-        depositPaid: false
-      }
-    ]
-  },
-  {
-    id: 'gb-3',
-    title: 'Robe Longue de Soirée Satinée Plissée',
-    description: 'Robe longue élégante à col en V plongeant et jupe fluide plissée. Matière satinée tombé lourd de haute qualité pour toutes vos cérémonies au Bénin.',
-    imageUrl: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&auto=format&fit=crop&q=80',
-    priceCFA: 21000,
-    originalPriceCFA: 32000,
+    title: 'Set 2 Valises Trolley Ultra-Légères TSA',
+    description: 'Ensemble de 2 valises rigides en polycarbonate incassable avec cadenas TSA intégré, 4 roues pivotantes 360° silencieuses et poignée télescopique.',
+    imageUrl: 'https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?w=800&auto=format&fit=crop&q=80',
+    priceCFA: 49000,
+    originalPriceCFA: 75000,
     minQuantity: 8,
     currentQuantity: 8,
-    orderDate: '2026-10-14',
-    shippingMode: 'air',
-    platform: 'shein',
+    orderDate: '2026-10-18',
+    shippingMode: 'sea',
+    platform: 'alibaba',
     variants: [
-      'Taille S - Vert Émeraude',
-      'Taille M - Vert Émeraude',
-      'Taille M - Rouge Bordeaux',
-      'Taille L - Bleu Roi',
-      'Taille XL - Noir Chic'
+      'Gris Anthracite (Grand & Moyen)',
+      'Rose Gold Glamour (Grand & Moyen)',
+      'Noir Mat Élégant (Grand & Moyen)',
+      'Bleu Nuit (Grand & Moyen)'
     ],
     status: 'goal_reached',
     createdAt: new Date(Date.now() - 5 * 86400 * 1000).toISOString(),
     participants: [
       {
-        id: 'part-7',
-        clientName: 'Félicité Kiki',
-        whatsapp: '0154072488',
-        city: 'Cotonou - Sainte Rita',
+        id: 'part-4',
+        clientName: 'Gervais Agbessi',
+        whatsapp: '0195223344',
+        city: 'Porto-Novo',
         quantity: 2,
-        variant: 'Taille M - Vert Émeraude',
+        variant: 'Noir Mat Élégant (Grand & Moyen)',
+        notes: 'Prêt pour départ en mission',
         reservedAt: new Date(Date.now() - 4 * 86400 * 1000).toISOString(),
-        ticketId: 'CS-720301',
+        ticketId: 'CS-551204',
         depositPaid: true
       },
       {
-        id: 'part-8',
-        clientName: 'Berthe Mensah',
-        whatsapp: '0167221100',
-        city: 'Cotonou - Fidjrossè',
+        id: 'part-5',
+        clientName: 'Tatiana Hounkpatin',
+        whatsapp: '0161884422',
+        city: 'Cotonou - Haie Vive',
         quantity: 3,
-        variant: 'Taille L - Bleu Roi',
+        variant: 'Rose Gold Glamour (Grand & Moyen)',
+        notes: 'Voyage familial',
         reservedAt: new Date(Date.now() - 3 * 86400 * 1000).toISOString(),
-        ticketId: 'CS-720302',
+        ticketId: 'CS-551205',
         depositPaid: true
       },
       {
-        id: 'part-9',
-        clientName: 'Mireille Lawson',
-        whatsapp: '0190554433',
-        city: 'Ouidah',
+        id: 'part-6',
+        clientName: 'Michel Houndé',
+        whatsapp: '0197001199',
+        city: 'Cotonou - Maro-Militaire',
         quantity: 3,
-        variant: 'Taille M - Rouge Bordeaux',
+        variant: 'Gris Anthracite (Grand & Moyen)',
+        notes: 'Acompte versé en agence',
         reservedAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
-        ticketId: 'CS-720303',
+        ticketId: 'CS-551206',
         depositPaid: true
       }
     ]
   },
   {
-    id: 'gb-4',
-    title: 'Ensemble Jogging Molletonné Streetwear Unisexe',
-    description: 'Ensemble hoodie à capuche et bas de jogging molletonné épais grand confort. Coupe moderne oversize, élastiques cheville et poches profondes.',
-    imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&auto=format&fit=crop&q=80',
-    priceCFA: 12500,
-    originalPriceCFA: 19500,
-    minQuantity: 12,
-    currentQuantity: 5,
+    id: 'gb-3',
+    title: 'Kit Studio Créateur Ring Light 45cm + Trépied Pro 2.1m',
+    description: 'Anneau lumineux LED puissant 55W avec télécommande sans fil, réglage température 3000K-6000K, 3 supports téléphones pour tournages TikTok et Lives.',
+    imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80',
+    priceCFA: 22500,
+    originalPriceCFA: 35000,
+    minQuantity: 15,
+    currentQuantity: 11,
     orderDate: '2026-10-22',
     shippingMode: 'air',
     platform: 'temu',
     variants: [
-      'Taille M - Gris Chiné',
-      'Taille L - Noir Intense',
-      'Taille XL - Beige Sable',
-      'Taille XXL - Vert Kaki'
+      'Pack Ring Light + Trépied + Télécommande',
+      'Pack Pro avec Micro Cravate Sans Fil Inclus (+5000 F)'
     ],
     status: 'open',
     createdAt: new Date(Date.now() - 2 * 86400 * 1000).toISOString(),
     participants: [
       {
-        id: 'part-10',
-        clientName: 'Boris Houndété',
-        whatsapp: '0196887766',
-        city: 'Cotonou - Kouhounou',
-        quantity: 3,
-        variant: 'Taille L - Noir Intense',
+        id: 'part-7',
+        clientName: 'Estelle Kpadonou',
+        whatsapp: '0167332211',
+        city: 'Cotonou - Sainte Rita',
+        quantity: 2,
+        variant: 'Pack Ring Light + Trépied + Télécommande',
+        notes: 'Pour création de contenu boutique de perruques',
         reservedAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
-        ticketId: 'CS-840901',
+        ticketId: 'CS-551207',
         depositPaid: true
       },
       {
-        id: 'part-11',
-        clientName: 'Arnaud Soglo',
-        whatsapp: '0153443322',
-        city: 'Calavi - Zogbadjè',
-        quantity: 2,
-        variant: 'Taille M - Gris Chiné',
-        reservedAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-        ticketId: 'CS-840902',
+        id: 'part-8',
+        clientName: 'Bénédicte Alapini',
+        whatsapp: '0196884433',
+        city: 'Abomey-Calavi',
+        quantity: 1,
+        variant: 'Pack Ring Light + Trépied + Télécommande',
+        notes: '',
+        reservedAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+        ticketId: 'CS-551208',
         depositPaid: false
       }
     ]
+  },
+  {
+    id: 'gb-4',
+    title: 'Mixeur Portable Smoothie Rechargeable USB-C',
+    description: 'Mini blender 6 lames en acier inoxydable, batterie puissante 4000mAh, bol sans BPA 450ml étanche. Idéal sport, bureau et voyages.',
+    imageUrl: 'https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=800&auto=format&fit=crop&q=80',
+    priceCFA: 9500,
+    originalPriceCFA: 16000,
+    minQuantity: 20,
+    currentQuantity: 5,
+    orderDate: '2026-10-25',
+    shippingMode: 'air',
+    platform: 'shein',
+    variants: [
+      'Vert Menthe Pastel',
+      'Rose Poudré',
+      'Blanc Épuré',
+      'Noir Mat'
+    ],
+    status: 'open',
+    createdAt: new Date(Date.now() - 1 * 86400 * 1000).toISOString(),
+    participants: []
   }
 ];
 
-function ensureGroupBuysFile() {
+function readLocalGroupBuys(): GroupBuyItem[] {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      const data = JSON.parse(raw) as GroupBuyItem[];
+      return data;
+    }
+  } catch (err) {
+    console.error('Erreur lecture group_buys.json locale:', err);
+  }
+  return INITIAL_GROUP_BUYS;
+}
+
+function writeLocalGroupBuys(items: GroupBuyItem[]): void {
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, JSON.stringify(INITIAL_GROUP_BUYS, null, 2), 'utf-8');
-    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2), 'utf-8');
   } catch (err) {
     // Environnement read-only (ex: Vercel serverless)
   }
 }
 
-export function getAllGroupBuys(): GroupBuyItem[] {
-  ensureGroupBuysFile();
+function stripMongoId<T extends { _id?: any }>(item: T): Omit<T, '_id'> {
+  const { _id, ...rest } = item;
+  return rest as any;
+}
+
+export async function getAllGroupBuys(): Promise<GroupBuyItem[]> {
   try {
-    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    const data = JSON.parse(raw) as GroupBuyItem[];
-    return data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const db = await getDatabase();
+    if (db) {
+      const docs = await db.collection('group_buys').find({}).toArray();
+      const items = docs.map(stripMongoId) as GroupBuyItem[];
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      global.__cs_groupbuys_cache = items;
+      return items;
+    }
   } catch (err) {
-    console.error('Erreur lecture group_buys.json:', err);
-    return INITIAL_GROUP_BUYS;
+    console.error('Erreur getAllGroupBuys MongoDB Atlas:', err);
+  }
+
+  if (global.__cs_groupbuys_cache && global.__cs_groupbuys_cache.length > 0) {
+    return global.__cs_groupbuys_cache;
+  }
+  const local = readLocalGroupBuys();
+  global.__cs_groupbuys_cache = local;
+  return local;
+}
+
+export function getAllGroupBuysSync(): GroupBuyItem[] {
+  if (global.__cs_groupbuys_cache && global.__cs_groupbuys_cache.length > 0) {
+    return global.__cs_groupbuys_cache;
+  }
+  const local = readLocalGroupBuys();
+  global.__cs_groupbuys_cache = local;
+  return local;
+}
+
+export async function saveGroupBuys(items: GroupBuyItem[]): Promise<void> {
+  global.__cs_groupbuys_cache = items;
+  writeLocalGroupBuys(items);
+
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const collection = db.collection('group_buys');
+      await collection.deleteMany({});
+      if (items.length > 0) {
+        await collection.insertMany(items);
+      }
+    }
+  } catch (err) {
+    console.error('Erreur saveGroupBuys sur MongoDB Atlas:', err);
   }
 }
 
-export function saveGroupBuys(items: GroupBuyItem[]): void {
-  try {
-    ensureGroupBuysFile();
-    fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Erreur écriture group_buys.json (environnement read-only):', err);
-  }
-}
-
-export function getGroupBuyById(id: string): GroupBuyItem | null {
-  const items = getAllGroupBuys();
+export async function getGroupBuyById(id: string): Promise<GroupBuyItem | null> {
   const cleanId = id.trim().toLowerCase();
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const doc = await db.collection('group_buys').findOne({ id: cleanId });
+      if (doc) return stripMongoId(doc) as GroupBuyItem;
+    }
+  } catch (err) {
+    console.error('Erreur getGroupBuyById sur MongoDB Atlas:', err);
+  }
+
+  const items = await getAllGroupBuys();
   return items.find(item => item.id.toLowerCase() === cleanId) || null;
 }
 
@@ -278,8 +308,8 @@ export interface CreateGroupBuyPayload {
   status?: GroupBuyStatus;
 }
 
-export function createGroupBuy(payload: CreateGroupBuyPayload): GroupBuyItem {
-  const items = getAllGroupBuys();
+export async function createGroupBuy(payload: CreateGroupBuyPayload): Promise<GroupBuyItem> {
+  const items = await getAllGroupBuys();
   const id = `gb-${Date.now().toString(36)}`;
   
   const newItem: GroupBuyItem = {
@@ -300,42 +330,103 @@ export function createGroupBuy(payload: CreateGroupBuyPayload): GroupBuyItem {
     participants: []
   };
 
+  try {
+    const db = await getDatabase();
+    if (db) {
+      await db.collection('group_buys').insertOne({ ...newItem });
+    }
+  } catch (err) {
+    console.error('Erreur createGroupBuy sur MongoDB Atlas:', err);
+  }
+
   items.unshift(newItem);
-  saveGroupBuys(items);
+  global.__cs_groupbuys_cache = items;
+  writeLocalGroupBuys(items);
+
   return newItem;
 }
 
-export function updateGroupBuy(id: string, updates: Partial<GroupBuyItem>): GroupBuyItem | null {
-  const items = getAllGroupBuys();
-  const index = items.findIndex(item => item.id.toLowerCase() === id.trim().toLowerCase());
-  if (index === -1) return null;
+export async function updateGroupBuy(id: string, updates: Partial<GroupBuyItem>): Promise<GroupBuyItem | null> {
+  const cleanId = id.trim().toLowerCase();
+  let updatedItem: GroupBuyItem | null = null;
 
-  const current = items[index];
-  const updated: GroupBuyItem = {
-    ...current,
-    ...updates,
-    // recalculer automatiquement currentQuantity si participants est mis à jour
-    currentQuantity: updates.participants 
-      ? updates.participants.reduce((acc, p) => acc + (p.quantity || 0), 0)
-      : (updates.currentQuantity !== undefined ? updates.currentQuantity : current.currentQuantity)
-  };
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const existing = await db.collection('group_buys').findOne({ id: cleanId });
+      if (existing) {
+        const merged = {
+          ...stripMongoId(existing),
+          ...updates
+        } as GroupBuyItem;
 
-  // Ajuster le statut si l'objectif est atteint
-  if (updated.status === 'open' && updated.currentQuantity >= updated.minQuantity) {
-    updated.status = 'goal_reached';
+        if (updates.participants) {
+          merged.currentQuantity = updates.participants.reduce((acc, p) => acc + (p.quantity || 0), 0);
+        }
+
+        if (merged.status === 'open' && merged.currentQuantity >= merged.minQuantity) {
+          merged.status = 'goal_reached';
+        }
+
+        await db.collection('group_buys').updateOne(
+          { id: cleanId },
+          { $set: merged }
+        );
+        updatedItem = merged;
+      }
+    }
+  } catch (err) {
+    console.error('Erreur updateGroupBuy sur MongoDB Atlas:', err);
   }
 
-  items[index] = updated;
-  saveGroupBuys(items);
-  return updated;
+  const items = await getAllGroupBuys();
+  const index = items.findIndex(item => item.id.toLowerCase() === cleanId);
+  if (index !== -1) {
+    const current = items[index];
+    const merged: GroupBuyItem = {
+      ...current,
+      ...updates,
+      currentQuantity: updates.participants 
+        ? updates.participants.reduce((acc, p) => acc + (p.quantity || 0), 0)
+        : (updates.currentQuantity !== undefined ? updates.currentQuantity : current.currentQuantity)
+    };
+
+    if (merged.status === 'open' && merged.currentQuantity >= merged.minQuantity) {
+      merged.status = 'goal_reached';
+    }
+
+    items[index] = merged;
+    global.__cs_groupbuys_cache = items;
+    writeLocalGroupBuys(items);
+    if (!updatedItem) updatedItem = merged;
+  }
+
+  return updatedItem;
 }
 
-export function deleteGroupBuy(id: string): boolean {
-  const items = getAllGroupBuys();
-  const filtered = items.filter(item => item.id.toLowerCase() !== id.trim().toLowerCase());
-  if (filtered.length === items.length) return false;
-  saveGroupBuys(filtered);
-  return true;
+export async function deleteGroupBuy(id: string): Promise<boolean> {
+  const cleanId = id.trim().toLowerCase();
+  let deleted = false;
+
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const res = await db.collection('group_buys').deleteOne({ id: cleanId });
+      if (res.deletedCount > 0) deleted = true;
+    }
+  } catch (err) {
+    console.error('Erreur deleteGroupBuy sur MongoDB Atlas:', err);
+  }
+
+  const items = await getAllGroupBuys();
+  const filtered = items.filter(item => item.id.toLowerCase() !== cleanId);
+  if (filtered.length !== items.length) {
+    deleted = true;
+    global.__cs_groupbuys_cache = filtered;
+    writeLocalGroupBuys(filtered);
+  }
+
+  return deleted;
 }
 
 export interface JoinGroupBuyPayload {
@@ -347,23 +438,21 @@ export interface JoinGroupBuyPayload {
   notes?: string;
 }
 
-export function joinGroupBuy(groupBuyId: string, payload: JoinGroupBuyPayload): {
+export async function joinGroupBuy(groupBuyId: string, payload: JoinGroupBuyPayload): Promise<{
   groupBuy: GroupBuyItem;
   participant: GroupBuyParticipant;
   ticketId: string;
-} {
-  const items = getAllGroupBuys();
-  const index = items.findIndex(item => item.id.toLowerCase() === groupBuyId.trim().toLowerCase());
-  if (index === -1) {
+}> {
+  const groupBuy = await getGroupBuyById(groupBuyId);
+  if (!groupBuy) {
     throw new Error('Vente en groupe introuvable.');
   }
 
-  const groupBuy = items[index];
   const qty = Number(payload.quantity) > 0 ? Number(payload.quantity) : 1;
   const now = new Date().toISOString();
 
   // 1. Créer le ticket officiel lié à la vente groupée
-  const tickets = getAllTickets();
+  const tickets = await getAllTickets();
   let newTicketId = generateTicketId();
   while (tickets.some(t => t.id === newTicketId)) {
     newTicketId = generateTicketId();
@@ -434,7 +523,7 @@ export function joinGroupBuy(groupBuyId: string, payload: JoinGroupBuyPayload): 
   };
 
   tickets.unshift(newTicket);
-  saveTickets(tickets);
+  await saveTickets(tickets);
 
   // 2. Créer l'enregistrement participant
   const participant: GroupBuyParticipant = {
@@ -450,18 +539,13 @@ export function joinGroupBuy(groupBuyId: string, payload: JoinGroupBuyPayload): 
     depositPaid: false
   };
 
-  groupBuy.participants.unshift(participant);
-  groupBuy.currentQuantity = groupBuy.participants.reduce((acc, p) => acc + (p.quantity || 0), 0);
-
-  if (groupBuy.status === 'open' && groupBuy.currentQuantity >= groupBuy.minQuantity) {
-    groupBuy.status = 'goal_reached';
-  }
-
-  items[index] = groupBuy;
-  saveGroupBuys(items);
+  const updatedParticipants = [participant, ...groupBuy.participants];
+  const updated = await updateGroupBuy(groupBuyId, {
+    participants: updatedParticipants
+  });
 
   return {
-    groupBuy,
+    groupBuy: updated || groupBuy,
     participant,
     ticketId: newTicketId
   };

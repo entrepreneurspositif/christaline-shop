@@ -36,7 +36,60 @@ const DEFAULT_SUBSCRIPTION: AdminSubscriptionData = {
   adminTelegramBotToken: ''
 };
 
+import { getDatabase } from './mongodb';
+
+let isMongoHydrated = false;
+
+function hydrateFromMongoBackground() {
+  if (isMongoHydrated) return;
+  isMongoHydrated = true;
+  getDatabase().then(async db => {
+    if (db) {
+      const doc = await db.collection('subscription').findOne({ _id: 'admin_subscription' as any });
+      if (doc) {
+        const { _id, ...rest } = doc;
+        const current = globalThis.__cs_subscription_data || DEFAULT_SUBSCRIPTION;
+        globalThis.__cs_subscription_data = {
+          ...current,
+          ...rest,
+          feexpayConfig: {
+            ...current.feexpayConfig,
+            ...(rest.feexpayConfig || {})
+          }
+        };
+      }
+    }
+  }).catch(() => {});
+}
+
+export async function readSubscriptionDataAsync(): Promise<AdminSubscriptionData> {
+  try {
+    const db = await getDatabase();
+    if (db) {
+      const doc = await db.collection('subscription').findOne({ _id: 'admin_subscription' as any });
+      if (doc) {
+        const { _id, ...rest } = doc;
+        const current = readSubscriptionData();
+        const merged: AdminSubscriptionData = {
+          ...current,
+          ...rest,
+          feexpayConfig: {
+            ...current.feexpayConfig,
+            ...(rest.feexpayConfig || {})
+          }
+        };
+        globalThis.__cs_subscription_data = merged;
+        return merged;
+      }
+    }
+  } catch (err) {
+    console.error('Erreur readSubscriptionDataAsync MongoDB:', err);
+  }
+  return readSubscriptionData();
+}
+
 export function readSubscriptionData(): AdminSubscriptionData {
+  hydrateFromMongoBackground();
   let result: AdminSubscriptionData = { ...DEFAULT_SUBSCRIPTION };
 
   // 1. Essai de lecture depuis data/subscription.json (fichier initial du projet)
@@ -147,6 +200,17 @@ export function writeSubscriptionData(data: AdminSubscriptionData) {
   } catch (error) {
     // Normal sur environnement serverless read-only
   }
+
+  // 4. Écrire dans MongoDB Atlas
+  getDatabase().then(db => {
+    if (db) {
+      db.collection('subscription').updateOne(
+        { _id: 'admin_subscription' as any },
+        { $set: { ...data, _id: 'admin_subscription' } },
+        { upsert: true }
+      ).catch(e => console.error('Erreur écriture subscription MongoDB:', e));
+    }
+  }).catch(() => {});
 }
 
 /**

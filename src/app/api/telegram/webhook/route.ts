@@ -61,8 +61,8 @@ export async function POST(request: Request) {
     // COMMANDE : /stats
     // ==========================================
     if (command === '/stats') {
-      const tickets = getAllTickets();
-      const groupBuys = getAllGroupBuys();
+      const tickets = await getAllTickets();
+      const groupBuys = await getAllGroupBuys();
 
       const totalTickets = tickets.length;
       const pendingQuote = tickets.filter(t => t.quote.status === 'pending').length;
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     // COMMANDE : /tickets
     // ==========================================
     if (command === '/tickets') {
-      const tickets = getAllTickets().slice(0, 5);
+      const tickets = (await getAllTickets()).slice(0, 5);
 
       if (tickets.length === 0) {
         await sendTelegramMessage('📭 Aucun ticket enregistré pour le moment.', { chatIdOverride: chatId });
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      const ticket = getTicketById(targetId);
+      const ticket = await getTicketById(targetId);
       if (!ticket) {
         await sendTelegramMessage(`❌ Le ticket <code>#${targetId}</code> est introuvable.`, { chatIdOverride: chatId });
         return NextResponse.json({ ok: true });
@@ -168,7 +168,7 @@ export async function POST(request: Request) {
     // COMMANDE : /ventes ou /groupbuys
     // ==========================================
     if (command === '/ventes' || command === '/groupbuys') {
-      const groupBuys = getAllGroupBuys();
+      const groupBuys = await getAllGroupBuys();
       if (groupBuys.length === 0) {
         await sendTelegramMessage('📭 Aucune vente en groupe actuellement.', { chatIdOverride: chatId });
         return NextResponse.json({ ok: true });
@@ -210,7 +210,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
 
-      const ticket = getTicketById(targetId);
+      const ticket = await getTicketById(targetId);
       if (!ticket) {
         await sendTelegramMessage(`❌ Le ticket <code>#${targetId}</code> est introuvable.`, { chatIdOverride: chatId });
         return NextResponse.json({ ok: true });
@@ -244,7 +244,7 @@ export async function POST(request: Request) {
       }
 
       const previousStatus = ticket.quote.status;
-      const updated = updateTicket(ticket.id, {
+      const updated = await updateTicket(ticket.id, {
         quote: {
           ...ticket.quote,
           status: mappedStatus
