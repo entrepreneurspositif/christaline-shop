@@ -38,7 +38,7 @@ export default function VentesGroupeesPage() {
   const { settings } = useSettings();
   const [groupBuys, setGroupBuys] = useState<GroupBuyItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'open' | 'goal_reached' | 'air' | 'sea'>('all');
+  const [filter, setFilter] = useState<'all' | 'open' | 'goal_reached' | 'air' | 'sea' | 'shein' | 'temu' | '1688'>('all');
   const [search, setSearch] = useState('');
 
   // Modal de participation
@@ -153,15 +153,57 @@ export default function VentesGroupeesPage() {
   // Filtrage des articles
   const filteredItems = groupBuys.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase()) ||
-                          item.description.toLowerCase().includes(search.toLowerCase());
+                          item.description.toLowerCase().includes(search.toLowerCase()) ||
+                          (item.platform || '').toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
 
     if (filter === 'open') return item.status === 'open';
     if (filter === 'goal_reached') return item.status === 'goal_reached';
     if (filter === 'air') return item.shippingMode === 'air';
     if (filter === 'sea') return item.shippingMode === 'sea';
+    if (filter === 'shein') return (item.platform || '').toLowerCase() === 'shein';
+    if (filter === 'temu') return (item.platform || '').toLowerCase() === 'temu';
+    if (filter === '1688') return (item.platform || '').toLowerCase() === '1688' || (item.platform || '').toLowerCase() === 'taobao';
     return true;
   });
+
+  const getPlatformBadge = (plat?: string) => {
+    const p = (plat || 'shein').toLowerCase();
+    if (p === 'shein') {
+      return (
+        <span className="bg-black text-white border border-stone-700 text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-xs">
+          🖤 SHEIN
+        </span>
+      );
+    }
+    if (p === 'temu') {
+      return (
+        <span className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-xs">
+          🧡 TEMU
+        </span>
+      );
+    }
+    if (p === '1688' || p === 'taobao') {
+      return (
+        <span className="bg-amber-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-xs">
+          🇨🇳 {p.toUpperCase()}
+        </span>
+      );
+    }
+    if (p === 'aliexpress') {
+      return (
+        <span className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-xs">
+          🌐 AliExpress
+        </span>
+      );
+    }
+    return (
+      <span className="bg-stone-900/80 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md uppercase">
+        {p.toUpperCase()}
+      </span>
+    );
+  };
+
 
   const getStatusBadge = (status: string, current: number, min: number) => {
     if (status === 'goal_reached' || current >= min) {
@@ -327,6 +369,39 @@ export default function VentesGroupeesPage() {
               >
                 🚢 Maritime (2-3 mois)
               </button>
+
+              <button
+                onClick={() => setFilter('shein')}
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  filter === 'shein'
+                    ? 'bg-black text-white shadow-xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                🖤 SHEIN ({groupBuys.filter(g => (g.platform || '').toLowerCase() === 'shein').length})
+              </button>
+
+              <button
+                onClick={() => setFilter('temu')}
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  filter === 'temu'
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                🧡 TEMU ({groupBuys.filter(g => (g.platform || '').toLowerCase() === 'temu').length})
+              </button>
+
+              <button
+                onClick={() => setFilter('1688')}
+                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  filter === '1688'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                🇨🇳 1688 / Taobao ({groupBuys.filter(g => (g.platform || '').toLowerCase() === '1688' || (g.platform || '').toLowerCase() === 'taobao').length})
+              </button>
             </div>
           </div>
 
@@ -390,9 +465,7 @@ export default function VentesGroupeesPage() {
                                 -{discountPct}%
                               </span>
                             )}
-                            <span className="bg-stone-900/80 backdrop-blur-md text-white text-[11px] font-bold px-2 py-0.5 rounded-md uppercase">
-                              {item.platform || 'SHEIN'}
-                            </span>
+                            {getPlatformBadge(item.platform)}
                           </div>
                         </div>
 

@@ -71,7 +71,9 @@ import {
   Zap,
   Flame,
   Tag,
-  Filter
+  Filter,
+  ShieldAlert,
+  KeyRound
 } from 'lucide-react';
 import { AnalyticsSummary, AnalyticsEvent } from '@/lib/analytics';
 import { useSettings } from '@/context/SettingsContext';
@@ -130,6 +132,13 @@ export default function AdminPage() {
   const [pendingPaymentRef, setPendingPaymentRef] = useState<string | null>(null);
   const [paymentUrl, setPaymentUrl] = useState<string | undefined>(undefined);
 
+  // Déverrouillage Super Admin d'urgence (si abonnement expiré)
+  const [superAdminUnlockPass, setSuperAdminUnlockPass] = useState('');
+  const [superAdminUnlockError, setSuperAdminUnlockError] = useState<string | null>(null);
+  const [unlockingSuperAdmin, setUnlockingSuperAdmin] = useState(false);
+  const [showSuperAdminUnlockForm, setShowSuperAdminUnlockForm] = useState(false);
+
+
   // État Test Telegram
   const [testingTelegram, setTestingTelegram] = useState(false);
   const [telegramTestResult, setTelegramTestResult] = useState<{
@@ -147,6 +156,7 @@ export default function AdminPage() {
   const [viewingParticipantsGb, setViewingParticipantsGb] = useState<GroupBuyItem | null>(null);
   const [gbSubTab, setGbSubTab] = useState<'active' | 'catalog'>('active');
   const [winningCategoryFilter, setWinningCategoryFilter] = useState<'all' | 'beaute' | 'electromenager' | 'hightech' | 'mode_bagagerie'>('all');
+  const [winningPlatformFilter, setWinningPlatformFilter] = useState<'all' | 'shein' | 'temu' | '1688' | 'aliexpress'>('all');
   const [winningSearch, setWinningSearch] = useState('');
   const [importingWinning, setImportingWinning] = useState(false);
 
@@ -613,12 +623,60 @@ export default function AdminPage() {
       const res = await fetch('/api/subscription/status');
       const data = await res.json();
       if (data.success && data.status) {
-        setSubscriptionInfo(data.status);
+        const isSuperAdminFlag = typeof window !== 'undefined' && (
+          sessionStorage.getItem('cs_is_super_admin') === 'true' || 
+          localStorage.getItem('cs_is_super_admin') === 'true' ||
+          localStorage.getItem('cs_super_admin_auth') === 'true'
+        );
+        setSubscriptionInfo({
+          ...data.status,
+          isSuperAdmin: isSuperAdminFlag || Boolean(data.status.isSuperAdmin)
+        });
       }
     } catch (err) {
       console.error('Erreur statut souscription:', err);
     }
   };
+
+  const handleSuperAdminUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSuperAdminUnlockError(null);
+    setUnlockingSuperAdmin(true);
+
+    try {
+      const res = await fetch('/api/subscription/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: superAdminUnlockPass.trim() })
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.success || !data.isSuperAdmin) {
+        throw new Error(data.error || 'Mot de passe Super Admin incorrect.');
+      }
+
+      setIsAuthenticated(true);
+      setClientAuth('super-admin', true);
+      setSubscriptionInfo({
+        isExpired: false,
+        expiresAt: data.expiresAt,
+        daysRemaining: data.daysRemaining || 30,
+        monthlyFeeCFA: data.monthlyFeeCFA || 15000,
+        subscriptionDurationDays: data.subscriptionDurationDays || 30,
+        isSuperAdmin: true
+      });
+      fetchTickets();
+      fetchSettings();
+      fetchGroupBuys();
+      fetchAnalytics();
+      fetchDeliveredOrders();
+    } catch (err: any) {
+      setSuperAdminUnlockError(err.message || 'Mot de passe Super Admin incorrect.');
+    } finally {
+      setUnlockingSuperAdmin(false);
+    }
+  };
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1277,6 +1335,196 @@ export default function AdminPage() {
           }}
         />
 
+      </div>
+    );
+  }
+
+  // VÉRIFICATION STRICTE DE L'ABONNEMENT ADMIN :
+  // Si l'abonnement a expiré et que l'administrateur n'est pas Super Admin,
+  // l'accès au tableau de bord est STRICTEMENT BLOQUÉ jusqu'au renouvellement FeexPay ou déverrouillage Super Admin
+  const isSuperAdminUser = Boolean(
+    subscriptionInfo?.isSuperAdmin || 
+    (typeof window !== 'undefined' && (
+      sessionStorage.getItem('cs_is_super_admin') === 'true' || 
+      localStorage.getItem('cs_is_super_admin') === 'true' ||
+      localStorage.getItem('cs_super_admin_auth') === 'true'
+    ))
+  );
+
+  if (subscriptionInfo?.isExpired && !isSuperAdminUser) {
+    return (
+      <div className="min-h-screen flex flex-col bg-stone-900 text-stone-100">
+        {isMobileMode ? (
+          <header className="bg-rose-950/90 border-b border-rose-800 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-amber-400/20 flex items-center justify-center">
+                <Crown className="w-4 h-4 text-amber-400" />
+              </div>
+              <span className="font-bold text-sm text-white">Christaline Admin</span>
+            </div>
+            <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full font-bold animate-pulse">Abonnement Expiré</span>
+          </header>
+        ) : (
+          <Navbar />
+        )}
+
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-xl w-full bg-stone-850 rounded-3xl p-6 sm:p-8 border border-red-500/40 shadow-2xl space-y-6 text-center relative overflow-hidden">
+            
+            {/* Halo de fond rouge alerte */}
+            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 bg-rose-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+            {/* Badge statut */}
+            <div className="inline-flex items-center gap-2 bg-red-500/20 border border-red-500/40 text-red-300 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider">
+              <ShieldAlert className="w-4 h-4 text-red-400 animate-pulse" />
+              <span>Accès Tableau de Bord Bloqué</span>
+            </div>
+
+            {/* Titre & Explication */}
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-white font-serif tracking-tight">
+                Abonnement Expiré
+              </h1>
+              <p className="text-xs sm:text-sm text-stone-300 mt-2 max-w-md mx-auto leading-relaxed">
+                Votre période d'administration a pris fin le{' '}
+                <strong className="text-rose-400">
+                  {subscriptionInfo?.expiresAt ? new Date(subscriptionInfo.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'récemment'}
+                </strong>.
+                Pour continuer à chiffrer les devis, gérer les ventes en groupe et suivre les colis, veuillez régler votre cotisation mensuelle.
+              </p>
+            </div>
+
+            {/* Récapitulatif Tarif & Durée */}
+            <div className="bg-stone-900/90 border border-stone-700/80 rounded-2xl p-4 sm:p-5 text-left space-y-3">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <span className="text-stone-400">Cotisation plateforme :</span>
+                <span className="font-black text-amber-400 text-base sm:text-lg">
+                  {(subscriptionInfo?.monthlyFeeCFA || 15000).toLocaleString('fr-FR')} FCFA
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-stone-400 pt-2 border-t border-stone-800">
+                <span>Durée du cycle :</span>
+                <span className="font-bold text-stone-200">{subscriptionInfo?.subscriptionDurationDays || 30} jours d'accès complet</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span>Modes de paiement :</span>
+                <span className="font-bold text-emerald-400">MTN, Moov, Celtiis & Carte Bancaire (FeexPay)</span>
+              </div>
+            </div>
+
+            {/* Boutons d'Action Principaux */}
+            <div className="space-y-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentSuccessData(null);
+                  setPaymentError(null);
+                  setShowRenewalModal(true);
+                }}
+                className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 hover:from-rose-700 hover:to-amber-600 text-white font-black text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-rose-950/60 transition-all active:scale-[0.98] cursor-pointer"
+              >
+                <Zap className="w-5 h-5 fill-white text-white" />
+                <span>Renouveler immédiatement mon accès via FeexPay</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowSuperAdminUnlockForm(!showSuperAdminUnlockForm)}
+                className="w-full py-2.5 px-4 rounded-xl bg-stone-800/80 hover:bg-stone-800 border border-stone-700 text-stone-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                <span>
+                  {showSuperAdminUnlockForm ? 'Masquer le déverrouillage Super Admin' : 'Déverrouiller avec le mot de passe Super Admin'}
+                </span>
+              </button>
+
+              {/* Formulaire déverrouillage Super Admin d'urgence */}
+              {showSuperAdminUnlockForm && (
+                <form onSubmit={handleSuperAdminUnlock} className="p-4 bg-stone-900/90 border border-amber-500/30 rounded-2xl space-y-3 text-left">
+                  <label className="block text-xs font-bold text-amber-300">
+                    Mot de passe Super Admin (Accès propriétaire permanent) :
+                  </label>
+                  {superAdminUnlockError && (
+                    <div className="p-2.5 bg-red-950/80 border border-red-800 rounded-lg text-red-300 text-xs">
+                      {superAdminUnlockError}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      required
+                      placeholder="Mot de passe Super Admin"
+                      value={superAdminUnlockPass}
+                      onChange={(e) => setSuperAdminUnlockPass(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-xl bg-stone-950 border border-stone-700 text-white text-xs outline-hidden focus:border-amber-400"
+                    />
+                    <button
+                      type="submit"
+                      disabled={unlockingSuperAdmin}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-xs rounded-xl transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      {unlockingSuperAdmin ? 'Vérification...' : 'Débloquer'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-xs text-stone-400 hover:text-white underline cursor-pointer"
+                >
+                  Se déconnecter de l'administration
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </main>
+
+        {!isMobileMode && <Footer />}
+
+        {/* Modal de renouvellement FeexPay (sur l'écran Paywall) */}
+        <FeexPayRenewalModal
+          isOpen={showRenewalModal}
+          onClose={() => {
+            setShowRenewalModal(false);
+            setWaitingForMobilePin(false);
+          }}
+          monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
+          subscriptionDurationDays={subscriptionInfo?.subscriptionDurationDays || 30}
+          renewalPhone={renewalPhone}
+          setRenewalPhone={setRenewalPhone}
+          renewalOperator={renewalOperator}
+          setRenewalOperator={setRenewalOperator}
+          processingPayment={processingPayment}
+          onSubmitRenewal={handleFeexPayRenewal}
+          paymentSuccessData={paymentSuccessData}
+          paymentError={paymentError}
+          waitingForMobilePin={waitingForMobilePin}
+          onManualCheckStatus={handleManualCheckPendingStatus}
+          feexpayMode={(subscriptionInfo as any)?.feexpayMode || 'SANDBOX'}
+          paymentUrl={paymentUrl}
+          onSuccessProceed={() => {
+            if (paymentSuccessData) {
+              setShowRenewalModal(false);
+              setWaitingForMobilePin(false);
+              setIsAuthenticated(true);
+              setSubscriptionInfo(prev => prev ? {
+                ...prev,
+                isExpired: false,
+                expiresAt: paymentSuccessData.expiresAt
+              } : null);
+              setClientAuth('admin', false);
+              fetchTickets();
+              fetchSettings();
+              fetchGroupBuys();
+              fetchAnalytics();
+              fetchDeliveredOrders();
+            }
+          }}
+        />
       </div>
     );
   }
@@ -3799,7 +4047,7 @@ export default function AdminPage() {
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
                     gbSubTab === 'catalog' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
                   }`}>
-                    10 Idées
+                    {WINNING_PRODUCTS_BENIN.length} Idées
                   </span>
                 </button>
               </div>
@@ -3810,14 +4058,14 @@ export default function AdminPage() {
                   onClick={handleImportAllWinningProducts}
                   disabled={importingWinning}
                   className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white font-bold text-xs flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
-                  title="Ajouter tous les 10 produits gagnants directement sur la page publique"
+                  title={`Ajouter tous les ${WINNING_PRODUCTS_BENIN.length} produits gagnants directement sur la page publique`}
                 >
                   {importingWinning ? (
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <Zap className="w-3.5 h-3.5 fill-white" />
                   )}
-                  <span>Tout importer sur le site (10 articles)</span>
+                  <span>Tout importer ({WINNING_PRODUCTS_BENIN.length} articles)</span>
                 </button>
               )}
             </div>
@@ -4000,7 +4248,7 @@ export default function AdminPage() {
                           </span>
                         </div>
                         <p className="text-xs sm:text-sm text-rose-100 mt-1 max-w-2xl leading-relaxed">
-                          Ces 10 articles sont les plus recherchés et vendus en ligne à Cotonou et Calavi. Cliquez sur <strong>"⚡ Lancer ce Groupage sur le Site"</strong> pour ouvrir le formulaire pré-rempli et publier l'offre en 1 clic.
+                          Ces <strong>{WINNING_PRODUCTS_BENIN.length} articles gagnants</strong> (SHEIN, TEMU, 1688...) sont les plus recherchés et vendus en ligne à Cotonou et Calavi. Cliquez sur <strong>"⚡ Lancer ce Groupage sur le Site"</strong> pour ouvrir le formulaire pré-rempli et publier l'offre en 1 clic.
                         </p>
                       </div>
                     </div>
@@ -4016,15 +4264,15 @@ export default function AdminPage() {
                       ) : (
                         <Zap className="w-4 h-4 fill-rose-600 text-rose-600" />
                       )}
-                      <span>Tout importer sur le site (10 articles)</span>
+                      <span>Tout importer sur le site ({WINNING_PRODUCTS_BENIN.length} articles)</span>
                     </button>
                   </div>
 
-                  {/* BARRE DE FILTRES & RECHERCHE */}
+                  {/* BARRE DE FILTRES CATÉGORIES & RECHERCHE */}
                   <div className="pt-3 border-t border-white/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
                       {[
-                        { id: 'all', label: 'Tous (10)' },
+                        { id: 'all', label: `Tous (${WINNING_PRODUCTS_BENIN.length})` },
                         { id: 'beaute', label: '💄 Beauté & Cheveux' },
                         { id: 'electromenager', label: '🍳 Cuisine & Électro' },
                         { id: 'hightech', label: '📱 High-Tech & Mobile' },
@@ -4051,10 +4299,38 @@ export default function AdminPage() {
                         type="text"
                         value={winningSearch}
                         onChange={(e) => setWinningSearch(e.target.value)}
-                        placeholder="Filtrer par nom ou mot-clé..."
+                        placeholder="Filtrer par nom, mot-clé ou plateforme..."
                         className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white/15 text-white placeholder-white/60 text-xs border border-white/20 focus:outline-hidden focus:bg-white/25"
                       />
                     </div>
+                  </div>
+
+                  {/* BARRE DE FILTRES PLATEFORMES (SHEIN, TEMU, 1688...) */}
+                  <div className="pt-2.5 border-t border-white/10 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-bold text-amber-200 flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5" />
+                      <span>Plateformes :</span>
+                    </span>
+                    {[
+                      { id: 'all', label: 'Toutes les plateformes' },
+                      { id: 'shein', label: '🖤 SHEIN' },
+                      { id: 'temu', label: '🧡 TEMU' },
+                      { id: '1688', label: '🇨🇳 1688 / Taobao' },
+                      { id: 'aliexpress', label: '🌐 AliExpress / Alibaba' }
+                    ].map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setWinningPlatformFilter(p.id as any)}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          winningPlatformFilter === p.id
+                            ? 'bg-amber-300 text-stone-900 shadow-xs'
+                            : 'bg-black/25 text-white hover:bg-black/40'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -4063,11 +4339,17 @@ export default function AdminPage() {
                   {WINNING_PRODUCTS_BENIN
                     .filter((wp) => {
                       const matchesCat = winningCategoryFilter === 'all' || wp.category === winningCategoryFilter;
+                      const matchesPlatform = winningPlatformFilter === 'all' ||
+                        (winningPlatformFilter === 'shein' && wp.platform === 'shein') ||
+                        (winningPlatformFilter === 'temu' && wp.platform === 'temu') ||
+                        (winningPlatformFilter === '1688' && (wp.platform === '1688' || wp.platform === 'taobao')) ||
+                        (winningPlatformFilter === 'aliexpress' && (wp.platform === 'aliexpress' || wp.platform === 'alibaba'));
                       const matchesSearch = !winningSearch || 
                         wp.title.toLowerCase().includes(winningSearch.toLowerCase()) || 
                         wp.description.toLowerCase().includes(winningSearch.toLowerCase()) ||
-                        wp.whyItSellsInBenin.toLowerCase().includes(winningSearch.toLowerCase());
-                      return matchesCat && matchesSearch;
+                        wp.whyItSellsInBenin.toLowerCase().includes(winningSearch.toLowerCase()) ||
+                        wp.platform.toLowerCase().includes(winningSearch.toLowerCase());
+                      return matchesCat && matchesPlatform && matchesSearch;
                     })
                     .map((product) => (
                       <div
@@ -5092,9 +5374,13 @@ export default function AdminPage() {
                     onChange={(e) => setGbPlatform(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs font-bold"
                   >
-                    <option value="shein">SHEIN</option>
-                    <option value="temu">TEMU</option>
-                    <option value="autre">Autre Fournisseur</option>
+                    <option value="shein">🖤 SHEIN</option>
+                    <option value="temu">🧡 TEMU</option>
+                    <option value="1688">🇨🇳 1688</option>
+                    <option value="taobao">🇨🇳 Taobao</option>
+                    <option value="aliexpress">🌐 AliExpress</option>
+                    <option value="alibaba">🏢 Alibaba</option>
+                    <option value="autre">✨ Autre Fournisseur</option>
                   </select>
                 </div>
               </div>

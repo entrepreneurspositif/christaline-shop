@@ -239,5 +239,136 @@ export const WINNING_PRODUCTS_BENIN: WinningProduct[] = [
     targetAudience: 'Femmes portant leurs cheveux naturels ou défrisés',
     profitMarginEstimateCFA: 6500,
     demandLevel: 'Très Forte'
+  },
+  {
+    id: 'wp-11',
+    title: 'Robe de Soirée Satinée avec Fente & Dos Nu Drapé (Collection SHEIN BAE)',
+    category: 'mode_bagagerie',
+    categoryLabel: 'Mode Femme & Soirée',
+    description: 'Superbe robe longue en satin soyeux haute brillance, coupe sirène flatteuse avec fente haute élégante et dos nu bénitier raffiné. Parfaite pour galas, mariages et fêtes à Cotonou.',
+    whyItSellsInBenin: 'SHEIN est la référence absolue de la mode féminine chez les Béninoises. Ce modèle fait fureur sur les statuts WhatsApp et s\'arrache pour les cérémonies de dot et soirées chic.',
+    imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&auto=format&fit=crop&q=80',
+    suggestedPriceCFA: 12500,
+    marketPriceCFA: 25000,
+    minQuantity: 10,
+    shippingMode: 'air',
+    platform: 'shein',
+    variants: [
+      'Bordeaux Royal - Taille S',
+      'Bordeaux Royal - Taille M',
+      'Vert Émeraude - Taille M',
+      'Vert Émeraude - Taille L',
+      'Noir Intense - Taille M'
+    ],
+    targetAudience: 'Jeunes femmes, invitées de mariage, étudiantes chic',
+    profitMarginEstimateCFA: 12500,
+    demandLevel: 'Ultra Élevée'
+  },
+  {
+    id: 'wp-12',
+    title: 'Sac à Main Matelassé Fermoir Métal & Chaîne Dorée (Style Luxe SHEIN)',
+    category: 'mode_bagagerie',
+    categoryLabel: 'Maroquinerie & Luxe',
+    description: 'Sac bandoulière iconique en similicuir grainé matelassé haute qualité, fermoir tournant en métal doré lourd et bandoulière réglable chaîne or entrelacée de cuir.',
+    whyItSellsInBenin: 'L\'accessoire star des commandes SHEIN au Bénin. Léger, classe et ultra-polyvalent pour le travail comme pour le culte du dimanche ou les réceptions.',
+    imageUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80',
+    suggestedPriceCFA: 9500,
+    marketPriceCFA: 18000,
+    minQuantity: 12,
+    shippingMode: 'air',
+    platform: 'shein',
+    variants: [
+      'Noir Matelassé Chaîne Or',
+      'Beige Crème Chaîne Or',
+      'Rose Poudré Chaîne Or'
+    ],
+    targetAudience: 'Femmes actives, lycéennes, commerçantes, amatrices de mode',
+    profitMarginEstimateCFA: 8500,
+    demandLevel: 'Ultra Élevée'
+  },
+  {
+    id: 'wp-13',
+    title: 'Mini Vidéoprojecteur Portable Full HD 1080P WiFi & Bluetooth (Cinéma Mobile)',
+    category: 'hightech',
+    categoryLabel: 'High-Tech & Divertissement',
+    description: 'Projecteur compact orientable à 180° intégrant Android, WiFi bi-bande et Bluetooth. Projette un écran géant jusqu\'à 130 pouces directement depuis un smartphone, clé USB ou console.',
+    whyItSellsInBenin: 'C\'est LE gadget tech viral n°1 de TEMU sur TikTok et Facebook au Bénin. Permet de regarder les matchs de football, séries et films en famille sur mur blanc.',
+    imageUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800&auto=format&fit=crop&q=80',
+    suggestedPriceCFA: 29500,
+    marketPriceCFA: 55000,
+    minQuantity: 8,
+    shippingMode: 'air',
+    platform: 'temu',
+    variants: [
+      'Blanc Pur - Pack Standard Télécommande',
+      'Blanc Pur - Pack Cinéma (+ Trépied 1.2m)'
+    ],
+    targetAudience: 'Jeunes branchés, passionnés de football, familles, cinéastes amateurs',
+    profitMarginEstimateCFA: 25500,
+    demandLevel: 'Ultra Élevée'
+  },
+  {
+    id: 'wp-14',
+    title: 'Mini Compresseur d\'Air Sans Fil Portatif avec Manomètre Numérique LED',
+    category: 'electromenager',
+    categoryLabel: 'Auto & Moto Pratique',
+    description: 'Gonfleur électrique portable puissant rechargeable USB-C avec arrêt automatique à la pression choisie, écran LCD rétroéclairé, torche LED de nuit et 4 embouts fournis.',
+    whyItSellsInBenin: 'Sauve la vie des conducteurs de moto (Zemidjan, scooters) et automobilistes à Cotonou et Calavi lors d\'une crevaison lente ou perte de pression sans devoir chercher un vulcanisateur.',
+    imageUrl: 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=800&auto=format&fit=crop&q=80',
+    suggestedPriceCFA: 14500,
+    marketPriceCFA: 27000,
+    minQuantity: 10,
+    shippingMode: 'air',
+    platform: 'temu',
+    variants: [
+      'Pack Complet Embouts Moto/Voiture/Ballon',
+      'Pack Deluxe Batterie Grande Autonomie 6000mAh'
+    ],
+    targetAudience: 'Conducteurs de moto, automobilistes, sportifs, livreurs',
+    profitMarginEstimateCFA: 12500,
+    demandLevel: 'Très Forte'
+  },
+  {
+    id: 'wp-15',
+    title: 'Brosse Chauffante Lissante Ionique Céramique Anti-Brûlure (Chauffe Rapide 30s)',
+    category: 'beaute',
+    categoryLabel: 'Coiffure Express',
+    description: 'Brosse électrique à picots en céramique tourmaline 3D générant des ions négatifs pour détendre et lisser les mèches rebelles, défriser sans aplatir et éliminer l\'électricité statique.',
+    whyItSellsInBenin: 'Gain de temps phénoménal le matin avant d\'aller au travail ou aux cours à l\'UAC. Remplace le fer à lisser traditionnel sans risquer de se brûler les oreilles ou le cuir chevelu.',
+    imageUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80',
+    suggestedPriceCFA: 8900,
+    marketPriceCFA: 18000,
+    minQuantity: 12,
+    shippingMode: 'air',
+    platform: 'temu',
+    variants: [
+      'Noir Doré Premium',
+      'Rose Métallisé Élégant',
+      'Vert Forêt Luxueux'
+    ],
+    targetAudience: 'Femmes actives, étudiantes, salons de coiffure de quartier',
+    profitMarginEstimateCFA: 9100,
+    demandLevel: 'Très Forte'
+  },
+  {
+    id: 'wp-16',
+    title: 'Caméra de Sécurité Solaire 4G / WiFi 360° Vision Nocturne & Détecteur Humain',
+    category: 'hightech',
+    categoryLabel: 'Sécurité & Maison',
+    description: 'Caméra motorisée PTZ étanche IP66 alimentée par panneau solaire et batterie intégrée. Alerte sur smartphone via application dédiée, audio bidirectionnel micro/haut-parleur et projecteur LED.',
+    whyItSellsInBenin: 'Idéale pour sécuriser chantiers en construction, parcelles, fermes ou boutiques au Bénin même en l\'absence de raccordement électrique SBEE.',
+    imageUrl: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&auto=format&fit=crop&q=80',
+    suggestedPriceCFA: 34500,
+    marketPriceCFA: 65000,
+    minQuantity: 6,
+    shippingMode: 'air',
+    platform: 'temu',
+    variants: [
+      'Modèle WiFi Double Antenne + Panneau Solaire',
+      'Modèle 4G Carte SIM Tout Opérateur (+5000 F)'
+    ],
+    targetAudience: 'Propriétaires de chantiers, commerçants, résidents de maisons individuelles',
+    profitMarginEstimateCFA: 30500,
+    demandLevel: 'Très Forte'
   }
 ];

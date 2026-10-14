@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { GroupBuyItem, GroupBuyParticipant, GroupBuyStatus, ShippingModeType } from './types';
-import { getAllTickets, saveTickets, generateTicketId, createDefaultTimeline } from './storage';
+import { getAllTickets, insertTicket, generateTicketId, createDefaultTimeline } from './storage';
 import { getDatabase } from './mongodb';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -522,8 +522,8 @@ export async function joinGroupBuy(groupBuyId: string, payload: JoinGroupBuyPayl
     }
   };
 
-  tickets.unshift(newTicket);
-  await saveTickets(tickets);
+  // 1. Sauvegarder le ticket de manière atomique (MongoDB Atlas + Cache + Local)
+  await insertTicket(newTicket as any);
 
   // 2. Créer l'enregistrement participant
   const participant: GroupBuyParticipant = {
@@ -539,7 +539,8 @@ export async function joinGroupBuy(groupBuyId: string, payload: JoinGroupBuyPayl
     depositPaid: false
   };
 
-  const updatedParticipants = [participant, ...groupBuy.participants];
+  const currentParticipants = Array.isArray(groupBuy.participants) ? groupBuy.participants : [];
+  const updatedParticipants = [participant, ...currentParticipants];
   const updated = await updateGroupBuy(groupBuyId, {
     participants: updatedParticipants
   });

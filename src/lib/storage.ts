@@ -136,9 +136,10 @@ function writeLocalTickets(tickets: TicketOrder[]): void {
   }
 }
 
-function stripMongoId<T extends { _id?: any }>(item: T): Omit<T, '_id'> {
-  const { _id, ...rest } = item;
-  return rest as any;
+function stripMongoId<T>(item: T): T {
+  if (!item || typeof item !== 'object') return item;
+  const { _id, ...rest } = item as Record<string, any>;
+  return rest as T;
 }
 
 export async function getAllTickets(): Promise<TicketOrder[]> {
@@ -146,7 +147,7 @@ export async function getAllTickets(): Promise<TicketOrder[]> {
     const db = await getDatabase();
     if (db) {
       const docs = await db.collection('tickets').find({}).toArray();
-      const tickets = docs.map(stripMongoId) as TicketOrder[];
+      const tickets = docs.map(d => stripMongoId(d)) as unknown as TicketOrder[];
       tickets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       global.__cs_tickets_cache = tickets;
       return tickets;
@@ -180,7 +181,7 @@ export async function getTicketById(id: string): Promise<TicketOrder | null> {
     if (db) {
       const doc = await db.collection('tickets').findOne({ id: cleanId });
       if (doc) {
-        return stripMongoId(doc) as TicketOrder;
+        return stripMongoId(doc) as unknown as TicketOrder;
       }
     }
   } catch (err) {
@@ -192,22 +193,49 @@ export async function getTicketById(id: string): Promise<TicketOrder | null> {
 }
 
 export async function saveTickets(tickets: TicketOrder[]): Promise<void> {
-  global.__cs_tickets_cache = tickets;
-  writeLocalTickets(tickets);
+  const cleaned: TicketOrder[] = tickets.map(t => stripMongoId(t));
+  global.__cs_tickets_cache = cleaned;
+  writeLocalTickets(cleaned);
 
   try {
     const db = await getDatabase();
     if (db) {
       const collection = db.collection('tickets');
       await collection.deleteMany({});
-      if (tickets.length > 0) {
-        await collection.insertMany(tickets);
+      if (cleaned.length > 0) {
+        await collection.insertMany(cleaned.map(t => ({ ...t })));
       }
     }
   } catch (err) {
     console.error('Erreur saveTickets sur MongoDB Atlas:', err);
   }
 }
+
+export async function insertTicket(newTicket: TicketOrder): Promise<TicketOrder> {
+  const cleanTicket = stripMongoId(newTicket);
+
+  try {
+    const db = await getDatabase();
+    if (db) {
+      await db.collection('tickets').insertOne({ ...cleanTicket });
+    }
+  } catch (err) {
+    console.error('Erreur insertTicket sur MongoDB Atlas:', err);
+  }
+
+  const tickets = await getAllTickets();
+  const existingIdx = tickets.findIndex(t => t.id === cleanTicket.id);
+  if (existingIdx !== -1) {
+    tickets[existingIdx] = cleanTicket;
+  } else {
+    tickets.unshift(cleanTicket);
+  }
+  global.__cs_tickets_cache = tickets;
+  writeLocalTickets(tickets);
+
+  return cleanTicket;
+}
+
 
 export interface CreateTicketPayload {
   shippingMode?: ShippingModeType;
@@ -303,20 +331,7 @@ export async function createNewTicket(payload: CreateTicketPayload): Promise<Tic
     }
   };
 
-  try {
-    const db = await getDatabase();
-    if (db) {
-      await db.collection('tickets').insertOne({ ...newTicket });
-    }
-  } catch (err) {
-    console.error('Erreur createNewTicket MongoDB Atlas:', err);
-  }
-
-  tickets.unshift(newTicket);
-  global.__cs_tickets_cache = tickets;
-  writeLocalTickets(tickets);
-
-  return newTicket;
+  return await insertTicket(newTicket);
 }
 
 export async function updateTicket(id: string, updates: Partial<TicketOrder>): Promise<TicketOrder | null> {

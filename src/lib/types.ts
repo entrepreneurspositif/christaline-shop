@@ -94,24 +94,45 @@ export interface TicketOrder {
 
 export const PLATFORM_CONFIG: Record<string, { name: string; color: string; bg: string; border: string; logoText: string }> = {
   shein: {
-    name: 'Shein',
+    name: 'SHEIN',
     color: 'text-black',
-    bg: 'bg-black text-white',
+    bg: 'bg-black text-white border border-stone-800',
     border: 'border-black',
     logoText: 'SHEIN'
   },
   temu: {
-    name: 'Temu',
-    color: 'text-amber-600',
+    name: 'TEMU',
+    color: 'text-orange-600',
     bg: 'bg-gradient-to-r from-orange-500 to-amber-600 text-white',
     border: 'border-orange-500',
     logoText: 'TEMU'
   },
+  '1688': {
+    name: '1688',
+    color: 'text-amber-700',
+    bg: 'bg-gradient-to-r from-amber-600 to-orange-700 text-white',
+    border: 'border-amber-600',
+    logoText: '1688'
+  },
+  taobao: {
+    name: 'Taobao',
+    color: 'text-orange-600',
+    bg: 'bg-orange-600 text-white',
+    border: 'border-orange-600',
+    logoText: 'TAOBAO'
+  },
+  aliexpress: {
+    name: 'AliExpress',
+    color: 'text-red-600',
+    bg: 'bg-red-600 text-white',
+    border: 'border-red-600',
+    logoText: 'ALIEXPRESS'
+  },
   alibaba: {
     name: 'Alibaba',
-    color: 'text-orange-600',
-    bg: 'bg-orange-500 text-white',
-    border: 'border-orange-500',
+    color: 'text-amber-600',
+    bg: 'bg-amber-600 text-white',
+    border: 'border-amber-500',
     logoText: 'ALIBABA'
   },
   autre: {
