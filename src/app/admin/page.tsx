@@ -1349,12 +1349,6 @@ export default function AdminPage() {
                 >
                   Se déconnecter de l'administration
                 </button>
-                <div className="text-[11px] text-stone-500 pt-3 border-t border-stone-800 w-full text-center">
-                  Direction ou Propriétaire ?{' '}
-                  <Link href="/super-admin" className="text-amber-400 hover:text-amber-300 underline font-semibold">
-                    Accéder au Portail Super Admin ↗
-                  </Link>
-                </div>
               </div>
             </div>
 
@@ -1471,7 +1465,7 @@ export default function AdminPage() {
               </button>
             </form>
 
-            {/* Renouvellement FeexPay & Accès Super Admin */}
+            {/* Renouvellement FeexPay */}
             <div className="pt-3 border-t border-stone-700/60 space-y-2.5">
               <button
                 type="button"
@@ -1488,12 +1482,6 @@ export default function AdminPage() {
 
               <div className="flex flex-col items-center justify-center gap-1 text-[11px] text-stone-500 pt-1">
                 <span>Paiement sécurisé FeexPay Bénin • MoMo, Moov, Celtiis & Carte</span>
-                <span className="text-stone-600 pt-1 border-t border-stone-700/40 w-full text-center">
-                  Direction de la plateforme ?{' '}
-                  <Link href="/super-admin" className="text-amber-400/90 hover:text-amber-300 underline font-semibold">
-                    Portail Super Admin ↗
-                  </Link>
-                </span>
               </div>
             </div>
 
@@ -1588,40 +1576,6 @@ export default function AdminPage() {
 
       <main className={`flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8 ${isMobileMode ? 'pb-28 pt-4' : ''}`}>
         
-        {/* BANDEAU SUPERVISEUR (SI CONNECTÉ EN TANT QUE SUPER ADMIN SUR /admin) */}
-        {subscriptionInfo?.isSuperAdmin && (
-          <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-stone-900 border border-amber-500/40 rounded-3xl p-5 sm:p-6 text-stone-900 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-stone-950 flex items-center justify-center font-black shadow-md shrink-0">
-                <Crown className="w-6 h-6 fill-stone-950 text-stone-950" />
-              </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-serif font-black text-stone-900 text-base sm:text-lg">
-                    Mode Superviseur Actif
-                  </span>
-                  <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-stone-950 px-2.5 py-0.5 rounded-full shadow-2xs">
-                    Direction Plateforme
-                  </span>
-                </div>
-                <p className="text-xs text-stone-600 max-w-2xl">
-                  Vous consultez l&apos;espace boutique en tant que Super Admin. Vous disposez d&apos;une vue complète des commandes, devis et paramètres sans restriction d&apos;abonnement.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href="/super-admin"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-amber-400 font-bold text-xs shadow-md transition-all active:scale-95"
-              >
-                <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span>Console Super Admin ↗</span>
-              </Link>
-            </div>
-          </div>
-        )}
-
         {/* BANDEAU EN-TÊTE ADMIN AVEC ONGLETS */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -5134,23 +5088,15 @@ export default function AdminPage() {
                   </button>
                 </div>
 
-                {/* SÉPARATION PROFESSIONNELLE AVEC LE SUPER ADMIN */}
+                {/* ASSISTANCE & SUPPORT BOUTIQUE */}
                 <div className="bg-stone-50 rounded-3xl p-6 border border-stone-200 space-y-3">
                   <div className="flex items-center gap-2 text-stone-700 font-bold text-xs uppercase tracking-wider">
                     <ShieldAlert className="w-4 h-4 text-stone-500" />
-                    <span>Gouvernance &amp; Propriété</span>
+                    <span>Assistance &amp; Facturation</span>
                   </div>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    La configuration générale de la plateforme (tarification, clés API FeexPay, réinitialisations directes et administration des accès) relève exclusivement de la Direction sur le <strong>Portail Super Admin</strong>.
+                    Pour toute question relative à votre compte, à vos règlements ou à la prolongation de votre formule boutique, contactez le service client Christaline Shop.
                   </p>
-                  <div className="pt-2">
-                    <Link
-                      href="/super-admin"
-                      className="inline-flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 font-bold underline"
-                    >
-                      <span>Accéder au Portail Direction / Super Admin ↗</span>
-                    </Link>
-                  </div>
                 </div>
 
               </div>
