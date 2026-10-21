@@ -211,14 +211,25 @@ export default function SuperAdminPage() {
   };
 
   // Actions manuelles
-  const triggerAction = async (action: 'generate_password' | 'extend_days' | 'revoke_access', days = 30) => {
-    if (!confirm(
-      action === 'revoke_access' 
-        ? "Voulez-vous vraiment bloquer l'accès administrateur immédiatement ? L'admin devra payer sur FeexPay pour continuer."
-        : action === 'generate_password'
-        ? "Générer un nouveau mot de passe Admin pour 1 mois ?"
-        : `Prolonger l'accès de ${days} jours gratuitement ?`
-    )) return;
+  const triggerAction = async (
+    action: 'generate_password' | 'extend_days' | 'revoke_access', 
+    days = 30,
+    grantFreeDays = false
+  ) => {
+    let confirmMsg = '';
+    if (action === 'revoke_access') {
+      confirmMsg = "Voulez-vous vraiment bloquer l'accès administrateur immédiatement ? L'admin devra régler sa cotisation sur FeexPay pour continuer.";
+    } else if (action === 'generate_password') {
+      if (grantFreeDays) {
+        confirmMsg = `Générer un nouveau mot de passe Admin et lui offrir ${days} jours d'accès gratuit (sans paiement) ?`;
+      } else {
+        confirmMsg = "Générer un nouveau mot de passe Admin ? L'accès sera VERROUILLÉ : l'administrateur devra obligatoirement payer sur FeexPay pour débloquer son tableau de bord.";
+      }
+    } else {
+      confirmMsg = `Prolonger l'accès du mot de passe actuel de ${days} jours gratuitement ?`;
+    }
+
+    if (!confirm(confirmMsg)) return;
 
     setActionSuccess(null);
     setActionError(null);
@@ -230,7 +241,8 @@ export default function SuperAdminPage() {
         body: JSON.stringify({
           masterPassword,
           action,
-          days
+          days,
+          grantFreeDays
         })
       });
 
@@ -241,10 +253,10 @@ export default function SuperAdminPage() {
 
       setActionSuccess(data.message);
       await loadSuperAdminData(masterPassword);
-      setTimeout(() => setActionSuccess(null), 4000);
+      setTimeout(() => setActionSuccess(null), 5000);
     } catch (err: any) {
       setActionError(err.message || 'Une erreur est survenue');
-      setTimeout(() => setActionError(null), 4000);
+      setTimeout(() => setActionError(null), 5000);
     }
   };
 
@@ -641,21 +653,68 @@ export default function SuperAdminPage() {
             En tant que Super Admin, vous pouvez forcer la génération d'un nouveau mot de passe, accorder un mois gratuit, ou révoquer immédiatement l'accès d'un clic :
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 pt-1">
+            {/* 1. NOUVEAU CODE AVEC PAIEMENT OBLIGATOIRE (PAR DÉFAUT) */}
             <button
               type="button"
-              onClick={() => triggerAction('generate_password')}
+              onClick={() => triggerAction('generate_password', durationDaysInput || 30, false)}
               className="p-4 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
             >
               <span className="flex items-center gap-1.5 font-black text-amber-200">
-                <RefreshCw className="w-4 h-4 text-amber-400" />
-                <span>Générer Clé Admin (+{durationDaysInput || 30}j)</span>
+                <Key className="w-4 h-4 text-amber-400" />
+                <span>Générer Clé Admin (Paiement Requis 🔒)</span>
               </span>
               <span className="text-[11px] text-stone-400 font-normal">
-                Crée une nouvelle clé, prolonge de {durationDaysInput || 30}j et l'envoie sur Telegram
+                Crée une clé admin verrouillée : l'admin <strong>doit payer via FeexPay</strong> pour entrer dans le tableau de bord
               </span>
             </button>
 
+            {/* 2. NOUVEAU CODE AVEC ACCÈS GRATUIT OFFERT */}
+            <button
+              type="button"
+              onClick={() => triggerAction('generate_password', durationDaysInput || 30, true)}
+              className="p-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5 font-black text-emerald-200">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span>Offrir Clé Gratuite (+{durationDaysInput || 30}j 🎁)</span>
+              </span>
+              <span className="text-[11px] text-stone-400 font-normal">
+                Crée une nouvelle clé et accorde {durationDaysInput || 30} jours d'accès direct sans aucun paiement
+              </span>
+            </button>
+
+            {/* 3. PROLONGER LA CLÉ ACTUELLE */}
+            <button
+              type="button"
+              onClick={() => triggerAction('extend_days', durationDaysInput || 30)}
+              className="p-4 rounded-2xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 text-teal-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5 font-black text-teal-200">
+                <Calendar className="w-4 h-4 text-teal-400" />
+                <span>Prolonger Clé Actuelle (+{durationDaysInput || 30}j)</span>
+              </span>
+              <span className="text-[11px] text-stone-400 font-normal">
+                Conserve le mot de passe actuel et repousse l'expiration de {durationDaysInput || 30} jours
+              </span>
+            </button>
+
+            {/* 4. BLOQUER / RÉVOQUER IMMÉDIATEMENT */}
+            <button
+              type="button"
+              onClick={() => triggerAction('revoke_access')}
+              className="p-4 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5 font-black text-rose-200">
+                <XCircle className="w-4 h-4 text-rose-400" />
+                <span>Bloquer l'Accès Immédiatement ⛔</span>
+              </span>
+              <span className="text-[11px] text-stone-400 font-normal">
+                Verrouille l'espace admin d'un coup : oblige l'admin à régler sur FeexPay
+              </span>
+            </button>
+
+            {/* 5. ENVOI TELEGRAM */}
             <button
               type="button"
               disabled={sendingTelegram}
@@ -664,38 +723,10 @@ export default function SuperAdminPage() {
             >
               <span className="flex items-center gap-1.5 font-black text-sky-200">
                 {sendingTelegram ? <RefreshCw className="w-4 h-4 animate-spin text-sky-400" /> : <Send className="w-4 h-4 text-sky-400" />}
-                <span>Envoyer Mot de Passe sur Telegram 📲</span>
+                <span>Envoyer sur Telegram 📲</span>
               </span>
               <span className="text-[11px] text-stone-400 font-normal">
-                Transmet le mot de passe actif directement au compte Telegram configuré
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => triggerAction('extend_days', durationDaysInput || 30)}
-              className="p-4 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
-            >
-              <span className="flex items-center gap-1.5 font-black text-emerald-200">
-                <Calendar className="w-4 h-4 text-emerald-400" />
-                <span>Prolonger (+{durationDaysInput || 30} Jours)</span>
-              </span>
-              <span className="text-[11px] text-stone-400 font-normal">
-                Conserve le mot de passe actuel et repousse l'expiration
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => triggerAction('revoke_access')}
-              className="p-4 rounded-2xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 font-bold text-xs flex flex-col gap-1 text-left transition-colors cursor-pointer"
-            >
-              <span className="flex items-center gap-1.5 font-black text-rose-200">
-                <XCircle className="w-4 h-4 text-rose-400" />
-                <span>Bloquer / Expirer l'Accès Maintenant</span>
-              </span>
-              <span className="text-[11px] text-stone-400 font-normal">
-                Verrouille l'espace admin : oblige l'admin à régler sur FeexPay
+                Transmet le code actif et son statut (Payé ou En attente) sur le compte Telegram
               </span>
             </button>
           </div>

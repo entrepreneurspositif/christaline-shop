@@ -10,7 +10,7 @@ import { notifyNewAdminPasswordTelegram } from '@/lib/telegram';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { masterPassword, action, days } = body;
+    const { masterPassword, action, days, grantFreeDays } = body;
 
     const data = await readSubscriptionDataAsync();
 
@@ -23,15 +23,20 @@ export async function POST(request: Request) {
     const baseUrl = host ? `${protocol}://${host}` : '';
 
     if (action === 'generate_password') {
-      const res = await superAdminManualGeneratePasswordAsync();
+      const isFreeGift = Boolean(grantFreeDays);
+      const extensionDays = Number(days) || 30;
+      const res = await superAdminManualGeneratePasswordAsync({
+        grantFreeDays: isFreeGift,
+        durationDays: extensionDays
+      });
 
       // Transmission sur Telegram
       notifyNewAdminPasswordTelegram({
         newPassword: res.newPassword,
         expiresAt: res.expiresAt,
-        amountCFA: 0,
-        reference: 'GENERATION_SUPER_ADMIN',
-        operator: 'Super Admin Manuel',
+        amountCFA: isFreeGift ? 0 : data.monthlyFeeCFA,
+        reference: isFreeGift ? 'OFFRE_SUPER_ADMIN_GRATUIT' : 'CLE_ADMIN_PAIEMENT_REQUIS',
+        operator: isFreeGift ? 'Super Admin Manuel (Offert)' : 'En attente de paiement FeexPay',
         source: 'super_admin',
         baseUrl
       }).catch(err => {
@@ -40,9 +45,12 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: 'Nouveau mot de passe généré pour 1 mois (30 jours) et envoyé sur Telegram',
+        message: isFreeGift 
+          ? `Nouveau code généré et offert pour ${extensionDays} jours ! Transmis sur Telegram.`
+          : `Nouveau code généré avec succès (Accès verrouillé : Paiement FeexPay de ${data.monthlyFeeCFA.toLocaleString('fr-FR')} FCFA obligatoire pour activer). Transmis sur Telegram.`,
         newPassword: res.newPassword,
-        expiresAt: res.expiresAt
+        expiresAt: res.expiresAt,
+        isExpired: res.isExpired
       });
     }
 

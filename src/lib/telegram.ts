@@ -339,6 +339,7 @@ export async function notifyNewAdminPasswordTelegram(params: {
     }
 
     const expiryDate = new Date(params.expiresAt);
+    const isLockedAwaitingPayment = Date.now() >= expiryDate.getTime();
     const expiryFormatted = expiryDate.toLocaleDateString('fr-FR', {
       day: '2-digit',
       month: 'long',
@@ -348,15 +349,21 @@ export async function notifyNewAdminPasswordTelegram(params: {
     const isSuperAdminGen = params.source === 'super_admin' || !params.amountCFA;
     const adminUrl = params.baseUrl ? `${params.baseUrl}/admin` : 'https://christalineshop.com/admin';
 
-    const message = 
-      `🔐 <b>NOUVEAU MOT DE PASSE ADMIN — CHRISTALINE SHOP</b>\n\n` +
-      `Votre accès administrateur mensuel a été activé avec succès !\n\n` +
-      `🔑 <b>Mot de passe :</b> <code>${escapeHtml(params.newPassword)}</code>\n` +
-      `⏳ <b>Valide jusqu'au :</b> <b>${escapeHtml(expiryFormatted)}</b> (30 jours)\n\n` +
-      `💰 <b>Tarif :</b> ${isSuperAdminGen ? 'Attribution Super Admin (Offert)' : formatCFA(params.amountCFA || 15000)}\n` +
-      (params.operator ? `💳 <b>Moyen :</b> ${escapeHtml(params.operator)}\n` : '') +
-      (params.reference ? `🔖 <b>Réf :</b> <code>${escapeHtml(params.reference)}</code>\n\n` : '\n') +
-      `🛡️ <b>Sécurité renforcée :</b> <i>Pour protéger la boutique, les liens de connexion directe à l'administration ne sont pas affichés publiquement sur le site. Cliquez sur le bouton ci-dessous pour accéder directement à votre espace :</i>`;
+    const message = isLockedAwaitingPayment
+      ? `🔐 <b>NOUVEAU CODE ADMIN — CHRISTALINE SHOP</b>\n\n` +
+        `Un code d'accès administrateur a été configuré pour votre compte.\n\n` +
+        `🔑 <b>Code d'accès :</b> <code>${escapeHtml(params.newPassword)}</code>\n` +
+        `⚠️ <b>Statut :</b> <b>EN ATTENTE DE PAIEMENT (Accès Verrouillé)</b>\n` +
+        `💰 <b>Cotisation :</b> <b>${formatCFA(params.amountCFA || 15000)}</b>\n\n` +
+        `👉 <i>Pour débloquer l'accès au tableau de bord, saisissez ce code sur votre espace admin et réglez la cotisation via FeexPay (MoMo, Moov, Celtiis).</i>`
+      : `🔐 <b>ACCÈS ADMIN ACTIVÉ — CHRISTALINE SHOP</b>\n\n` +
+        `Votre accès administrateur mensuel est actif avec succès !\n\n` +
+        `🔑 <b>Mot de passe :</b> <code>${escapeHtml(params.newPassword)}</code>\n` +
+        `⏳ <b>Valide jusqu'au :</b> <b>${escapeHtml(expiryFormatted)}</b>\n\n` +
+        `💰 <b>Tarif :</b> ${isSuperAdminGen ? 'Attribution Super Admin (Offert)' : formatCFA(params.amountCFA || 15000)}\n` +
+        (params.operator ? `💳 <b>Moyen :</b> ${escapeHtml(params.operator)}\n` : '') +
+        (params.reference ? `🔖 <b>Réf :</b> <code>${escapeHtml(params.reference)}</code>\n\n` : '\n') +
+        `🛡️ <b>Sécurité :</b> <i>Cliquez sur le bouton ci-dessous pour accéder directement à votre espace :</i>`;
 
     const replyMarkup = {
       inline_keyboard: [

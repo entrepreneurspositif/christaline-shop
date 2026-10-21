@@ -20,8 +20,8 @@ declare global {
   var __cs_subscription_data: AdminSubscriptionData | undefined;
 }
 
-// Date d'expiration initiale : 30 jours à partir de maintenant
-const initialExpiration = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+// Date d'expiration initiale : expirée par défaut (l'administrateur DOIT régler son abonnement pour activer l'accès)
+const initialExpiration = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
 const DEFAULT_SUBSCRIPTION: AdminSubscriptionData = {
   superAdminPassword: process.env.SUPER_ADMIN_PASSWORD?.trim() || 'superadmin2026',
@@ -481,56 +481,85 @@ export function processSuccessfulPayment(params: {
 /**
  * Actions manuelles pour le Super Admin
  */
-export async function superAdminManualGeneratePasswordAsync(): Promise<{ newPassword: string; expiresAt: string }> {
+export async function superAdminManualGeneratePasswordAsync(options?: { 
+  grantFreeDays?: boolean; 
+  durationDays?: number 
+}): Promise<{ newPassword: string; expiresAt: string; isExpired: boolean }> {
   const data = await readSubscriptionDataAsync();
   const newPassword = generateRandomAdminPassword();
-  const durationDays = data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30;
-  const newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+  const grantFree = Boolean(options?.grantFreeDays);
+  const durationDays = (options?.durationDays && options.durationDays > 0)
+    ? options.durationDays
+    : (data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30);
 
-  const record: SubscriptionPaymentRecord = {
-    id: `manual_${Date.now()}`,
-    reference: 'GENERATION_SUPER_ADMIN',
-    amountCFA: 0,
-    date: new Date().toISOString(),
-    status: 'SUCCESS',
-    operator: 'Super Admin Manuel',
-    generatedPassword: newPassword,
-    validUntil: newExpiresAt
-  };
+  let newExpiresAt: string;
+
+  if (grantFree) {
+    // Si le Super Admin offre expressément l'accès gratuit
+    newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+    const record: SubscriptionPaymentRecord = {
+      id: `manual_gift_${Date.now()}`,
+      reference: 'OFFRE_SUPER_ADMIN_GRATUIT',
+      amountCFA: 0,
+      date: new Date().toISOString(),
+      status: 'SUCCESS',
+      operator: 'Super Admin Manuel (Accès Offert)',
+      generatedPassword: newPassword,
+      validUntil: newExpiresAt
+    };
+    data.paymentHistory.unshift(record);
+  } else {
+    // PAR DÉFAUT : Le code est généré verrouillé / expiré.
+    // L'administrateur DOIT obligatoirement régler sa cotisation via FeexPay pour y avoir accès.
+    newExpiresAt = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  }
 
   data.activeAdminPassword = newPassword;
   data.passwordExpiresAt = newExpiresAt;
-  data.paymentHistory.unshift(record);
 
   await writeSubscriptionDataAsync(data);
 
-  return { newPassword, expiresAt: newExpiresAt };
+  const isExpired = Date.now() >= new Date(newExpiresAt).getTime();
+  return { newPassword, expiresAt: newExpiresAt, isExpired };
 }
 
-export function superAdminManualGeneratePassword(): { newPassword: string; expiresAt: string } {
+export function superAdminManualGeneratePassword(options?: { 
+  grantFreeDays?: boolean; 
+  durationDays?: number 
+}): { newPassword: string; expiresAt: string; isExpired: boolean } {
   const data = readSubscriptionData();
   const newPassword = generateRandomAdminPassword();
-  const durationDays = data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30;
-  const newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+  const grantFree = Boolean(options?.grantFreeDays);
+  const durationDays = (options?.durationDays && options.durationDays > 0)
+    ? options.durationDays
+    : (data.subscriptionDurationDays && data.subscriptionDurationDays > 0 ? data.subscriptionDurationDays : 30);
 
-  const record: SubscriptionPaymentRecord = {
-    id: `manual_${Date.now()}`,
-    reference: 'GENERATION_SUPER_ADMIN',
-    amountCFA: 0,
-    date: new Date().toISOString(),
-    status: 'SUCCESS',
-    operator: 'Super Admin Manuel',
-    generatedPassword: newPassword,
-    validUntil: newExpiresAt
-  };
+  let newExpiresAt: string;
+
+  if (grantFree) {
+    newExpiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+    const record: SubscriptionPaymentRecord = {
+      id: `manual_gift_${Date.now()}`,
+      reference: 'OFFRE_SUPER_ADMIN_GRATUIT',
+      amountCFA: 0,
+      date: new Date().toISOString(),
+      status: 'SUCCESS',
+      operator: 'Super Admin Manuel (Accès Offert)',
+      generatedPassword: newPassword,
+      validUntil: newExpiresAt
+    };
+    data.paymentHistory.unshift(record);
+  } else {
+    newExpiresAt = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  }
 
   data.activeAdminPassword = newPassword;
   data.passwordExpiresAt = newExpiresAt;
-  data.paymentHistory.unshift(record);
 
   writeSubscriptionData(data);
 
-  return { newPassword, expiresAt: newExpiresAt };
+  const isExpired = Date.now() >= new Date(newExpiresAt).getTime();
+  return { newPassword, expiresAt: newExpiresAt, isExpired };
 }
 
 export async function superAdminExtendDaysAsync(days?: number): Promise<{ expiresAt: string; daysRemaining: number }> {

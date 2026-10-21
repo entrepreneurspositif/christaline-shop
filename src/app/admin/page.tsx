@@ -84,6 +84,7 @@ import { WINNING_PRODUCTS_BENIN, WinningProduct } from '@/lib/winningProductsDat
 
 export default function AdminPage() {
   const { refreshSettings } = useSettings();
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -239,20 +240,61 @@ export default function AdminPage() {
         setIsMobileMode(true);
       }
     }
-    fetchSubscriptionStatus();
-    const isAuth = sessionStorage.getItem('cs_admin_auth') || localStorage.getItem('cs_admin_auth');
-    if (isAuth === 'true') {
-      setIsAuthenticated(true);
-      const isSuperAdminFlag = sessionStorage.getItem('cs_is_super_admin') === 'true' || localStorage.getItem('cs_is_super_admin') === 'true';
-      if (isSuperAdminFlag) {
-        setSubscriptionInfo(prev => prev ? { ...prev, isSuperAdmin: true } : null);
+
+    const initAuthAndSubscription = async () => {
+      try {
+        // 1. Lire le statut officiel de souscription depuis le serveur
+        const res = await fetch('/api/subscription/status');
+        const data = await res.json();
+        const status = data?.status;
+
+        const isSuperAdminFlag = typeof window !== 'undefined' && (
+          sessionStorage.getItem('cs_is_super_admin') === 'true' || 
+          localStorage.getItem('cs_is_super_admin') === 'true' ||
+          localStorage.getItem('cs_super_admin_auth') === 'true'
+        );
+
+        const isAuth = typeof window !== 'undefined' && (
+          sessionStorage.getItem('cs_admin_auth') === 'true' || 
+          localStorage.getItem('cs_admin_auth') === 'true'
+        );
+
+        if (status) {
+          setSubscriptionInfo({
+            ...status,
+            isSuperAdmin: isSuperAdminFlag || Boolean(status.isSuperAdmin)
+          });
+        }
+
+        // VERROU STRICT : Si l'abonnement a expiré et que l'utilisateur n'est pas Super Admin,
+        // l'accès au tableau de bord est INTERDIT. On purge la session locale et on bloque tout chargement !
+        if (status?.isExpired && !isSuperAdminFlag) {
+          setIsAuthenticated(false);
+          setClientAuth('none');
+          setCheckingAuth(false);
+          return;
+        }
+
+        // Si l'abonnement est actif ou si Super Admin, restaurer la session authentifiée
+        if (isAuth || isSuperAdminFlag) {
+          setIsAuthenticated(true);
+          fetchTickets();
+          fetchSettings();
+          fetchGroupBuys();
+          fetchAnalytics();
+          fetchDeliveredOrders();
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error('Erreur initialisation souscription admin:', err);
+        setIsAuthenticated(false);
+      } finally {
+        setCheckingAuth(false);
       }
-      fetchTickets();
-      fetchSettings();
-      fetchGroupBuys();
-      fetchAnalytics();
-      fetchDeliveredOrders();
-    }
+    };
+
+    initAuthAndSubscription();
   }, []);
 
   const fetchGroupBuys = async () => {
@@ -632,6 +674,12 @@ export default function AdminPage() {
           ...data.status,
           isSuperAdmin: isSuperAdminFlag || Boolean(data.status.isSuperAdmin)
         });
+
+        // Verrouillage immédiat si l'abonnement expire pendant la session
+        if (data.status.isExpired && !isSuperAdminFlag) {
+          setIsAuthenticated(false);
+          setClientAuth('none');
+        }
       }
     } catch (err) {
       console.error('Erreur statut souscription:', err);
@@ -1218,123 +1266,31 @@ export default function AdminPage() {
   const totalVolume = tickets.reduce((acc, t) => acc + (t.quote.grandTotalCFA || 0), 0);
   const totalCollected = tickets.reduce((acc, t) => acc + (t.quote.depositPaidCFA || 0), 0);
 
-  if (!isAuthenticated) {
+  // 1. ÉCRAN DE CHARGEMENT PENDANT LA VÉRIFICATION INITIALE DE L'ABONNEMENT
+  if (checkingAuth) {
     return (
       <div className="min-h-screen flex flex-col bg-stone-900 text-stone-100">
         {isMobileMode ? (
-          <header className="bg-rose-900/90 border-b border-rose-800 px-4 py-3 flex items-center justify-between">
+          <header className="bg-stone-950 border-b border-stone-800 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-amber-400/20 flex items-center justify-center">
                 <Crown className="w-4 h-4 text-amber-400" />
               </div>
               <span className="font-bold text-sm text-white">Christaline Admin</span>
             </div>
-            <span className="text-[10px] bg-rose-800 text-rose-200 px-2 py-0.5 rounded-full font-bold">App Mobile</span>
+            <span className="text-[10px] bg-stone-800 text-stone-300 px-2 py-0.5 rounded-full font-bold">Vérification...</span>
           </header>
         ) : (
           <Navbar />
         )}
         <main className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-stone-800 rounded-3xl p-8 border border-stone-700 shadow-2xl space-y-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center mx-auto shadow-lg">
-              <Lock className="w-8 h-8" />
-            </div>
-
-            <div>
-              <h1 className="text-2xl font-black text-white font-serif">
-                Espace Gestion Christaline • Bénin
-              </h1>
-              <p className="text-xs text-stone-400 mt-1">
-                Accès réservé pour chiffrer les devis et gérer le suivi des commandes
-              </p>
-            </div>
-
-            {authError && (
-              <div className="p-3 bg-red-950/60 border border-red-800 rounded-xl text-red-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{authError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <input
-                  type="password"
-                  required
-                  placeholder="Mot de passe d'administration"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:border-rose-500 outline-hidden text-center"
-                />
-                <p className="text-[11px] text-stone-500 mt-2">
-                  (Mot de passe par défaut : <code>admin123</code> ou <code>0154072488</code>)
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-rose-950 cursor-pointer flex items-center justify-center gap-2"
-              >
-                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                <span>Accéder au Tableau de Bord</span>
-              </button>
-            </form>
-
-            {/* Renouvellement FeexPay & Accès Super Admin */}
-            <div className="pt-3 border-t border-stone-700/60 space-y-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setPaymentSuccessData(null);
-                  setPaymentError(null);
-                  setShowRenewalModal(true);
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
-              >
-                <CreditCard className="w-3.5 h-3.5 text-amber-400" />
-                <span>Renouveler mon abonnement ({subscriptionInfo?.monthlyFeeCFA || 15000} FCFA via FeexPay)</span>
-              </button>
-
-              <div className="flex items-center justify-center text-[11px] text-stone-500 pt-1">
-                <span>Paiement sécurisé FeexPay Bénin • MoMo, Moov, Celtiis & Carte</span>
-              </div>
-            </div>
-
+          <div className="flex flex-col items-center gap-4 text-center max-w-sm">
+            <div className="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-bold text-white tracking-wide">Vérification de l'accès Administrateur...</p>
+            <p className="text-xs text-stone-400">Contrôle de validité de l'abonnement Christaline en cours</p>
           </div>
         </main>
         {!isMobileMode && <Footer />}
-
-        {/* Modal de renouvellement FeexPay (sur l'écran de login) */}
-        <FeexPayRenewalModal
-          isOpen={showRenewalModal}
-          onClose={() => {
-            setShowRenewalModal(false);
-            setWaitingForMobilePin(false);
-          }}
-          monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
-          subscriptionDurationDays={subscriptionInfo?.subscriptionDurationDays || 30}
-          renewalPhone={renewalPhone}
-          setRenewalPhone={setRenewalPhone}
-          renewalOperator={renewalOperator}
-          setRenewalOperator={setRenewalOperator}
-          processingPayment={processingPayment}
-          onSubmitRenewal={handleFeexPayRenewal}
-          paymentSuccessData={paymentSuccessData}
-          paymentError={paymentError}
-          waitingForMobilePin={waitingForMobilePin}
-          onManualCheckStatus={handleManualCheckPendingStatus}
-          feexpayMode={(subscriptionInfo as any)?.feexpayMode || 'SANDBOX'}
-          paymentUrl={paymentUrl}
-          onSuccessProceed={() => {
-            if (paymentSuccessData) {
-              setShowRenewalModal(false);
-              setWaitingForMobilePin(false);
-              setPassword(paymentSuccessData.newPassword);
-            }
-          }}
-        />
-
       </div>
     );
   }
@@ -1351,6 +1307,7 @@ export default function AdminPage() {
     ))
   );
 
+  // 2. ÉCRAN PAYWALL BLOQUANT SI EXPIRÉ (ET NON SUPER ADMIN)
   if (subscriptionInfo?.isExpired && !isSuperAdminUser) {
     return (
       <div className="min-h-screen flex flex-col bg-stone-900 text-stone-100">
@@ -1528,6 +1485,140 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  // 3. ÉCRAN DE CONNEXION ADMIN (SI SOUSCRIPTION ACTIVE MAIS NON AUTHENTIFIÉ)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col bg-stone-900 text-stone-100">
+        {isMobileMode ? (
+          <header className="bg-rose-900/90 border-b border-rose-800 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-amber-400/20 flex items-center justify-center">
+                <Crown className="w-4 h-4 text-amber-400" />
+              </div>
+              <span className="font-bold text-sm text-white">Christaline Admin</span>
+            </div>
+            <span className="text-[10px] bg-rose-800 text-rose-200 px-2 py-0.5 rounded-full font-bold">App Mobile</span>
+          </header>
+        ) : (
+          <Navbar />
+        )}
+        <main className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-stone-800 rounded-3xl p-8 border border-stone-700 shadow-2xl space-y-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center mx-auto shadow-lg">
+              <Lock className="w-8 h-8" />
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-black text-white font-serif">
+                Espace Gestion Christaline • Bénin
+              </h1>
+              <p className="text-xs text-stone-400 mt-1">
+                Accès réservé pour chiffrer les devis et gérer le suivi des commandes
+              </p>
+            </div>
+
+            {authError && (
+              <div className="p-3 bg-red-950/60 border border-red-800 rounded-xl text-red-300 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  required
+                  placeholder="Mot de passe d'administration"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:border-rose-500 outline-hidden text-center"
+                />
+                <p className="text-[11px] text-stone-500 mt-2">
+                  (Mot de passe par défaut : <code>admin123</code> ou <code>0154072488</code>)
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-rose-950 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                <span>Accéder au Tableau de Bord</span>
+              </button>
+            </form>
+
+            {/* Renouvellement FeexPay & Accès Super Admin */}
+            <div className="pt-3 border-t border-stone-700/60 space-y-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentSuccessData(null);
+                  setPaymentError(null);
+                  setShowRenewalModal(true);
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                <span>Renouveler mon abonnement ({subscriptionInfo?.monthlyFeeCFA || 15000} FCFA via FeexPay)</span>
+              </button>
+
+              <div className="flex items-center justify-center text-[11px] text-stone-500 pt-1">
+                <span>Paiement sécurisé FeexPay Bénin • MoMo, Moov, Celtiis & Carte</span>
+              </div>
+            </div>
+
+          </div>
+        </main>
+        {!isMobileMode && <Footer />}
+
+        {/* Modal de renouvellement FeexPay (sur l'écran de login) */}
+        <FeexPayRenewalModal
+          isOpen={showRenewalModal}
+          onClose={() => {
+            setShowRenewalModal(false);
+            setWaitingForMobilePin(false);
+          }}
+          monthlyFeeCFA={subscriptionInfo?.monthlyFeeCFA || 15000}
+          subscriptionDurationDays={subscriptionInfo?.subscriptionDurationDays || 30}
+          renewalPhone={renewalPhone}
+          setRenewalPhone={setRenewalPhone}
+          renewalOperator={renewalOperator}
+          setRenewalOperator={setRenewalOperator}
+          processingPayment={processingPayment}
+          onSubmitRenewal={handleFeexPayRenewal}
+          paymentSuccessData={paymentSuccessData}
+          paymentError={paymentError}
+          waitingForMobilePin={waitingForMobilePin}
+          onManualCheckStatus={handleManualCheckPendingStatus}
+          feexpayMode={(subscriptionInfo as any)?.feexpayMode || 'SANDBOX'}
+          paymentUrl={paymentUrl}
+          onSuccessProceed={() => {
+            if (paymentSuccessData) {
+              setShowRenewalModal(false);
+              setWaitingForMobilePin(false);
+              setIsAuthenticated(true);
+              setSubscriptionInfo(prev => prev ? {
+                ...prev,
+                isExpired: false,
+                expiresAt: paymentSuccessData.expiresAt
+              } : null);
+              setClientAuth('admin', false);
+              fetchTickets();
+              fetchSettings();
+              fetchGroupBuys();
+              fetchAnalytics();
+              fetchDeliveredOrders();
+            }
+          }}
+        />
+
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-100">
