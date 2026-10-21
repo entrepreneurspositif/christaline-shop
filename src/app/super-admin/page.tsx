@@ -28,7 +28,9 @@ import {
   EyeOff,
   UserCheck,
   Send,
-  MessageSquare
+  MessageSquare,
+  Crown,
+  ShoppingBag
 } from 'lucide-react';
 import { AdminSubscriptionData } from '@/lib/subscription';
 import { setClientAuth } from '@/lib/authClient';
@@ -462,10 +464,13 @@ export default function SuperAdminPage() {
             <Link
               href="/admin"
               target="_blank"
-              className="px-3.5 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-black transition-all flex items-center gap-2 shadow-xs active:scale-95"
+              title="Superviser l'espace boutique avec privilèges Super Admin"
             >
-              <span>Voir /admin</span>
-              <ExternalLink className="w-3.5 h-3.5 text-stone-400" />
+              <Crown className="w-4 h-4 text-amber-400" />
+              <span className="hidden sm:inline">Tableau de Bord Boutique (/admin)</span>
+              <span className="sm:hidden">Admin Boutique</span>
+              <ExternalLink className="w-3.5 h-3.5 text-amber-400/70" />
             </Link>
 
             <button

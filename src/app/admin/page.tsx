@@ -95,7 +95,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'group_buys' | 'delivered_orders' | 'platforms' | 'settings' | 'telegram' | 'marketing'>('tickets');
+  const [activeAdminTab, setActiveAdminTab] = useState<'tickets' | 'group_buys' | 'delivered_orders' | 'platforms' | 'settings' | 'telegram' | 'marketing' | 'subscription'>('tickets');
 
   // Données Marketing & Statistiques
   const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary | null>(null);
@@ -132,12 +132,6 @@ export default function AdminPage() {
   const [waitingForMobilePin, setWaitingForMobilePin] = useState(false);
   const [pendingPaymentRef, setPendingPaymentRef] = useState<string | null>(null);
   const [paymentUrl, setPaymentUrl] = useState<string | undefined>(undefined);
-
-  // Déverrouillage Super Admin d'urgence (si abonnement expiré)
-  const [superAdminUnlockPass, setSuperAdminUnlockPass] = useState('');
-  const [superAdminUnlockError, setSuperAdminUnlockError] = useState<string | null>(null);
-  const [unlockingSuperAdmin, setUnlockingSuperAdmin] = useState(false);
-  const [showSuperAdminUnlockForm, setShowSuperAdminUnlockForm] = useState(false);
 
 
   // État Test Telegram
@@ -686,44 +680,7 @@ export default function AdminPage() {
     }
   };
 
-  const handleSuperAdminUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSuperAdminUnlockError(null);
-    setUnlockingSuperAdmin(true);
 
-    try {
-      const res = await fetch('/api/subscription/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: superAdminUnlockPass.trim() })
-      });
-      const data = await res.json();
-
-      if (!res.ok || !data.success || !data.isSuperAdmin) {
-        throw new Error(data.error || 'Mot de passe Super Admin incorrect.');
-      }
-
-      setIsAuthenticated(true);
-      setClientAuth('super-admin', true);
-      setSubscriptionInfo({
-        isExpired: false,
-        expiresAt: data.expiresAt,
-        daysRemaining: data.daysRemaining || 30,
-        monthlyFeeCFA: data.monthlyFeeCFA || 15000,
-        subscriptionDurationDays: data.subscriptionDurationDays || 30,
-        isSuperAdmin: true
-      });
-      fetchTickets();
-      fetchSettings();
-      fetchGroupBuys();
-      fetchAnalytics();
-      fetchDeliveredOrders();
-    } catch (err: any) {
-      setSuperAdminUnlockError(err.message || 'Mot de passe Super Admin incorrect.');
-    } finally {
-      setUnlockingSuperAdmin(false);
-    }
-  };
 
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -1384,49 +1341,7 @@ export default function AdminPage() {
                 <span>Renouveler immédiatement mon accès via FeexPay</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setShowSuperAdminUnlockForm(!showSuperAdminUnlockForm)}
-                className="w-full py-2.5 px-4 rounded-xl bg-stone-800/80 hover:bg-stone-800 border border-stone-700 text-stone-300 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                <span>
-                  {showSuperAdminUnlockForm ? 'Masquer le déverrouillage Super Admin' : 'Déverrouiller avec le mot de passe Super Admin'}
-                </span>
-              </button>
-
-              {/* Formulaire déverrouillage Super Admin d'urgence */}
-              {showSuperAdminUnlockForm && (
-                <form onSubmit={handleSuperAdminUnlock} className="p-4 bg-stone-900/90 border border-amber-500/30 rounded-2xl space-y-3 text-left">
-                  <label className="block text-xs font-bold text-amber-300">
-                    Mot de passe Super Admin (Accès propriétaire permanent) :
-                  </label>
-                  {superAdminUnlockError && (
-                    <div className="p-2.5 bg-red-950/80 border border-red-800 rounded-lg text-red-300 text-xs">
-                      {superAdminUnlockError}
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <input
-                      type="password"
-                      required
-                      placeholder="Mot de passe Super Admin"
-                      value={superAdminUnlockPass}
-                      onChange={(e) => setSuperAdminUnlockPass(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-xl bg-stone-950 border border-stone-700 text-white text-xs outline-hidden focus:border-amber-400"
-                    />
-                    <button
-                      type="submit"
-                      disabled={unlockingSuperAdmin}
-                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-950 font-black text-xs rounded-xl transition-all cursor-pointer disabled:opacity-50 shrink-0"
-                    >
-                      {unlockingSuperAdmin ? 'Vérification...' : 'Débloquer'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <div className="pt-2">
+              <div className="pt-2 flex flex-col items-center gap-2">
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -1434,6 +1349,12 @@ export default function AdminPage() {
                 >
                   Se déconnecter de l'administration
                 </button>
+                <div className="text-[11px] text-stone-500 pt-3 border-t border-stone-800 w-full text-center">
+                  Direction ou Propriétaire ?{' '}
+                  <Link href="/super-admin" className="text-amber-400 hover:text-amber-300 underline font-semibold">
+                    Accéder au Portail Super Admin ↗
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -1511,15 +1432,15 @@ export default function AdminPage() {
 
             <div>
               <h1 className="text-2xl font-black text-white font-serif">
-                Espace Gestion Christaline • Bénin
+                Espace Administrateur • Gestion Boutique
               </h1>
               <p className="text-xs text-stone-400 mt-1">
-                Accès réservé pour chiffrer les devis et gérer le suivi des commandes
+                Chiffrage des devis, gestion des précommandes et suivi des colis
               </p>
             </div>
 
             {authError && (
-              <div className="p-3 bg-red-950/60 border border-red-800 rounded-xl text-red-300 text-xs flex items-center gap-2">
+              <div className="p-3 bg-red-950/60 border border-red-800 rounded-xl text-red-300 text-xs flex items-center gap-2 text-left">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{authError}</span>
               </div>
@@ -1530,13 +1451,13 @@ export default function AdminPage() {
                 <input
                   type="password"
                   required
-                  placeholder="Mot de passe d'administration"
+                  placeholder="Code d'accès Administrateur"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:border-rose-500 outline-hidden text-center"
+                  className="w-full px-4 py-3 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:border-rose-500 outline-hidden text-center font-mono tracking-wider"
                 />
                 <p className="text-[11px] text-stone-500 mt-2">
-                  (Mot de passe par défaut : <code>admin123</code> ou <code>0154072488</code>)
+                  Saisissez votre code d'accès boutique (ex : <code>CS-XXXXXX</code>)
                 </p>
               </div>
 
@@ -1546,7 +1467,7 @@ export default function AdminPage() {
                 className="w-full py-3.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-rose-950 cursor-pointer flex items-center justify-center gap-2"
               >
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                <span>Accéder au Tableau de Bord</span>
+                <span>Connexion Espace Admin</span>
               </button>
             </form>
 
@@ -1565,8 +1486,14 @@ export default function AdminPage() {
                 <span>Renouveler mon abonnement ({subscriptionInfo?.monthlyFeeCFA || 15000} FCFA via FeexPay)</span>
               </button>
 
-              <div className="flex items-center justify-center text-[11px] text-stone-500 pt-1">
+              <div className="flex flex-col items-center justify-center gap-1 text-[11px] text-stone-500 pt-1">
                 <span>Paiement sécurisé FeexPay Bénin • MoMo, Moov, Celtiis & Carte</span>
+                <span className="text-stone-600 pt-1 border-t border-stone-700/40 w-full text-center">
+                  Direction de la plateforme ?{' '}
+                  <Link href="/super-admin" className="text-amber-400/90 hover:text-amber-300 underline font-semibold">
+                    Portail Super Admin ↗
+                  </Link>
+                </span>
               </div>
             </div>
 
@@ -1661,6 +1588,40 @@ export default function AdminPage() {
 
       <main className={`flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8 ${isMobileMode ? 'pb-28 pt-4' : ''}`}>
         
+        {/* BANDEAU SUPERVISEUR (SI CONNECTÉ EN TANT QUE SUPER ADMIN SUR /admin) */}
+        {subscriptionInfo?.isSuperAdmin && (
+          <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-stone-900 border border-amber-500/40 rounded-3xl p-5 sm:p-6 text-stone-900 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-stone-950 flex items-center justify-center font-black shadow-md shrink-0">
+                <Crown className="w-6 h-6 fill-stone-950 text-stone-950" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-serif font-black text-stone-900 text-base sm:text-lg">
+                    Mode Superviseur Actif
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-stone-950 px-2.5 py-0.5 rounded-full shadow-2xs">
+                    Direction Plateforme
+                  </span>
+                </div>
+                <p className="text-xs text-stone-600 max-w-2xl">
+                  Vous consultez l&apos;espace boutique en tant que Super Admin. Vous disposez d&apos;une vue complète des commandes, devis et paramètres sans restriction d&apos;abonnement.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/super-admin"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-amber-400 font-bold text-xs shadow-md transition-all active:scale-95"
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span>Console Super Admin ↗</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* BANDEAU EN-TÊTE ADMIN AVEC ONGLETS */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -1674,16 +1635,12 @@ export default function AdminPage() {
               Tableau de Bord & Paramètres
             </h1>
 
-            {/* BADGE ABONNEMENT MENSUEL & BOUTON RENOUVELER FEEXPAY */}
+            {/* BADGE ABONNEMENT MENSUEL & ACCÈS DIRECT À L'ONGLET */}
             {subscriptionInfo && (
               <div className="flex items-center gap-2 mt-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    setPaymentSuccessData(null);
-                    setPaymentError(null);
-                    setShowRenewalModal(true);
-                  }}
+                  onClick={() => setActiveAdminTab('subscription')}
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     subscriptionInfo.isExpired
                       ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 ring-2 ring-rose-400/20'
@@ -1691,14 +1648,14 @@ export default function AdminPage() {
                       ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 ring-2 ring-amber-400/20'
                       : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                   }`}
-                  title="Gérer ou prolonger l'abonnement FeexPay"
+                  title="Voir l'état de mon abonnement et cotisations"
                 >
                   <CreditCard className="w-3.5 h-3.5 text-stone-700" />
                   <span>
                     Abonnement : {subscriptionInfo.daysRemaining} jour{subscriptionInfo.daysRemaining > 1 ? 's' : ''} restant{subscriptionInfo.daysRemaining > 1 ? 's' : ''}
                   </span>
                   <span className="text-[10px] bg-white text-stone-800 px-2 py-0.5 rounded-md shadow-2xs font-black">
-                    Renouveler ({subscriptionInfo.monthlyFeeCFA.toLocaleString('fr-FR')} F)
+                    Gérer / Renouveler
                   </span>
                 </button>
               </div>
@@ -1801,6 +1758,21 @@ export default function AdminPage() {
               <span>Marketing & Stats</span>
               {(settings?.marketing?.facebookPixel?.enabled || settings?.marketing?.tiktokPixel?.enabled) && (
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" title="Pixels actifs" />
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveAdminTab('subscription')}
+              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeAdminTab === 'subscription'
+                  ? 'bg-gradient-to-r from-amber-600 via-rose-600 to-pink-600 text-white shadow-xs'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Mon Abonnement</span>
+              {subscriptionInfo && (
+                <span className={`w-2 h-2 rounded-full shrink-0 ${subscriptionInfo.isExpired ? 'bg-rose-500' : 'bg-emerald-500'}`} />
               )}
             </button>
 
@@ -4908,6 +4880,282 @@ export default function AdminPage() {
                   })}
               </div>
             )}
+
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* ONGLET : MON ABONNEMENT & COTISATIONS (SELF-SERVICE ADMIN)    */}
+        {/* ============================================================ */}
+        {activeAdminTab === 'subscription' && (
+          <div className="space-y-8 animate-fade-in">
+            {/* EN-TÊTE DE LA SECTION */}
+            <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-8 shadow-xs">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 text-[10px] font-black uppercase tracking-wider mb-2 border border-amber-200">
+                    <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Licence &amp; Cotisations • Gestion Boutique</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-stone-900 font-serif">
+                    Mon Abonnement &amp; Cotisation Boutique
+                  </h2>
+                  <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-2xl leading-relaxed">
+                    Suivez en direct la validité de votre accès administrateur Christaline Shop, le compte à rebours de renouvellement et prolongez votre licence en toute autonomie par Mobile Money ou Carte Bancaire.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentSuccessData(null);
+                      setPaymentError(null);
+                      setShowRenewalModal(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 hover:from-rose-700 hover:to-amber-600 text-white text-xs font-black shadow-md shadow-rose-200 transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <Zap className="w-4 h-4 fill-white text-white" />
+                    <span>Renouveler immédiatement ({subscriptionInfo?.monthlyFeeCFA ? subscriptionInfo.monthlyFeeCFA.toLocaleString('fr-FR') : '15 000'} F)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 CARTES D&apos;ÉTAT PRINCIPALES */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-stone-100">
+                
+                {/* CARTE 1 : STATUT DE LA LICENCE */}
+                <div className={`p-4 rounded-2xl border ${
+                  subscriptionInfo?.isExpired
+                    ? 'bg-rose-50/60 border-rose-200 text-rose-900'
+                    : 'bg-emerald-50/60 border-emerald-200 text-emerald-900'
+                }`}>
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                    <span>État de l&apos;Accès</span>
+                    {subscriptionInfo?.isExpired ? (
+                      <XCircle className="w-4 h-4 text-rose-600" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    )}
+                  </div>
+                  <div className="mt-2 text-2xl font-black">
+                    {subscriptionInfo?.isExpired ? 'EXPIRÉ' : 'OPÉRATIONNEL'}
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    {subscriptionInfo?.isExpired
+                      ? 'Accès bloqué en attente de cotisation'
+                      : 'Accès complet aux devis, commandes et suivi'}
+                  </p>
+                </div>
+
+                {/* CARTE 2 : COMPTE À REBOURS */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                    <span>Temps Restant</span>
+                    <Clock className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-stone-900">
+                    {subscriptionInfo?.daysRemaining || 0} jour{(subscriptionInfo?.daysRemaining || 0) > 1 ? 's' : ''}
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    Expire le : <strong className="text-stone-700">{subscriptionInfo?.expiresAt ? new Date(subscriptionInfo.expiresAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Indéfini'}</strong>
+                  </p>
+                </div>
+
+                {/* CARTE 3 : TARIF & DURÉE */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                    <span>Cotisation Plateforme</span>
+                    <DollarSign className="w-4 h-4 text-rose-600" />
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-stone-900">
+                    {(subscriptionInfo?.monthlyFeeCFA || 15000).toLocaleString('fr-FR')} <span className="text-xs font-bold text-stone-500">FCFA</span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    Cycle d&apos;exploitation : <strong className="text-stone-700">{subscriptionInfo?.subscriptionDurationDays || 30} jours</strong>
+                  </p>
+                </div>
+
+                {/* CARTE 4 : PASSERELLE SÉCURISÉE */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200">
+                  <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                    <span>Paiement Bénin</span>
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="mt-2 text-base font-black text-stone-900 flex items-center gap-1.5">
+                    <span>FeexPay Sécurisé</span>
+                    <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">Certifié</span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    MTN, Moov, Celtiis &amp; Carte Visa
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* BLOC PRINCIPAL : GUIDE D'EXPLOITATION & RENOUVELLEMENT */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* COLONNE GAUCHE (2/3) : ACTION DE RENOUVELLEMENT & COMMENT ÇA MARCHE */}
+              <div className="lg:col-span-2 space-y-6">
+                
+                {/* BANNIÈRE ACTION RENOUVELER */}
+                <div className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-900 text-white rounded-3xl p-6 sm:p-8 border border-stone-800 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="relative z-10 space-y-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Renouvellement 100% Automatique &amp; Instantané</span>
+                    </div>
+
+                    <h3 className="text-xl sm:text-2xl font-black font-serif text-white">
+                      Prolongez votre licence d&apos;exploitation boutique
+                    </h3>
+
+                    <p className="text-xs sm:text-sm text-stone-300 leading-relaxed max-w-xl">
+                      En réglant votre cotisation mensuelle de <strong>{(subscriptionInfo?.monthlyFeeCFA || 15000).toLocaleString('fr-FR')} FCFA</strong>, votre accès est immédiatement prolongé de <strong>{subscriptionInfo?.subscriptionDurationDays || 30} jours</strong>. Vos calculs de devis, vos tickets clients et vos ventes en groupe restent accessibles sans interruption.
+                    </p>
+
+                    <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPaymentSuccessData(null);
+                          setPaymentError(null);
+                          setShowRenewalModal(true);
+                        }}
+                        className="py-3.5 px-6 rounded-2xl bg-gradient-to-r from-rose-600 via-pink-600 to-amber-500 hover:from-rose-700 hover:to-amber-600 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-rose-950/60 transition-all active:scale-[0.98] cursor-pointer"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        <span>Payer ma cotisation par Mobile Money / Carte</span>
+                      </button>
+
+                      <div className="text-xs text-stone-400 flex items-center justify-center sm:justify-start gap-1.5 px-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>Déblocage instantané en temps réel</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* FAQ & GUIDE PRATIQUE ADMIN */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xs space-y-4">
+                  <h3 className="font-serif font-black text-stone-900 text-lg flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-amber-500" />
+                    <span>Foire Aux Questions • Gestion de l&apos;Abonnement</span>
+                  </h3>
+
+                  <div className="space-y-3 pt-2 text-xs sm:text-sm">
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 space-y-1">
+                      <div className="font-bold text-stone-900 flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-[10px] font-black shrink-0">1</span>
+                        <span>Que se passe-t-il si mon abonnement arrive à échéance ?</span>
+                      </div>
+                      <p className="text-stone-600 text-xs pl-7 leading-relaxed">
+                        Si votre abonnement expire, votre espace d&apos;administration passe en mode de renouvellement prioritaire. Vos commandes, devis clients, produits de groupage et preuves de livraison sont précieusement conservés sans aucune perte de données. Il vous suffit de régler votre cotisation via FeexPay pour réactiver immédiatement l&apos;accès complet.
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 space-y-1">
+                      <div className="font-bold text-stone-900 flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-[10px] font-black shrink-0">2</span>
+                        <span>Puis-je renouveler avant la date d&apos;expiration ?</span>
+                      </div>
+                      <p className="text-stone-600 text-xs pl-7 leading-relaxed">
+                        Oui, absolument ! Vous pouvez renouveler par anticipation à tout moment. Les {subscriptionInfo?.subscriptionDurationDays || 30} jours supplémentaires sont automatiquement ajoutés à la fin de votre période de validité restante.
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 space-y-1">
+                      <div className="font-bold text-stone-900 flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-[10px] font-black shrink-0">3</span>
+                        <span>Quels réseaux Mobile Money sont acceptés au Bénin ?</span>
+                      </div>
+                      <p className="text-stone-600 text-xs pl-7 leading-relaxed">
+                        FeexPay accepte MTN Mobile Money, Moov Money Bénin, Celtiis Cash ainsi que les cartes bancaires Visa et Mastercard. La transaction s&apos;effectue directement sur votre téléphone via le prompt USSD de votre opérateur.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* COLONNE DROITE (1/3) : RECAPITULATIF & SEPARATION DIRECTION */}
+              <div className="space-y-6">
+                
+                {/* CARTOUCHE RECAPITULATIF CONTRAT */}
+                <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-4">
+                  <h4 className="font-bold text-stone-900 text-sm uppercase tracking-wider border-b border-stone-100 pb-3 flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-rose-600" />
+                    <span>Détails du Contrat Boutique</span>
+                  </h4>
+
+                  <div className="space-y-3 text-xs">
+                    <div className="flex items-center justify-between py-1.5 border-b border-stone-100">
+                      <span className="text-stone-500">Boutique :</span>
+                      <span className="font-bold text-stone-900">Christaline Shop Bénin</span>
+                    </div>
+
+                    <div className="flex items-center justify-between py-1.5 border-b border-stone-100">
+                      <span className="text-stone-500">Tarif périodique :</span>
+                      <span className="font-bold text-stone-900">{(subscriptionInfo?.monthlyFeeCFA || 15000).toLocaleString('fr-FR')} FCFA</span>
+                    </div>
+
+                    <div className="flex items-center justify-between py-1.5 border-b border-stone-100">
+                      <span className="text-stone-500">Périodicité :</span>
+                      <span className="font-bold text-stone-900">Chaque {subscriptionInfo?.subscriptionDurationDays || 30} jours</span>
+                    </div>
+
+                    <div className="flex items-center justify-between py-1.5 border-b border-stone-100">
+                      <span className="text-stone-500">Module de paiement :</span>
+                      <span className="font-bold text-emerald-700">FeexPay Gateway v2</span>
+                    </div>
+
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="text-stone-500">Date d&apos;échéance :</span>
+                      <span className="font-bold text-rose-600">
+                        {subscriptionInfo?.expiresAt ? new Date(subscriptionInfo.expiresAt).toLocaleDateString('fr-FR') : '-'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentSuccessData(null);
+                      setPaymentError(null);
+                      setShowRenewalModal(true);
+                    }}
+                    className="w-full py-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Renouveler ma cotisation</span>
+                  </button>
+                </div>
+
+                {/* SÉPARATION PROFESSIONNELLE AVEC LE SUPER ADMIN */}
+                <div className="bg-stone-50 rounded-3xl p-6 border border-stone-200 space-y-3">
+                  <div className="flex items-center gap-2 text-stone-700 font-bold text-xs uppercase tracking-wider">
+                    <ShieldAlert className="w-4 h-4 text-stone-500" />
+                    <span>Gouvernance &amp; Propriété</span>
+                  </div>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    La configuration générale de la plateforme (tarification, clés API FeexPay, réinitialisations directes et administration des accès) relève exclusivement de la Direction sur le <strong>Portail Super Admin</strong>.
+                  </p>
+                  <div className="pt-2">
+                    <Link
+                      href="/super-admin"
+                      className="inline-flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 font-bold underline"
+                    >
+                      <span>Accéder au Portail Direction / Super Admin ↗</span>
+                    </Link>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
 
           </div>
         )}
