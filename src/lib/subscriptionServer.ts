@@ -25,7 +25,7 @@ const initialExpiration = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString
 
 const DEFAULT_SUBSCRIPTION: AdminSubscriptionData = {
   superAdminPassword: process.env.SUPER_ADMIN_PASSWORD?.trim() || 'superadmin2026',
-  monthlyFeeCFA: Number(process.env.FEEXPAY_MONTHLY_FEE) || 15000,
+  monthlyFeeCFA: Number(process.env.FEEXPAY_MONTHLY_FEE) || 1500,
   subscriptionDurationDays: Number(process.env.SUBSCRIPTION_DURATION_DAYS) || 30, // 30 jours par défaut
   activeAdminPassword: 'admin123',
   passwordExpiresAt: initialExpiration,
@@ -128,6 +128,14 @@ export function readSubscriptionData(): AdminSubscriptionData {
   // 3. Essai de lecture depuis la mémoire globale (prioritaire sur les fichiers)
   if (globalThis.__cs_subscription_data) {
     result = sanitizeData(globalThis.__cs_subscription_data, result);
+  }
+
+  // 4. Si une variable d'environnement explicite FEEXPAY_MONTHLY_FEE est définie sur Vercel,
+  // elle prend le pas sur le fichier statique bundled par défaut si la mémoire n'est pas modifiée en direct
+  if (process.env.FEEXPAY_MONTHLY_FEE && Number(process.env.FEEXPAY_MONTHLY_FEE) > 0) {
+    if (!globalThis.__cs_subscription_data) {
+      result.monthlyFeeCFA = Number(process.env.FEEXPAY_MONTHLY_FEE);
+    }
   }
 
   return result;

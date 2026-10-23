@@ -129,15 +129,40 @@ export default function SuperAdminPage() {
         let curChatId = sub.adminTelegramChatId || '';
         let curBotToken = sub.adminTelegramBotToken || '';
 
-        // Récupérer depuis localStorage si non initialisé sur le serveur
+        // Récupérer depuis localStorage si non initialisé ou si MongoDB n'est pas connecté
         try {
           const cached = localStorage.getItem('cs_super_admin_saved_config');
           if (cached) {
             const parsed = JSON.parse(cached);
+            if (parsed.fee) {
+              if (!(sub as any)?.mongoConnected) {
+                curFee = parsed.fee;
+                if (Number(parsed.fee) !== Number(sub.monthlyFeeCFA)) {
+                  fetch('/api/super-admin/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      masterPassword: pass,
+                      monthlyFeeCFA: Number(parsed.fee),
+                      subscriptionDurationDays: Number(parsed.durationDays || curDuration)
+                    })
+                  }).catch(() => {});
+                }
+              } else if (!curFee) {
+                curFee = parsed.fee;
+              }
+            }
+
+            if (parsed.durationDays) {
+              if (!(sub as any)?.mongoConnected) {
+                curDuration = parsed.durationDays;
+              } else if (!sub.subscriptionDurationDays) {
+                curDuration = parsed.durationDays;
+              }
+            }
+
             if (!curShopId && parsed.shopId) curShopId = parsed.shopId;
             if (!curToken && parsed.apiToken) curToken = parsed.apiToken;
-            if (!curFee && parsed.fee) curFee = parsed.fee;
-            if (!sub.subscriptionDurationDays && parsed.durationDays) curDuration = parsed.durationDays;
             if (parsed.mode && !sub.feexpayConfig?.shopId) curMode = parsed.mode;
             if (!curChatId && parsed.chatId) curChatId = parsed.chatId;
             if (!curBotToken && parsed.botToken) curBotToken = parsed.botToken;
@@ -813,6 +838,7 @@ export default function SuperAdminPage() {
               <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                 {[
                   { label: '1 000 F', val: 1000 },
+                  { label: '1 500 F', val: 1500 },
                   { label: '2 000 F', val: 2000 },
                   { label: '5 000 F', val: 5000 },
                   { label: '10 000 F', val: 10000 },
